@@ -1,0 +1,151 @@
+{
+  "nav": {
+    "home": "Home",
+    "rides": "Rides",
+    "tours": "Tours",
+    "fleet": "Fleet",
+    "borderInfo": "Border Info",
+    "about": "About",
+    "contact": "Contact",
+    "login": "Login",
+    "register": "Register",
+    "dashboard": "Dashboard",
+    "bookNow": "Book Now"
+  },
+  "hero": {
+    "badge": "Premium West African Transport",
+    "title": "Travel Across West Africa",
+    "titleHighlight": "In Style & Comfort",
+    "subtitle": "Premium cross-border transport connecting Nigeria, Benin Republic, Togo & Ghana. Private rides, airport pickups, tours and VIP transport.",
+    "ctaBook": "Book a Ride",
+    "ctaExplore": "Explore Routes",
+    "stats": {
+      "routes": "Active Routes",
+      "passengers": "Happy Passengers",
+      "drivers": "Professional Drivers",
+      "countries": "Countries Covered"
+    }
+  },
+  "booking": {
+    "title": "Book Your Ride",
+    "from": "From",
+    "to": "To",
+    "date": "Date",
+    "passengers": "Passengers",
+    "type": "Trip Type",
+    "search": "Search Available Rides",
+    "types": {
+      "oneWay": "One Way",
+      "roundTrip": "Round Trip"
+    },
+    "selectFrom": "Select departure city",
+    "selectTo": "Select destination city",
+    "selectDate": "Select date",
+    "selectPassengers": "Select passengers"
+  },
+  "routes": {
+    "title": "Popular Routes",
+    "subtitle": "Direct, comfortable rides across West Africa's most travelled corridors",
+    "from": "From",
+    "to": "To",
+    "duration": "Duration",
+    "price": "From",
+    "bookRoute": "Book This Route",
+    "viewAll": "View All Routes"
+  },
+  "why": {
+    "title": "Why Choose Beninfy?",
+    "subtitle": "We set the standard for premium cross-border transport in West Africa",
+    "features": {
+      "safe": {
+        "title": "Safe & Secure",
+        "desc": "All drivers are vetted, licensed and experienced on cross-border routes."
+      },
+      "comfort": {
+        "title": "Premium Comfort",
+        "desc": "Modern air-conditioned vehicles with ample luggage space."
+      },
+      "punctual": {
+        "title": "Always Punctual",
+        "desc": "Real-time tracking and scheduled departures you can rely on."
+      },
+      "multilingual": {
+        "title": "Multilingual Support",
+        "desc": "Service available in English and French for all West African travellers."
+      },
+      "affordable": {
+        "title": "Transparent Pricing",
+        "desc": "No hidden fees. See the full price including border levies upfront."
+      },
+      "support": {
+        "title": "24/7 Support",
+        "desc": "Our team is available around the clock for any assistance."
+      }
+    }
+  },
+  "fleet": {
+    "title": "Our Fleet",
+    "subtitle": "A curated selection of premium vehicles for every journey",
+    "viewAll": "View Full Fleet",
+    "capacity": "Capacity",
+    "priceFrom": "From",
+    "perTrip": "/ trip"
+  },
+  "tours": {
+    "title": "Curated Tours",
+    "subtitle": "Discover the beauty and culture of West Africa with expert-guided tours",
+    "viewAll": "View All Tours",
+    "days": "days",
+    "from": "From",
+    "bookTour": "Book Tour"
+  },
+  "border": {
+    "title": "Border Information",
+    "subtitle": "Everything you need to know before crossing West African borders",
+    "viewAll": "View Border Details",
+    "fees": "Border Fees",
+    "documents": "Required Documents",
+    "tips": "Travel Tips"
+  },
+  "cta": {
+    "title": "Ready to Travel West Africa?",
+    "subtitle": "Book your premium cross-border transport today. Comfortable, safe, and reliable.",
+    "button": "Book Your Ride Now",
+    "secondary": "View All Routes"
+  },
+  "footer": {
+    "tagline": "Premium multilingual transport across West Africa.",
+    "company": "Company",
+    "services": "Services",
+    "support": "Support",
+    "legal": "Legal",
+    "links": {
+      "about": "About Us",
+      "careers": "Careers",
+      "press": "Press",
+      "blog": "Blog",
+      "rides": "Cross-Border Rides",
+      "airport": "Airport Pickups",
+      "tours": "Tours",
+      "fleet": "Fleet Booking",
+      "vip": "VIP Transport",
+      "help": "Help Centre",
+      "contact": "Contact Us",
+      "faq": "FAQ",
+      "safety": "Safety",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service",
+      "cookies": "Cookie Policy"
+    },
+    "copyright": "© {year} Beninfy. All rights reserved.",
+    "madeWith": "Made with ❤️ for West Africa"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "retry": "Try Again",
+    "learnMore": "Learn More",
+    "getStarted": "Get Started",
+    "comingSoon": "Coming Soon"
+  }
+}

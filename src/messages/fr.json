@@ -1,0 +1,151 @@
+{
+  "nav": {
+    "home": "Accueil",
+    "rides": "Trajets",
+    "tours": "Circuits",
+    "fleet": "Flotte",
+    "borderInfo": "Info Frontière",
+    "about": "À Propos",
+    "contact": "Contact",
+    "login": "Connexion",
+    "register": "S'inscrire",
+    "dashboard": "Tableau de Bord",
+    "bookNow": "Réserver"
+  },
+  "hero": {
+    "badge": "Transport Premium en Afrique de l'Ouest",
+    "title": "Voyagez à travers l'Afrique de l'Ouest",
+    "titleHighlight": "Avec Style et Confort",
+    "subtitle": "Transport transfrontalier premium reliant le Nigeria, la République du Bénin, le Togo et le Ghana. Trajets privés, transferts aéroport, circuits et transport VIP.",
+    "ctaBook": "Réserver un Trajet",
+    "ctaExplore": "Explorer les Routes",
+    "stats": {
+      "routes": "Routes Actives",
+      "passengers": "Passagers Satisfaits",
+      "drivers": "Conducteurs Professionnels",
+      "countries": "Pays Couverts"
+    }
+  },
+  "booking": {
+    "title": "Réserver Votre Trajet",
+    "from": "Départ",
+    "to": "Destination",
+    "date": "Date",
+    "passengers": "Passagers",
+    "type": "Type de Trajet",
+    "search": "Rechercher des Trajets",
+    "types": {
+      "oneWay": "Aller Simple",
+      "roundTrip": "Aller-Retour"
+    },
+    "selectFrom": "Choisir la ville de départ",
+    "selectTo": "Choisir la destination",
+    "selectDate": "Choisir une date",
+    "selectPassengers": "Nombre de passagers"
+  },
+  "routes": {
+    "title": "Routes Populaires",
+    "subtitle": "Trajets directs et confortables sur les corridors les plus fréquentés d'Afrique de l'Ouest",
+    "from": "De",
+    "to": "À",
+    "duration": "Durée",
+    "price": "À partir de",
+    "bookRoute": "Réserver cette Route",
+    "viewAll": "Voir Toutes les Routes"
+  },
+  "why": {
+    "title": "Pourquoi Choisir Beninfy?",
+    "subtitle": "Nous établissons la norme du transport transfrontalier premium en Afrique de l'Ouest",
+    "features": {
+      "safe": {
+        "title": "Sûr et Sécurisé",
+        "desc": "Tous les conducteurs sont vérifiés, licenciés et expérimentés sur les routes transfrontalières."
+      },
+      "comfort": {
+        "title": "Confort Premium",
+        "desc": "Véhicules modernes climatisés avec espace bagages généreux."
+      },
+      "punctual": {
+        "title": "Toujours Ponctuel",
+        "desc": "Suivi en temps réel et départs planifiés sur lesquels vous pouvez compter."
+      },
+      "multilingual": {
+        "title": "Support Multilingue",
+        "desc": "Service disponible en anglais et en français pour tous les voyageurs ouest-africains."
+      },
+      "affordable": {
+        "title": "Tarifs Transparents",
+        "desc": "Sans frais cachés. Voir le prix total incluant les droits de frontière à l'avance."
+      },
+      "support": {
+        "title": "Support 24h/7j",
+        "desc": "Notre équipe est disponible en permanence pour toute assistance."
+      }
+    }
+  },
+  "fleet": {
+    "title": "Notre Flotte",
+    "subtitle": "Une sélection soignée de véhicules premium pour chaque voyage",
+    "viewAll": "Voir la Flotte Complète",
+    "capacity": "Capacité",
+    "priceFrom": "À partir de",
+    "perTrip": "/ trajet"
+  },
+  "tours": {
+    "title": "Circuits Organisés",
+    "subtitle": "Découvrez la beauté et la culture de l'Afrique de l'Ouest avec des circuits guidés par des experts",
+    "viewAll": "Voir Tous les Circuits",
+    "days": "jours",
+    "from": "À partir de",
+    "bookTour": "Réserver le Circuit"
+  },
+  "border": {
+    "title": "Informations Frontalières",
+    "subtitle": "Tout ce que vous devez savoir avant de traverser les frontières ouest-africaines",
+    "viewAll": "Voir les Détails",
+    "fees": "Frais de Frontière",
+    "documents": "Documents Requis",
+    "tips": "Conseils de Voyage"
+  },
+  "cta": {
+    "title": "Prêt à Voyager en Afrique de l'Ouest?",
+    "subtitle": "Réservez votre transport transfrontalier premium aujourd'hui. Confortable, sûr et fiable.",
+    "button": "Réserver Maintenant",
+    "secondary": "Voir Toutes les Routes"
+  },
+  "footer": {
+    "tagline": "Transport premium multilingue à travers l'Afrique de l'Ouest.",
+    "company": "Entreprise",
+    "services": "Services",
+    "support": "Assistance",
+    "legal": "Légal",
+    "links": {
+      "about": "À Propos",
+      "careers": "Carrières",
+      "press": "Presse",
+      "blog": "Blog",
+      "rides": "Trajets Transfrontaliers",
+      "airport": "Transferts Aéroport",
+      "tours": "Circuits",
+      "fleet": "Réservation de Flotte",
+      "vip": "Transport VIP",
+      "help": "Centre d'Aide",
+      "contact": "Nous Contacter",
+      "faq": "FAQ",
+      "safety": "Sécurité",
+      "privacy": "Politique de Confidentialité",
+      "terms": "Conditions d'Utilisation",
+      "cookies": "Politique des Cookies"
+    },
+    "copyright": "© {year} Beninfy. Tous droits réservés.",
+    "madeWith": "Fait avec ❤️ pour l'Afrique de l'Ouest"
+  },
+  "common": {
+    "loading": "Chargement...",
+    "error": "Une erreur s'est produite",
+    "retry": "Réessayer",
+    "learnMore": "En Savoir Plus",
+    "getStarted": "Commencer",
+    "comingSoon": "Bientôt Disponible"
+  }
+}

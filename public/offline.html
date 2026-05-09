@@ -1,0 +1,19 @@
+export default function OfflinePage() {
+  return (
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 text-center">
+      <div className="inline-flex items-center justify-center w-20 h-20 bg-primary-container rounded-full mb-6">
+        <span className="material-symbols-outlined text-on-primary-container text-[40px]">wifi_off</span>
+      </div>
+      <h1 className="text-headline-lg text-primary mb-3">You're offline</h1>
+      <p className="text-body-lg text-on-surface-variant mb-8 max-w-sm">
+        It looks like you've lost your connection. Check your internet and try again.
+      </p>
+      <button
+        onClick={() => window.location.reload()}
+        className="bg-primary text-on-primary px-8 py-3.5 rounded-xl text-label-md hover:opacity-95 active:scale-[0.98] transition-all"
+      >
+        Try Again
+      </button>
+    </div>
+  )
+}

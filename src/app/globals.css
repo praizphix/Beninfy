@@ -1,26 +1,362 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
+/* ─── Tailwind utility → CSS-variable mapping ─────────────────────────────── */
 @theme inline {
+  /* shadcn compat */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Beninfy Material Design — primary */
+  --color-on-primary: var(--on-primary);
+  --color-primary-container: var(--primary-container);
+  --color-on-primary-container: var(--on-primary-container);
+  --color-inverse-primary: var(--inverse-primary);
+  --color-primary-fixed: var(--primary-fixed);
+  --color-primary-fixed-dim: var(--primary-fixed-dim);
+  --color-on-primary-fixed: var(--on-primary-fixed);
+  --color-on-primary-fixed-variant: var(--on-primary-fixed-variant);
+
+  /* Beninfy Material Design — secondary */
+  --color-on-secondary: var(--on-secondary);
+  --color-secondary-container: var(--secondary-container);
+  --color-on-secondary-container: var(--on-secondary-container);
+  --color-secondary-fixed: var(--secondary-fixed);
+  --color-secondary-fixed-dim: var(--secondary-fixed-dim);
+  --color-on-secondary-fixed: var(--on-secondary-fixed);
+  --color-on-secondary-fixed-variant: var(--on-secondary-fixed-variant);
+
+  /* Beninfy Material Design — tertiary */
+  --color-tertiary: var(--tertiary);
+  --color-on-tertiary: var(--on-tertiary);
+  --color-tertiary-container: var(--tertiary-container);
+  --color-on-tertiary-container: var(--on-tertiary-container);
+  --color-tertiary-fixed: var(--tertiary-fixed);
+  --color-tertiary-fixed-dim: var(--tertiary-fixed-dim);
+  --color-on-tertiary-fixed: var(--on-tertiary-fixed);
+  --color-on-tertiary-fixed-variant: var(--on-tertiary-fixed-variant);
+
+  /* Beninfy Material Design — error */
+  --color-error: var(--error);
+  --color-on-error: var(--on-error);
+  --color-error-container: var(--error-container);
+  --color-on-error-container: var(--on-error-container);
+
+  /* Beninfy Material Design — surface */
+  --color-surface: var(--surface);
+  --color-surface-dim: var(--surface-dim);
+  --color-surface-bright: var(--surface-bright);
+  --color-surface-variant: var(--surface-variant);
+  --color-surface-tint: var(--surface-tint);
+  --color-surface-container-lowest: var(--surface-container-lowest);
+  --color-surface-container-low: var(--surface-container-low);
+  --color-surface-container: var(--surface-container);
+  --color-surface-container-high: var(--surface-container-high);
+  --color-surface-container-highest: var(--surface-container-highest);
+  --color-on-surface: var(--on-surface);
+  --color-on-surface-variant: var(--on-surface-variant);
+  --color-on-background: var(--on-background);
+  --color-inverse-surface: var(--inverse-surface);
+  --color-inverse-on-surface: var(--inverse-on-surface);
+
+  /* Beninfy Material Design — outline */
+  --color-outline: var(--outline);
+  --color-outline-variant: var(--outline-variant);
+
+  /* Radius */
+  --radius-sm: calc(var(--radius) * 0.5);
+  --radius-md: calc(var(--radius) * 0.75);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.5);
+  --radius-2xl: calc(var(--radius) * 2);
+  --radius-3xl: calc(var(--radius) * 3);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* ─── Beninfy spacing / sizing tokens ─────────────────────────────────────── */
+@theme {
+  --spacing-margin-mobile: 1rem;      /* 16px */
+  --spacing-margin-desktop: 2.5rem;   /* 40px */
+  --spacing-gutter: 1.5rem;           /* 24px */
+  --spacing-container-max: 80rem;     /* 1280px */
+  --spacing-stack-sm: 0.5rem;         /* 8px */
+  --spacing-stack-md: 1rem;           /* 16px */
+  --spacing-stack-lg: 2rem;           /* 32px */
+}
+
+/* ─── Light mode ───────────────────────────────────────────────────────────── */
+:root {
+  /* shadcn compatibility overridden to Beninfy values */
+  --background: #f7f9ff;
+  --foreground: #181c20;
+  --card: #ffffff;
+  --card-foreground: #181c20;
+  --popover: #ffffff;
+  --popover-foreground: #181c20;
+  --primary: #3e004c;
+  --primary-foreground: #ffffff;
+  --secondary: #735c00;
+  --secondary-foreground: #ffffff;
+  --muted: #ebeef3;
+  --muted-foreground: #4f434e;
+  --accent: #fed65b;
+  --accent-foreground: #745c00;
+  --destructive: #ba1a1a;
+  --border: #d2c2d0;
+  --input: #d2c2d0;
+  --ring: #3e004c;
+  --radius: 0.5rem;
+
+  /* Beninfy Material Design tokens */
+  --on-primary: #ffffff;
+  --primary-container: #5b136b;
+  --on-primary-container: #d182de;
+  --inverse-primary: #f6adff;
+  --primary-fixed: #fed6ff;
+  --primary-fixed-dim: #f6adff;
+  --on-primary-fixed: #350041;
+  --on-primary-fixed-variant: #6e277d;
+
+  --on-secondary: #ffffff;
+  --secondary-container: #fed65b;
+  --on-secondary-container: #745c00;
+  --secondary-fixed: #ffe088;
+  --secondary-fixed-dim: #e9c349;
+  --on-secondary-fixed: #241a00;
+  --on-secondary-fixed-variant: #574500;
+
+  --tertiary: #4a0400;
+  --on-tertiary: #ffffff;
+  --tertiary-container: #720900;
+  --on-tertiary-container: #ff765d;
+  --tertiary-fixed: #ffdad4;
+  --tertiary-fixed-dim: #ffb4a6;
+  --on-tertiary-fixed: #3f0300;
+  --on-tertiary-fixed-variant: #900f00;
+
+  --error: #ba1a1a;
+  --on-error: #ffffff;
+  --error-container: #ffdad6;
+  --on-error-container: #93000a;
+
+  --surface: #f7f9ff;
+  --surface-dim: #d7dadf;
+  --surface-bright: #f7f9ff;
+  --surface-variant: #e0e3e8;
+  --surface-tint: #884197;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #f1f4f9;
+  --surface-container: #ebeef3;
+  --surface-container-high: #e5e8ee;
+  --surface-container-highest: #e0e3e8;
+
+  --on-surface: #181c20;
+  --on-surface-variant: #4f434e;
+  --on-background: #181c20;
+
+  --inverse-surface: #2d3135;
+  --inverse-on-surface: #eef1f6;
+
+  --outline: #80737f;
+  --outline-variant: #d2c2d0;
+
+  /* shadcn chart/sidebar */
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: #ffffff;
+  --sidebar-foreground: #181c20;
+  --sidebar-primary: #3e004c;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #ebeef3;
+  --sidebar-accent-foreground: #181c20;
+  --sidebar-border: #d2c2d0;
+  --sidebar-ring: #3e004c;
+}
+
+/* ─── Dark mode ────────────────────────────────────────────────────────────── */
+.dark {
+  --background: #101418;
+  --foreground: #e3e2e6;
+  --card: #1c2025;
+  --card-foreground: #e3e2e6;
+  --popover: #1c2025;
+  --popover-foreground: #e3e2e6;
+  --primary: #f6adff;
+  --primary-foreground: #350041;
+  --secondary: #e9c349;
+  --secondary-foreground: #241a00;
+  --muted: #272b2f;
+  --muted-foreground: #ccc4cb;
+  --accent: #574500;
+  --accent-foreground: #ffe088;
+  --destructive: #cf6679;
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.15);
+  --ring: #f6adff;
+
+  --on-primary: #350041;
+  --primary-container: #6e277d;
+  --on-primary-container: #f6adff;
+  --inverse-primary: #3e004c;
+  --primary-fixed: #fed6ff;
+  --primary-fixed-dim: #f6adff;
+  --on-primary-fixed: #350041;
+  --on-primary-fixed-variant: #6e277d;
+
+  --on-secondary: #241a00;
+  --secondary-container: #574500;
+  --on-secondary-container: #ffe088;
+  --secondary-fixed: #ffe088;
+  --secondary-fixed-dim: #e9c349;
+  --on-secondary-fixed: #241a00;
+  --on-secondary-fixed-variant: #574500;
+
+  --tertiary: #ffb4a6;
+  --on-tertiary: #3f0300;
+  --tertiary-container: #900f00;
+  --on-tertiary-container: #ffdad4;
+
+  --error: #ffb4ab;
+  --on-error: #690005;
+  --error-container: #93000a;
+  --on-error-container: #ffdad6;
+
+  --surface: #101418;
+  --surface-dim: #101418;
+  --surface-bright: #36393e;
+  --surface-variant: #4f434e;
+  --surface-tint: #f6adff;
+  --surface-container-lowest: #0b0f12;
+  --surface-container-low: #181c20;
+  --surface-container: #1c2025;
+  --surface-container-high: #272b2f;
+  --surface-container-highest: #32353a;
+
+  --on-surface: #e3e2e6;
+  --on-surface-variant: #ccc4cb;
+  --on-background: #e3e2e6;
+
+  --inverse-surface: #e3e2e6;
+  --inverse-on-surface: #2d3135;
+
+  --outline: #958e94;
+  --outline-variant: #4f434e;
+
+  --sidebar: #1c2025;
+  --sidebar-foreground: #e3e2e6;
+  --sidebar-primary: #f6adff;
+  --sidebar-primary-foreground: #350041;
+  --sidebar-accent: #272b2f;
+  --sidebar-accent-foreground: #e3e2e6;
+  --sidebar-border: rgba(255, 255, 255, 0.1);
+  --sidebar-ring: #f6adff;
+}
+
+/* ─── Base styles ──────────────────────────────────────────────────────────── */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ─── Custom font-size utilities matching Beninfy design system ────────────── */
+@layer utilities {
+  .text-display-lg {
+    font-size: 3rem;
+    line-height: 3.5rem;
+    letter-spacing: -0.02em;
+    font-weight: 700;
+  }
+  .text-headline-lg {
+    font-size: 2rem;
+    line-height: 2.5rem;
+    letter-spacing: -0.01em;
+    font-weight: 700;
+  }
+  .text-headline-lg-mobile {
+    font-size: 1.75rem;
+    line-height: 2.125rem;
+    font-weight: 700;
+  }
+  .text-headline-md {
+    font-size: 1.5rem;
+    line-height: 2rem;
+    font-weight: 600;
+  }
+  .text-headline-sm {
+    font-size: 1.25rem;
+    line-height: 1.75rem;
+    font-weight: 600;
+  }
+  .text-body-lg {
+    font-size: 1.125rem;
+    line-height: 1.75rem;
+    font-weight: 400;
+  }
+  .text-body-md {
+    font-size: 1rem;
+    line-height: 1.5rem;
+    font-weight: 400;
+  }
+  .text-body-sm {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    font-weight: 400;
+  }
+  .text-label-md {
+    font-size: 0.875rem;
+    line-height: 1rem;
+    letter-spacing: 0.01em;
+    font-weight: 600;
+  }
+  .text-label-sm {
+    font-size: 0.75rem;
+    line-height: 0.875rem;
+    letter-spacing: 0.02em;
+    font-weight: 500;
+  }
+  /* Material Symbols fill variant */
+  .icon-fill {
+    font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
 }

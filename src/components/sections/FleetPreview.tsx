@@ -1,0 +1,127 @@
+import Link from 'next/link'
+import { vehicles } from '@/data/vehicles'
+import { tourDailyRates } from '@/data/pricing'
+import { formatNGN } from '@/lib/utils'
+
+const VEHICLE_IMAGES: Record<string, string> = {
+  saloon:
+    'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=800&q=80',
+  suv: 'https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?auto=format&fit=crop&w=800&q=80',
+  sienna:
+    'https://images.unsplash.com/photo-1474978528675-2bfa6e89b7b0?auto=format&fit=crop&w=800&q=80',
+  prado:
+    'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=800&q=80',
+  sprinter:
+    'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=800&q=80',
+  hiace:
+    'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=800&q=80',
+  coastal:
+    'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=800&q=80',
+}
+
+const previewVehicles = vehicles.slice(0, 6)
+
+export default function FleetPreview() {
+  return (
+    <section className="py-20 max-w-[1280px] mx-auto px-4 md:px-10">
+      {/* Header */}
+      <div className="text-center mb-12">
+        <span className="text-primary text-label-md tracking-widest uppercase">Our Fleet</span>
+        <h2 className="text-headline-lg mt-2">Premium Vehicles for Every Journey</h2>
+        <p className="text-on-surface-variant mt-2 max-w-2xl mx-auto text-body-md">
+          From executive saloons to high-capacity coastal buses, every vehicle is verified,
+          air-conditioned, and professionally driven.
+        </p>
+      </div>
+
+      {/* Trust badges */}
+      <div className="flex flex-wrap justify-center gap-4 mb-12">
+        {[
+          { icon: 'verified_user', label: 'Verified Drivers' },
+          { icon: 'security', label: 'Security Options' },
+          { icon: 'ac_unit', label: 'Full Climate Control' },
+          { icon: 'wifi', label: 'Onboard Connectivity' },
+        ].map(({ icon, label }) => (
+          <div
+            key={label}
+            className="flex items-center gap-2 bg-primary/5 px-4 py-2 rounded-full border border-primary/10"
+          >
+            <span className="material-symbols-outlined text-primary icon-fill text-[18px]">
+              {icon}
+            </span>
+            <span className="text-label-md text-primary">{label}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Vehicle grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {previewVehicles.map((v) => (
+          <div
+            key={v.id}
+            className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant overflow-hidden flex flex-col hover:shadow-lg transition-shadow"
+          >
+            {/* Image */}
+            <div className="h-56 relative overflow-hidden bg-surface-container">
+              <img
+                src={VEHICLE_IMAGES[v.id] ?? VEHICLE_IMAGES.saloon}
+                alt={v.name}
+                className="w-full h-full object-cover"
+              />
+              {v.badge && (
+                <div className="absolute bottom-4 left-4 bg-primary/90 text-on-primary px-3 py-1 rounded-lg text-label-sm">
+                  {v.badge}
+                </div>
+              )}
+            </div>
+
+            {/* Content */}
+            <div className="p-6 flex-1 flex flex-col">
+              <div className="flex justify-between items-start mb-3">
+                <h3 className="text-headline-sm">{v.name}</h3>
+                <span className="text-secondary text-label-md">
+                  From {formatNGN(tourDailyRates[v.id])}/day
+                </span>
+              </div>
+              <p className="text-on-surface-variant text-body-sm mb-4 flex-1">{v.description}</p>
+
+              {/* Specs */}
+              <div className="grid grid-cols-2 gap-3 mb-5">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-on-surface-variant text-[18px]">
+                    person
+                  </span>
+                  <span className="text-label-md">{v.capacity} Passengers</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-on-surface-variant text-[18px]">
+                    luggage
+                  </span>
+                  <span className="text-label-md">{v.luggageCapacity} Bags</span>
+                </div>
+              </div>
+
+              <Link
+                href={`/en/fleet#${v.id}`}
+                className="block w-full border-2 border-secondary text-secondary py-3 rounded-xl text-label-md text-center hover:bg-secondary-container/20 transition-colors"
+              >
+                View Details
+              </Link>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* CTA */}
+      <div className="text-center mt-10">
+        <Link
+          href="/en/fleet"
+          className="inline-flex items-center gap-2 text-primary text-label-md hover:underline"
+        >
+          View full fleet
+          <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+        </Link>
+      </div>
+    </section>
+  )
+}
