@@ -9,7 +9,9 @@ import { vehicles } from '@/data/vehicles'
 import { routes } from '@/data/routes'
 import { getRouteBasePrice } from '@/data/pricing'
 import { formatNGN } from '@/lib/utils'
-import BookingSteps from '@/components/booking/BookingSteps'
+import JourneyTracker from '@/components/booking/JourneyTracker'
+import RouteMapSVG from '@/components/shared/RouteMapSVG'
+import CountUp from 'react-countup'
 import type { VehicleId, RouteId } from '@/types'
 
 const INPUT_BASE =
@@ -84,8 +86,8 @@ function PassengerDetailsContent() {
           Back to Rides
         </Link>
 
-        {/* Stepper */}
-        <BookingSteps steps={[
+        {/* Road journey tracker */}
+        <JourneyTracker steps={[
           { n: 1, label: 'Search', done: true },
           { n: 2, label: 'Details', active: true },
           { n: 3, label: 'Payment' },
@@ -255,24 +257,8 @@ function PassengerDetailsContent() {
                   </div>
 
                   <div className="p-6 space-y-5">
-                    {/* Route */}
-                    <div className="flex gap-3">
-                      <div className="flex flex-col items-center pt-1 shrink-0 gap-1">
-                        <div className="w-2.5 h-2.5 rounded-full border-2" style={{ borderColor: '#3e004c' }} />
-                        <div className="w-px flex-1 bg-gray-200 min-h-[24px]" />
-                        <span className="material-symbols-outlined" style={{ fontSize: 14, color: '#735c00' }}>location_on</span>
-                      </div>
-                      <div className="flex flex-col gap-3 flex-1 min-w-0">
-                        <div>
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">FROM</p>
-                          <p className="text-sm font-semibold text-gray-900 truncate">{from}</p>
-                        </div>
-                        <div>
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">TO</p>
-                          <p className="text-sm font-semibold text-gray-900 truncate">{to}</p>
-                        </div>
-                      </div>
-                    </div>
+                    {/* Animated route map */}
+                    <RouteMapSVG from={from} to={to} duration="~6 hrs" distance="~140 km" />
 
                     <div className="border-t border-gray-100" />
 
@@ -303,18 +289,22 @@ function PassengerDetailsContent() {
                         <div className="border-t border-gray-100" />
                         <div className="space-y-2.5">
                           {[
-                            { label: 'Ride Fare', value: formatNGN(basePrice) },
-                            { label: 'Border Protocol Fee', value: formatNGN(borderProtocolFee) },
-                            { label: 'Service Fee (5%)', value: formatNGN(serviceFee) },
+                            { label: 'Ride Fare', value: basePrice },
+                            { label: 'Border Protocol Fee', value: borderProtocolFee },
+                            { label: 'Service Fee (5%)', value: serviceFee },
                           ].map(({ label, value }) => (
                             <div key={label} className="flex justify-between text-sm">
                               <span className="text-gray-500">{label}</span>
-                              <span className="text-gray-900 font-medium">{value}</span>
+                              <span className="text-gray-900 font-medium">
+                                ₦<CountUp end={value} separator="," duration={1.2} />
+                              </span>
                             </div>
                           ))}
                           <div className="flex justify-between pt-3 border-t border-gray-200">
                             <span className="font-bold text-gray-900">Total</span>
-                            <span className="font-bold text-base" style={{ color: '#735c00' }}>{formatNGN(total)}</span>
+                            <span className="font-bold text-base" style={{ color: '#735c00' }}>
+                              ₦<CountUp end={total} separator="," duration={1.5} />
+                            </span>
                           </div>
                         </div>
                       </>

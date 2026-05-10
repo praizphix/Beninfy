@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useLocale } from 'next-intl'
 import { formatNGN } from '@/lib/utils'
+import PulseStatus, { DepartureRow } from '@/components/shared/PulseStatus'
 
 type TripStatus = 'confirmed' | 'pending' | 'completed' | 'active'
 
@@ -43,6 +44,13 @@ const statusColors: Record<TripStatus, string> = {
   pending: 'bg-secondary-container text-on-secondary-container',
   completed: 'bg-surface-container-high text-on-surface-variant',
 }
+
+const LIVE_DEPARTURES = [
+  { from: 'Lagos', to: 'Cotonou', time: '08:30', status: 'boarding' as const, vehicle: 'Executive SUV' },
+  { from: 'Cotonou', to: 'Lomé', time: '09:00', status: 'on-time' as const, vehicle: 'Toyota Sienna' },
+  { from: 'Lagos', to: 'Accra', time: '10:15', status: 'delayed' as const, vehicle: 'Toyota Prado' },
+  { from: 'Abuja', to: 'Lagos', time: '11:45', status: 'en-route' as const, vehicle: 'Saloon Car' },
+]
 
 type NavItem = 'dashboard' | 'profile' | 'payments' | 'support' | 'settings'
 
@@ -202,9 +210,9 @@ export default function DashboardPage() {
                         <span className="text-label-md text-secondary">{formatNGN(trip.amount)}</span>
                       </div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className={`px-2.5 py-0.5 rounded-lg text-label-sm ${statusColors[trip.status]}`}>{trip.status.charAt(0).toUpperCase() + trip.status.slice(1)}</span>
-                        <span className="px-2.5 py-0.5 bg-surface-container-low text-on-surface-variant rounded-lg text-label-sm">{trip.vehicle}</span>
-                        <span className="px-2.5 py-0.5 bg-surface-container-low text-on-surface-variant rounded-lg text-label-sm">{trip.passengers} pax</span>
+                        <PulseStatus status={trip.status === 'confirmed' ? 'on-time' : trip.status === 'pending' ? 'boarding' : 'en-route'} />
+                        <span className="px-2.5 py-0.5 bg-gray-100 text-gray-500 rounded-lg text-xs">{trip.vehicle}</span>
+                        <span className="px-2.5 py-0.5 bg-gray-100 text-gray-500 rounded-lg text-xs">{trip.passengers} pax</span>
                       </div>
                       {trip.driver && (
                         <p className="text-body-sm text-on-surface-variant mt-3 flex items-center gap-1">
@@ -253,6 +261,29 @@ export default function DashboardPage() {
                 </div>
               </section>
             </div>
+
+            {/* Live Departures board */}
+            <section className="bg-gray-950 rounded-2xl p-6 shadow-lg border border-gray-800">
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-3">
+                  <span className="material-symbols-outlined text-yellow-400" style={{ fontSize: 22 }}>departure_board</span>
+                  <h3 className="text-sm font-bold text-white tracking-widest uppercase">Live Departures</h3>
+                </div>
+                <PulseStatus status="en-route" />
+              </div>
+              <div className="space-y-2">
+                {LIVE_DEPARTURES.map((dep) => (
+                  <DepartureRow
+                    key={dep.time}
+                    from={dep.from}
+                    to={dep.to}
+                    time={dep.time}
+                    status={dep.status}
+                    vehicle={dep.vehicle}
+                  />
+                ))}
+              </div>
+            </section>
 
             {/* Quick actions */}
             <section className="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant">

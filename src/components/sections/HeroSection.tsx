@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { useLocale } from 'next-intl'
+import FlipText from '@/components/shared/FlipText'
 
 const EASE = [0.22, 1, 0.36, 1] as const
 
@@ -19,6 +20,26 @@ const TRUST_PILLS = [
   { icon: 'language', label: 'Bilingual Drivers' },
   { icon: 'shield', label: 'Border Protocol' },
 ]
+
+const ROUTES = ['Lagos → Cotonou', 'Cotonou → Lagos', 'Lagos → Lomé', 'Accra → Lagos', 'Cotonou → Abuja']
+
+/** Simple bus SVG for hero road strip */
+function HeroBus() {
+  return (
+    <svg width="64" height="38" viewBox="0 0 64 38" fill="none" aria-hidden>
+      <rect x="2" y="4" width="56" height="24" rx="5" fill="rgba(255,255,255,0.18)" />
+      <rect x="6" y="7" width="10" height="9" rx="2" fill="rgba(255,255,255,0.35)" />
+      <rect x="20" y="7" width="10" height="9" rx="2" fill="rgba(255,255,255,0.35)" />
+      <rect x="34" y="7" width="10" height="9" rx="2" fill="rgba(255,255,255,0.35)" />
+      <rect x="2" y="22" width="56" height="6" rx="0" fill="rgba(0,0,0,0.2)" />
+      <circle cx="14" cy="33" r="5" fill="rgba(0,0,0,0.4)" />
+      <circle cx="14" cy="33" r="2.5" fill="rgba(255,255,255,0.3)" />
+      <circle cx="48" cy="33" r="5" fill="rgba(0,0,0,0.4)" />
+      <circle cx="48" cy="33" r="2.5" fill="rgba(255,255,255,0.3)" />
+      <rect x="58" y="12" width="4" height="6" rx="2" fill="#fbbf24" />
+    </svg>
+  )
+}
 
 export default function HeroSection() {
   const locale = useLocale()
@@ -90,6 +111,31 @@ export default function HeroSection() {
           >
             Explore Tours
           </Link>
+        </motion.div>
+      </div>
+
+      {/* Animated road strip with bus at bottom of hero */}
+      <div className="absolute bottom-0 left-0 right-0 overflow-hidden h-14 pointer-events-none">
+        {/* Road */}
+        <div className="absolute bottom-0 left-0 right-0 h-10 bg-gray-900/60 backdrop-blur-sm" />
+        {/* Center line dashes — scroll animation */}
+        <motion.div
+          className="absolute bottom-3.5 left-0 flex gap-6"
+          style={{ width: '200%' }}
+          animate={{ x: [0, '-50%'] }}
+          transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
+        >
+          {Array.from({ length: 40 }).map((_, i) => (
+            <div key={i} className="h-0.5 w-8 bg-yellow-400/50 rounded-full shrink-0" />
+          ))}
+        </motion.div>
+        {/* Driving bus */}
+        <motion.div
+          className="absolute bottom-2"
+          animate={{ x: ['110vw', '-80px'] }}
+          transition={{ duration: 18, repeat: Infinity, ease: 'linear' }}
+        >
+          <HeroBus />
         </motion.div>
       </div>
     </section>

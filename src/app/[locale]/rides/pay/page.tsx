@@ -9,7 +9,8 @@ import { vehicles } from '@/data/vehicles'
 import { routes } from '@/data/routes'
 import { getRouteBasePrice } from '@/data/pricing'
 import { formatNGN } from '@/lib/utils'
-import BookingSteps from '@/components/booking/BookingSteps'
+import JourneyTracker from '@/components/booking/JourneyTracker'
+import CountUp from 'react-countup'
 import type { VehicleId, RouteId } from '@/types'
 
 type PaymentMethod = 'card' | 'mobile-money' | 'bank-transfer'
@@ -68,8 +69,8 @@ function PaymentContent() {
           Back to Passenger Details
         </Link>
 
-        {/* Progress stepper */}
-        <BookingSteps steps={[
+        {/* Road journey tracker */}
+        <JourneyTracker steps={[
           { n: 1, label: 'Search', done: true },
           { n: 2, label: 'Details', done: true },
           { n: 3, label: 'Payment', active: true },
@@ -210,21 +211,21 @@ function PaymentContent() {
                   <div className="space-y-2.5 py-4 border-y border-gray-100">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">Ride Fare</span>
-                      <span className="font-medium text-gray-900">{formatNGN(basePrice ?? 0)}</span>
+                      <span className="font-medium text-gray-900">₦<CountUp end={basePrice ?? 0} separator="," duration={1.2} /></span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">Border Protocol Fees</span>
-                      <span className="font-medium text-gray-900">{formatNGN(borderFee)}</span>
+                      <span className="font-medium text-gray-900">₦<CountUp end={borderFee} separator="," duration={1.2} /></span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">Service Fee (5%)</span>
-                      <span className="font-medium text-gray-900">{formatNGN(serviceFee)}</span>
+                      <span className="font-medium text-gray-900">₦<CountUp end={serviceFee} separator="," duration={1.2} /></span>
                     </div>
                   </div>
 
                   <div className="flex justify-between items-center">
                     <span className="font-bold text-gray-900">Total Amount</span>
-                    <span className="font-bold text-base" style={{ color: '#735c00' }}>{formatNGN(total)}</span>
+                    <span className="font-bold text-base" style={{ color: '#735c00' }}>₦<CountUp end={total} separator="," duration={1.5} /></span>
                   </div>
 
                   <button

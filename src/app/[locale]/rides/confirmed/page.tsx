@@ -4,6 +4,7 @@ import { routes } from '@/data/routes'
 import { getRouteBasePrice } from '@/data/pricing'
 import { formatNGN } from '@/lib/utils'
 import ConfirmationHeader from '@/components/booking/ConfirmationHeader'
+import PulseStatus from '@/components/shared/PulseStatus'
 import type { VehicleId, RouteId } from '@/types'
 
 interface Props {
@@ -56,7 +57,10 @@ export default async function BookingConfirmedPage({ params, searchParams }: Pro
             <div className="md:col-span-8 bg-white rounded-2xl p-7 shadow-sm border border-gray-100 flex flex-col gap-6">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
                 <h2 className="text-xl font-bold text-gray-900">Trip Summary</h2>
-                <span className="px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider" style={{ background: '#f3e8f8', color: '#3e004c' }}>Premium Transit</span>
+                <div className="flex items-center gap-2">
+                  <PulseStatus status="on-time" />
+                  <span className="px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider" style={{ background: '#f3e8f8', color: '#3e004c' }}>Premium Transit</span>
+                </div>
               </div>
 
               {/* Route display */}
