@@ -41,86 +41,86 @@ export default async function BookingConfirmedPage({ params, searchParams }: Pro
     : 'Date TBC'
 
   return (
-    <div className="min-h-screen bg-background">
-      <main className="mt-16 pb-24 relative overflow-hidden">
+    <div className="min-h-screen" style={{ background: '#f4f2f8' }}>
+      <div className="pt-24 pb-20 relative overflow-hidden">
         {/* Celebration gradient */}
-        <div className="absolute top-0 left-0 right-0 h-[500px] bg-gradient-to-b from-primary/5 via-secondary/5 to-transparent -z-10 pointer-events-none" />
+        <div className="absolute top-0 left-0 right-0 h-[400px] bg-gradient-to-b from-primary/5 to-transparent -z-10 pointer-events-none" />
 
-        <div className="max-w-[860px] mx-auto px-4 md:px-6 py-12">
+        <div className="max-w-[860px] mx-auto px-4 md:px-6">
           {/* Success header */}
           <ConfirmationHeader passengerName={passengerName} bookingRef={bookingRef} />
 
           {/* Main bento grid */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
             {/* Trip summary card */}
-            <div className="md:col-span-8 bg-surface-container-lowest rounded-2xl p-7 shadow-sm border border-outline-variant flex flex-col gap-6">
+            <div className="md:col-span-8 bg-white rounded-2xl p-7 shadow-sm border border-gray-100 flex flex-col gap-6">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
-                <h2 className="text-headline-md">Trip Summary</h2>
-                <span className="bg-primary-container/30 text-primary px-3 py-1 rounded-lg text-label-sm uppercase tracking-wider">Premium Transit</span>
+                <h2 className="text-xl font-bold text-gray-900">Trip Summary</h2>
+                <span className="px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider" style={{ background: '#f3e8f8', color: '#3e004c' }}>Premium Transit</span>
               </div>
 
               {/* Route display */}
-              <div className="flex items-center gap-6 py-5 border-y border-outline-variant">
+              <div className="flex items-center gap-6 py-5 border-y border-gray-100">
                 <div className="flex flex-col items-center gap-1">
-                  <span className="material-symbols-outlined text-primary text-[20px]">radio_button_checked</span>
-                  <div className="w-0.5 h-12 bg-outline-variant" />
-                  <span className="material-symbols-outlined text-secondary icon-fill text-[20px]">location_on</span>
+                  <span className="material-symbols-outlined text-[20px]" style={{ color: '#3e004c' }}>radio_button_checked</span>
+                  <div className="w-0.5 h-12 bg-gray-200" />
+                  <span className="material-symbols-outlined text-[20px]" style={{ color: '#735c00' }}>location_on</span>
                 </div>
                 <div className="flex flex-col gap-5 w-full">
                   <div>
-                    <p className="text-label-sm text-on-surface-variant uppercase tracking-wide mb-0.5">Pickup</p>
-                    <p className="text-headline-sm">{from}</p>
+                    <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-0.5">Pickup</p>
+                    <p className="text-base font-semibold text-gray-900">{from}</p>
                   </div>
                   <div>
-                    <p className="text-label-sm text-on-surface-variant uppercase tracking-wide mb-0.5">Destination</p>
-                    <p className="text-headline-sm">{to}</p>
+                    <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-0.5">Destination</p>
+                    <p className="text-base font-semibold text-gray-900">{to}</p>
                   </div>
                 </div>
               </div>
 
               {/* Details grid */}
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div className="p-4 bg-surface-container-low rounded-xl border border-outline-variant/30">
-                  <span className="material-symbols-outlined text-on-surface-variant text-[20px] mb-2 block">calendar_month</span>
-                  <p className="text-label-sm text-on-surface-variant">Date & Time</p>
-                  <p className="text-label-md mt-1">{formattedDate}</p>
+                <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                  <span className="material-symbols-outlined text-gray-400 text-[20px] mb-2 block">calendar_month</span>
+                  <p className="text-xs text-gray-500">Date &amp; Time</p>
+                  <p className="text-sm font-medium text-gray-900 mt-1">{formattedDate}</p>
                 </div>
-                <div className="p-4 bg-surface-container-low rounded-xl border border-outline-variant/30">
-                  <span className="material-symbols-outlined text-on-surface-variant text-[20px] mb-2 block">airport_shuttle</span>
-                  <p className="text-label-sm text-on-surface-variant">Vehicle Class</p>
-                  <p className="text-label-md mt-1">{vehicle.name}</p>
+                <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                  <span className="material-symbols-outlined text-gray-400 text-[20px] mb-2 block">airport_shuttle</span>
+                  <p className="text-xs text-gray-500">Vehicle Class</p>
+                  <p className="text-sm font-medium text-gray-900 mt-1">{vehicle.name}</p>
                 </div>
-                <div className="p-4 bg-surface-container-low rounded-xl border border-outline-variant/30 col-span-2 md:col-span-1">
-                  <span className="material-symbols-outlined text-on-surface-variant text-[20px] mb-2 block">payments</span>
-                  <p className="text-label-sm text-on-surface-variant">Total Paid</p>
-                  <p className="text-label-md text-secondary mt-1">{formatNGN(total)}</p>
+                <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 col-span-2 md:col-span-1">
+                  <span className="material-symbols-outlined text-gray-400 text-[20px] mb-2 block">payments</span>
+                  <p className="text-xs text-gray-500">Total Paid</p>
+                  <p className="text-sm font-medium mt-1" style={{ color: '#735c00' }}>{formatNGN(total)}</p>
                 </div>
               </div>
 
               {/* Price breakdown */}
-              <div className="space-y-2 text-body-sm pt-1 border-t border-outline-variant">
+              <div className="space-y-2 text-sm pt-1 border-t border-gray-100">
                 <div className="flex justify-between">
-                  <span className="text-on-surface-variant">Ride Fare</span>
-                  <span>{formatNGN(basePrice ?? 0)}</span>
+                  <span className="text-gray-500">Ride Fare</span>
+                  <span className="text-gray-900">{formatNGN(basePrice ?? 0)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-on-surface-variant">Border Protocol Fee</span>
-                  <span>{formatNGN(borderFee)}</span>
+                  <span className="text-gray-500">Border Protocol Fee</span>
+                  <span className="text-gray-900">{formatNGN(borderFee)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-on-surface-variant">Service Fee</span>
-                  <span>{formatNGN(serviceFee)}</span>
+                  <span className="text-gray-500">Service Fee</span>
+                  <span className="text-gray-900">{formatNGN(serviceFee)}</span>
                 </div>
               </div>
             </div>
 
             {/* What's next card */}
-            <div className="md:col-span-4 bg-primary text-on-primary rounded-2xl p-7 shadow-lg flex flex-col gap-5">
-              <h3 className="text-headline-sm">What's Next?</h3>
-              <p className="text-body-md opacity-90">
-                Our team will contact you within <strong className="text-secondary-fixed">2 hours</strong> to finalize your personalized pickup details and border clearance protocols.
+            <div className="md:col-span-4 rounded-2xl p-7 shadow-lg flex flex-col gap-5" style={{ background: '#3e004c', color: '#fff' }}>
+              <h3 className="text-base font-bold">What&apos;s Next?</h3>
+              <p className="text-sm opacity-90">
+                Our team will contact you within <strong style={{ color: '#ffd77a' }}>2 hours</strong> to finalize your personalized pickup details and border clearance protocols.
               </p>
-              <div className="mt-auto pt-5 flex flex-col gap-4 border-t border-on-primary/20">
+              <div className="mt-auto pt-5 flex flex-col gap-4 border-t border-white/20">
                 {[
                   { icon: 'verified_user', text: 'Driver vetting complete' },
                   { icon: 'health_and_safety', text: 'Sanitized vehicle ready' },
@@ -128,8 +128,8 @@ export default async function BookingConfirmedPage({ params, searchParams }: Pro
                   { icon: 'security', text: 'Border clearance pre-arranged' },
                 ].map(({ icon, text }) => (
                   <div key={text} className="flex items-center gap-3">
-                    <span className="material-symbols-outlined text-secondary-fixed text-[18px]">{icon}</span>
-                    <p className="text-label-sm">{text}</p>
+                    <span className="material-symbols-outlined text-[18px]" style={{ color: '#ffd77a' }}>{icon}</span>
+                    <p className="text-xs">{text}</p>
                   </div>
                 ))}
               </div>
@@ -139,14 +139,16 @@ export default async function BookingConfirmedPage({ params, searchParams }: Pro
             <div className="md:col-span-12 flex flex-col md:flex-row items-center justify-center gap-4 pt-4">
               <Link
                 href={`/${locale}/dashboard`}
-                className="w-full md:w-auto px-8 py-4 bg-primary text-on-primary rounded-xl text-label-md hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-lg"
+                className="w-full md:w-auto px-8 py-4 rounded-xl text-sm font-semibold text-white hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-lg"
+                style={{ background: '#3e004c' }}
               >
                 <span className="material-symbols-outlined text-[20px]">dashboard</span>
                 Go to Dashboard
               </Link>
               <button
                 onClick={() => window.print()}
-                className="w-full md:w-auto px-8 py-4 bg-transparent text-secondary border-2 border-secondary rounded-xl text-label-md hover:bg-secondary-container/20 transition-all flex items-center justify-center gap-2"
+                className="w-full md:w-auto px-8 py-4 rounded-xl text-sm font-semibold border-2 hover:opacity-80 transition-all flex items-center justify-center gap-2"
+                style={{ color: '#735c00', borderColor: '#735c00' }}
               >
                 <span className="material-symbols-outlined text-[20px]">download</span>
                 Download Receipt
@@ -155,7 +157,7 @@ export default async function BookingConfirmedPage({ params, searchParams }: Pro
                 href={`https://wa.me/2348000000000?text=My+Beninfy+booking+reference+is+%23${bookingRef}.+I+need+assistance.`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full md:w-auto px-8 py-4 bg-transparent text-on-surface-variant border-2 border-outline-variant rounded-xl text-label-md hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2"
+                className="w-full md:w-auto px-8 py-4 rounded-xl text-sm font-semibold border-2 border-gray-200 text-gray-500 hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2"
               >
                 <span className="material-symbols-outlined text-[20px]">chat</span>
                 WhatsApp Support
@@ -165,21 +167,21 @@ export default async function BookingConfirmedPage({ params, searchParams }: Pro
 
           {/* Support footer */}
           <div className="mt-16 text-center">
-            <p className="text-body-sm text-on-surface-variant mb-4">Need immediate assistance with your crossing?</p>
+            <p className="text-sm text-gray-400 mb-4">Need immediate assistance with your crossing?</p>
             <div className="flex items-center justify-center gap-6">
-              <a href={`/${locale}/about#contact`} className="flex items-center gap-2 text-primary text-label-md hover:underline">
+              <a href={`/${locale}/about#contact`} className="flex items-center gap-2 text-sm font-medium hover:underline" style={{ color: '#3e004c' }}>
                 <span className="material-symbols-outlined text-[18px]">support_agent</span>
                 Contact Concierge
               </a>
-              <span className="w-1 h-1 bg-outline rounded-full" />
-              <a href={`/${locale}/border-info`} className="flex items-center gap-2 text-primary text-label-md hover:underline">
+              <span className="w-1 h-1 bg-gray-300 rounded-full" />
+              <a href={`/${locale}/border-info`} className="flex items-center gap-2 text-sm font-medium hover:underline" style={{ color: '#3e004c' }}>
                 <span className="material-symbols-outlined text-[18px]">help_outline</span>
                 Border FAQ
               </a>
             </div>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   )
 }

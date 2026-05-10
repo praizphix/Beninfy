@@ -56,13 +56,13 @@ function PaymentContent() {
   ]
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mt-16 max-w-[1280px] mx-auto px-4 md:px-10 py-10">
+    <div className="min-h-screen" style={{ background: '#f4f2f8' }}>
+      <div className="pt-24 pb-20 max-w-[1280px] mx-auto px-4 md:px-10">
 
         {/* Back link */}
         <Link
           href={`/${locale}/rides/book?vehicle=${vehicleId}&from=${from}&to=${to}&date=${date}`}
-          className="inline-flex items-center gap-1.5 text-on-surface-variant text-label-md hover:text-primary mb-8 group"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-primary mb-6 group transition-colors"
         >
           <span className="material-symbols-outlined text-[18px] group-hover:-translate-x-0.5 transition-transform">arrow_back</span>
           Back to Passenger Details
@@ -77,35 +77,34 @@ function PaymentContent() {
         ]} />
 
         <form onSubmit={handlePay}>
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* LEFT: payment methods */}
             <div className="lg:col-span-7 space-y-5">
-              <section className="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant">
-                <h1 className="text-headline-md text-primary mb-6">Payment Method</h1>
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                <h1 className="text-xl font-bold mb-6" style={{ color: '#3e004c' }}>Payment Method</h1>
 
                 <div className="space-y-4">
                   {methods.map((m) => (
                     <div
                       key={m.id}
                       onClick={() => setMethod(m.id)}
-                      className={`rounded-xl border-2 p-4 cursor-pointer transition-all ${method === m.id ? 'border-primary bg-primary-container/10' : 'border-outline-variant bg-surface-container-lowest hover:border-primary/50'}`}
+                      className={`rounded-xl border-2 p-4 cursor-pointer transition-all ${method === m.id ? 'border-primary bg-primary/5' : 'border-gray-200 bg-gray-50 hover:border-primary/40'}`}
                     >
                       <div className="flex items-start gap-4">
-                        <span className={`material-symbols-outlined text-[22px] mt-0.5 ${method === m.id ? 'text-primary icon-fill' : 'text-outline'}`}>
-                          {method === m.id ? 'radio_button_checked' : 'radio_button_unchecked'}
-                        </span>
-                        <div className="flex-1">
-                          <div className="flex justify-between items-center mb-1">
-                            <span className="text-headline-sm">{m.label}</span>
-                            <span className="material-symbols-outlined text-outline text-[20px]">{m.icon}</span>
-                          </div>
-                          <p className="text-body-sm text-on-surface-variant">{m.desc}</p>
-
+                          <span className={`material-symbols-outlined text-[22px] mt-0.5 ${method === m.id ? 'text-primary' : 'text-gray-300'}`}>
+                            {method === m.id ? 'radio_button_checked' : 'radio_button_unchecked'}
+                          </span>
+                          <div className="flex-1">
+                            <div className="flex justify-between items-center mb-1">
+                              <span className="text-sm font-semibold text-gray-900">{m.label}</span>
+                              <span className="material-symbols-outlined text-gray-400 text-[20px]">{m.icon}</span>
+                            </div>
+                            <p className="text-xs text-gray-500">{m.desc}</p>
                           {/* Card form */}
                           {m.id === 'card' && method === 'card' && (
                             <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
                               <div className="col-span-2">
-                                <label className="block text-label-sm text-on-surface-variant mb-1">Card Number</label>
+                                <label className="block text-xs font-medium text-gray-600 mb-1.5">Card Number</label>
                                 <div className="relative">
                                   <input
                                     type="text"
@@ -113,31 +112,31 @@ function PaymentContent() {
                                     onChange={setCardField('number')}
                                     placeholder="**** **** **** ****"
                                     maxLength={19}
-                                    className="w-full bg-surface-container-low border border-outline-variant rounded-lg p-3 text-body-md focus:ring-2 focus:ring-primary focus:outline-none pr-10"
+                                    className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary pr-10 transition-all"
                                   />
-                                  <span className="absolute right-3 top-3 material-symbols-outlined text-outline text-[20px]">lock</span>
+                                  <span className="absolute right-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-400 text-[20px]">lock</span>
                                 </div>
                               </div>
                               <div>
-                                <label className="block text-label-sm text-on-surface-variant mb-1">Expiry Date</label>
+                                <label className="block text-xs font-medium text-gray-600 mb-1.5">Expiry Date</label>
                                 <input
                                   type="text"
                                   value={card.expiry}
                                   onChange={setCardField('expiry')}
                                   placeholder="MM/YY"
                                   maxLength={5}
-                                  className="w-full bg-surface-container-low border border-outline-variant rounded-lg p-3 text-body-md focus:ring-2 focus:ring-primary focus:outline-none"
+                                  className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                                 />
                               </div>
                               <div>
-                                <label className="block text-label-sm text-on-surface-variant mb-1">CVC/CVV</label>
+                                <label className="block text-xs font-medium text-gray-600 mb-1.5">CVC/CVV</label>
                                 <input
                                   type="password"
                                   value={card.cvv}
                                   onChange={setCardField('cvv')}
                                   placeholder="***"
                                   maxLength={4}
-                                  className="w-full bg-surface-container-low border border-outline-variant rounded-lg p-3 text-body-md focus:ring-2 focus:ring-primary focus:outline-none"
+                                  className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                                 />
                               </div>
                             </div>
@@ -145,28 +144,22 @@ function PaymentContent() {
 
                           {/* Mobile money info */}
                           {m.id === 'mobile-money' && method === 'mobile-money' && (
-                            <div className="mt-4 p-4 bg-surface-container-low rounded-lg">
-                              <p className="text-body-sm text-on-surface-variant">After confirming, you'll receive a payment prompt on your mobile number. Supports MTN MoMo, Orange Money, and T-Money.</p>
+                            <div className="mt-4 p-4 bg-gray-50 rounded-xl">
+                              <p className="text-xs text-gray-500">After confirming, you'll receive a payment prompt on your mobile number. Supports MTN MoMo, Orange Money, and T-Money.</p>
                             </div>
                           )}
 
                           {/* Bank transfer info */}
                           {m.id === 'bank-transfer' && method === 'bank-transfer' && (
-                            <div className="mt-4 p-4 bg-surface-container-low rounded-lg space-y-2">
-                              <p className="text-label-md">Beninfy Corporate Account</p>
-                              <div className="flex justify-between text-body-sm">
-                                <span className="text-on-surface-variant">Bank</span>
-                                <span>Zenith Bank Nigeria</span>
-                              </div>
-                              <div className="flex justify-between text-body-sm">
-                                <span className="text-on-surface-variant">Account No.</span>
-                                <span className="font-mono">2089471234</span>
-                              </div>
-                              <div className="flex justify-between text-body-sm">
-                                <span className="text-on-surface-variant">Sort Code</span>
-                                <span className="font-mono">057</span>
-                              </div>
-                              <p className="text-label-sm text-secondary mt-2">Use your booking reference as payment description after completing.</p>
+                            <div className="mt-4 p-4 bg-gray-50 rounded-xl space-y-2">
+                              <p className="text-xs font-semibold text-gray-900">Beninfy Corporate Account</p>
+                              {[['Bank', 'Zenith Bank Nigeria'], ['Account No.', '2089471234'], ['Sort Code', '057']].map(([label, val]) => (
+                                <div key={label} className="flex justify-between text-xs">
+                                  <span className="text-gray-400">{label}</span>
+                                  <span className="font-mono text-gray-900">{val}</span>
+                                </div>
+                              ))}
+                              <p className="text-xs mt-2" style={{ color: '#735c00' }}>Use your booking reference as payment description.</p>
                             </div>
                           )}
                         </div>
@@ -176,72 +169,69 @@ function PaymentContent() {
                 </div>
 
                 {/* Security badges */}
-                <div className="flex flex-wrap items-center justify-center gap-4 mt-6 pt-6 border-t border-outline-variant">
+                <div className="flex flex-wrap items-center justify-center gap-3 mt-6 pt-6 border-t border-gray-100">
                   {[
                     { icon: 'verified_user', label: 'SSL Encrypted' },
                     { icon: 'security', label: 'PCI-DSS Compliant' },
                     { icon: 'gpp_good', label: 'Secure Checkout' },
                   ].map(({ icon, label }) => (
-                    <div key={label} className="flex items-center gap-2 px-4 py-2 bg-primary/5 rounded-full">
-                      <span className="material-symbols-outlined text-primary text-[18px]">{icon}</span>
-                      <span className="text-label-sm text-primary">{label}</span>
+                    <div key={label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/5">
+                      <span className="material-symbols-outlined text-[16px]" style={{ color: '#3e004c' }}>{icon}</span>
+                      <span className="text-xs font-medium" style={{ color: '#3e004c' }}>{label}</span>
                     </div>
                   ))}
                 </div>
-              </section>
+              </div>
             </div>
 
             {/* RIGHT: booking summary */}
             <div className="lg:col-span-5">
               <div className="sticky top-24 space-y-4">
-                <section className="bg-surface-container-lowest rounded-2xl p-6 shadow-md border border-outline-variant">
-                  <h2 className="text-headline-sm mb-5">Ride Summary</h2>
-
-                  {/* Vehicle image + route */}
-                  <div className="flex gap-4 mb-6">
-                    <div className="w-24 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-surface-container-low flex items-center justify-center">
-                      <span className="material-symbols-outlined text-on-surface-variant text-[40px]">airport_shuttle</span>
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                  <div className="px-6 py-4" style={{ background: '#3e004c' }}>
+                    <p className="text-xs font-bold uppercase tracking-widest text-white/70">Ride Summary</p>
+                  </div>
+                  <div className="p-6 space-y-5">
+                  {/* Vehicle + route */}
+                  <div className="flex gap-4 mb-2">
+                    <div className="w-20 h-14 rounded-lg flex-shrink-0 flex items-center justify-center" style={{ background: '#f3e8f8' }}>
+                      <span className="material-symbols-outlined text-[32px]" style={{ color: '#3e004c' }}>airport_shuttle</span>
                     </div>
                     <div>
-                      <p className="text-label-md">{vehicle.name}</p>
-                      <p className="text-body-sm text-on-surface-variant">{from} → {to}</p>
+                      <p className="text-sm font-semibold text-gray-900">{vehicle.name}</p>
+                      <p className="text-xs text-gray-500">{from} → {to}</p>
                       {date && (
-                        <div className="flex items-center gap-1 mt-1">
-                          <span className="material-symbols-outlined text-primary text-[14px]">calendar_today</span>
-                          <span className="text-label-sm text-on-surface-variant">{new Date(date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                        </div>
+                        <p className="text-xs text-gray-400 mt-0.5">{new Date(date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                       )}
                     </div>
                   </div>
 
                   {/* Price breakdown */}
-                  <div className="space-y-3 py-4 border-y border-outline-variant mb-5">
-                    <div className="flex justify-between text-body-md">
-                      <span className="text-on-surface-variant">Ride Fare</span>
-                      <span>{formatNGN(basePrice ?? 0)}</span>
+                  <div className="space-y-2.5 py-4 border-y border-gray-100">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Ride Fare</span>
+                      <span className="font-medium text-gray-900">{formatNGN(basePrice ?? 0)}</span>
                     </div>
-                    <div className="flex justify-between text-body-md">
-                      <span className="text-on-surface-variant flex items-center gap-1">
-                        Border Protocol Fees
-                        <span className="material-symbols-outlined text-[14px] text-outline cursor-help" title="Beninfy handles all border facilitation">info</span>
-                      </span>
-                      <span>{formatNGN(borderFee)}</span>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Border Protocol Fees</span>
+                      <span className="font-medium text-gray-900">{formatNGN(borderFee)}</span>
                     </div>
-                    <div className="flex justify-between text-body-md">
-                      <span className="text-on-surface-variant">Service Fee (5%)</span>
-                      <span>{formatNGN(serviceFee)}</span>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Service Fee (5%)</span>
+                      <span className="font-medium text-gray-900">{formatNGN(serviceFee)}</span>
                     </div>
                   </div>
 
-                  <div className="flex justify-between items-center mb-6">
-                    <span className="text-headline-sm">Total Amount</span>
-                    <span className="text-headline-sm text-secondary">{formatNGN(total)}</span>
+                  <div className="flex justify-between items-center">
+                    <span className="font-bold text-gray-900">Total Amount</span>
+                    <span className="font-bold text-base" style={{ color: '#735c00' }}>{formatNGN(total)}</span>
                   </div>
 
                   <button
                     type="submit"
                     disabled={processing}
-                    className="w-full bg-primary text-on-primary py-4 rounded-xl text-label-md flex items-center justify-center gap-2 hover:opacity-95 active:scale-[0.98] transition-all shadow-lg disabled:opacity-70 disabled:cursor-wait"
+                    className="w-full py-4 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all shadow-md disabled:opacity-60 disabled:cursor-wait"
+                    style={{ background: '#3e004c' }}
                   >
                     {processing ? (
                       <>
@@ -250,24 +240,25 @@ function PaymentContent() {
                       </>
                     ) : (
                       <>
-                        <span className="material-symbols-outlined icon-fill text-[20px]">lock</span>
+                        <span className="material-symbols-outlined text-[20px]">lock</span>
                         Pay Securely {formatNGN(total)}
                       </>
                     )}
                   </button>
 
-                  <p className="text-center text-body-sm text-on-surface-variant mt-3">
-                    By clicking "Pay Securely" you agree to our{' '}
-                    <Link href={`/${locale}/terms`} className="text-primary hover:underline">Terms of Service</Link>
+                  <p className="text-center text-xs text-gray-400 mt-2">
+                    By paying you agree to our{' '}
+                    <Link href={`/${locale}/terms`} className="underline hover:text-primary">Terms of Service</Link>
                   </p>
-                </section>
+                  </div>
+                </div>
 
                 {/* Guarantee */}
-                <div className="bg-secondary-container/10 p-4 rounded-xl border border-secondary/20 flex items-start gap-3">
-                  <span className="material-symbols-outlined text-secondary icon-fill text-[20px] shrink-0">verified</span>
+                <div className="rounded-xl p-4 border flex items-start gap-3" style={{ background: '#fffdf0', borderColor: '#f0e6b0' }}>
+                  <span className="material-symbols-outlined shrink-0 mt-0.5" style={{ fontSize: 18, color: '#735c00' }}>verified</span>
                   <div>
-                    <p className="text-label-md text-on-secondary-container">Beninfy Guarantee</p>
-                    <p className="text-body-sm text-on-surface-variant">All payments are held in escrow until your journey is completed successfully. 24/7 dedicated support included.</p>
+                    <p className="text-xs font-semibold mb-0.5" style={{ color: '#735c00' }}>Beninfy Guarantee</p>
+                    <p className="text-xs text-gray-500 leading-relaxed">All payments held in escrow until your journey completes. 24/7 support included.</p>
                   </div>
                 </div>
               </div>
