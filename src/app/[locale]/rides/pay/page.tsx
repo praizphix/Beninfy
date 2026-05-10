@@ -9,6 +9,7 @@ import { vehicles } from '@/data/vehicles'
 import { routes } from '@/data/routes'
 import { getRouteBasePrice } from '@/data/pricing'
 import { formatNGN } from '@/lib/utils'
+import BookingSteps from '@/components/booking/BookingSteps'
 import type { VehicleId, RouteId } from '@/types'
 
 type PaymentMethod = 'card' | 'mobile-money' | 'bank-transfer'
@@ -68,36 +69,12 @@ function PaymentContent() {
         </Link>
 
         {/* Progress stepper */}
-        <div className="flex items-center mb-10 max-w-lg">
-          {([
-            { n: 1, label: 'Search', done: true },
-            { n: 2, label: 'Details', done: true },
-            { n: 3, label: 'Payment', active: true },
-            { n: 4, label: 'Confirmed' },
-          ] as { n: number; label: string; done?: boolean; active?: boolean }[]).map(({ n, label, done, active }, i, arr) => (
-            <div key={n} className={`flex items-center ${i < arr.length - 1 ? 'flex-1' : ''}`}>
-              <div className="flex flex-col items-center gap-1.5 shrink-0">
-                <div className={`w-9 h-9 rounded-full flex items-center justify-center text-label-sm font-semibold transition-all ${
-                  done
-                    ? 'bg-primary text-on-primary'
-                    : active
-                    ? 'bg-primary text-on-primary ring-[3px] ring-offset-[3px] ring-primary/30'
-                    : 'bg-surface-container-high text-on-surface-variant'
-                }`}>
-                  {done ? (
-                    <span className="material-symbols-outlined" style={{ fontSize: 18 }}>check</span>
-                  ) : n}
-                </div>
-                <span className={`text-[11px] font-medium leading-none ${
-                  active ? 'text-primary' : 'text-on-surface-variant'
-                }`}>{label}</span>
-              </div>
-              {i < arr.length - 1 && (
-                <div className={`flex-1 h-px mx-3 mb-5 ${done ? 'bg-primary' : 'bg-outline-variant'}`} />
-              )}
-            </div>
-          ))}
-        </div>
+        <BookingSteps steps={[
+          { n: 1, label: 'Search', done: true },
+          { n: 2, label: 'Details', done: true },
+          { n: 3, label: 'Payment', active: true },
+          { n: 4, label: 'Confirmed' },
+        ]} />
 
         <form onSubmit={handlePay}>
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

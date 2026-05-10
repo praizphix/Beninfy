@@ -1,3 +1,7 @@
+'use client'
+
+import { motion } from 'framer-motion'
+
 const WHY_ITEMS = [
   {
     icon: 'assignment_ind',
@@ -30,18 +34,33 @@ export default function WhyBeninfy() {
     <section className="py-20 bg-surface-container-low">
       <div className="max-w-[1280px] mx-auto px-4 md:px-10">
         {/* Heading */}
-        <div className="text-center mb-16">
+        <motion.div
+          className="text-center mb-16"
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+        >
           <h2 className="text-display-lg text-primary mb-4">Why Travel With Beninfy?</h2>
           <p className="text-on-surface-variant max-w-2xl mx-auto text-body-lg">
             We combine local expertise with international standards to provide the most reliable
             transport network in the ECOWAS region.
           </p>
-        </div>
+        </motion.div>
 
         {/* Bento grid */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 md:h-[560px]">
+        <motion.div
+          className="grid grid-cols-1 md:grid-cols-4 gap-6 md:h-[560px]"
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, margin: '-80px' }}
+          variants={{ hidden: {}, show: { transition: { staggerChildren: 0.1 } } }}
+        >
           {/* Large hero card */}
-          <div className="md:col-span-2 md:row-span-2 bg-primary text-on-primary rounded-3xl p-8 flex flex-col justify-between overflow-hidden relative group">
+          <motion.div
+            variants={{ hidden: { opacity: 0, x: -32 }, show: { opacity: 1, x: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } } }}
+            className="md:col-span-2 md:row-span-2 bg-primary text-on-primary rounded-3xl p-8 flex flex-col justify-between overflow-hidden relative group"
+          >
             <span className="material-symbols-outlined text-[72px] opacity-10 absolute -top-4 -right-4 group-hover:scale-125 transition-transform duration-500">
               security
             </span>
@@ -67,10 +86,13 @@ export default function WhyBeninfy() {
               </div>
               <span className="text-label-md opacity-80">Certified Security Agents</span>
             </div>
-          </div>
+          </motion.div>
 
           {/* Gold card */}
-          <div className="md:col-span-2 bg-secondary-container text-on-secondary-container rounded-3xl p-8 flex items-center justify-between group">
+          <motion.div
+            variants={{ hidden: { opacity: 0, y: 32 }, show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] } } }}
+            className="md:col-span-2 bg-secondary-container text-on-secondary-container rounded-3xl p-8 flex items-center justify-between group"
+          >
             <div>
               <h3 className="text-headline-md mb-2">Border Experts</h3>
               <p className="text-body-md opacity-80">
@@ -80,19 +102,25 @@ export default function WhyBeninfy() {
             <span className="material-symbols-outlined text-[48px] text-secondary group-hover:rotate-12 transition-transform shrink-0 ml-4">
               assignment_ind
             </span>
-          </div>
+          </motion.div>
 
           {/* Card 3 */}
-          <div className="bg-surface-container-highest rounded-3xl p-8 flex flex-col justify-center group">
+          <motion.div
+            variants={{ hidden: { opacity: 0, y: 32 }, show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] } } }}
+            className="bg-surface-container-highest rounded-3xl p-8 flex flex-col justify-center group"
+          >
             <span className="material-symbols-outlined text-primary text-[40px] mb-4">lock</span>
             <h3 className="text-headline-sm mb-2">100% Private</h3>
             <p className="text-body-sm text-on-surface-variant">
               No shared rides. The entire vehicle is yours.
             </p>
-          </div>
+          </motion.div>
 
           {/* Card 4 */}
-          <div className="bg-surface-container-lowest rounded-3xl p-8 flex flex-col justify-center border border-outline-variant group">
+          <motion.div
+            variants={{ hidden: { opacity: 0, y: 32 }, show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] } } }}
+            className="bg-surface-container-lowest rounded-3xl p-8 flex flex-col justify-center border border-outline-variant group"
+          >
             <span className="material-symbols-outlined text-primary text-[40px] mb-4">
               airport_shuttle
             </span>
@@ -100,23 +128,33 @@ export default function WhyBeninfy() {
             <p className="text-body-sm text-on-surface-variant">
               Modern, air-conditioned vehicles with full amenities.
             </p>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         {/* Stats row */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-12 pt-12 border-t border-outline-variant">
+        <motion.div
+          className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-12 pt-12 border-t border-outline-variant"
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, margin: '-60px' }}
+          variants={{ hidden: {}, show: { transition: { staggerChildren: 0.1 } } }}
+        >
           {[
             { value: '5', label: 'Official Routes' },
             { value: '10K+', label: 'Happy Passengers' },
             { value: '4', label: 'Countries Served' },
             { value: '24/7', label: 'Customer Support' },
           ].map(({ value, label }) => (
-            <div key={label} className="text-center">
+            <motion.div
+              key={label}
+              className="text-center"
+              variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } } }}
+            >
               <div className="text-display-lg text-primary">{value}</div>
               <div className="text-label-md text-on-surface-variant mt-1">{label}</div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   )

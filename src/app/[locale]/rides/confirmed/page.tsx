@@ -3,6 +3,7 @@ import { vehicles } from '@/data/vehicles'
 import { routes } from '@/data/routes'
 import { getRouteBasePrice } from '@/data/pricing'
 import { formatNGN } from '@/lib/utils'
+import ConfirmationHeader from '@/components/booking/ConfirmationHeader'
 import type { VehicleId, RouteId } from '@/types'
 
 interface Props {
@@ -47,16 +48,7 @@ export default async function BookingConfirmedPage({ params, searchParams }: Pro
 
         <div className="max-w-[860px] mx-auto px-4 md:px-6 py-12">
           {/* Success header */}
-          <section className="text-center mb-12">
-            <div className="inline-flex items-center justify-center w-24 h-24 bg-primary-container rounded-full mb-6 shadow-lg border-4 border-surface">
-              <span className="material-symbols-outlined text-on-primary-container text-[48px] icon-fill">check_circle</span>
-            </div>
-            <h1 className="text-display-lg text-primary mb-3">Booking Confirmed!</h1>
-            <p className="text-body-lg text-on-surface-variant">Thank you, {passengerName}. Beninfy's premium logistics service is on your side.</p>
-            <div className="mt-5 inline-block bg-secondary-container px-6 py-2.5 rounded-full border border-secondary">
-              <span className="text-label-md text-on-secondary-container">Reference: #{bookingRef}</span>
-            </div>
-          </section>
+          <ConfirmationHeader passengerName={passengerName} bookingRef={bookingRef} />
 
           {/* Main bento grid */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-5">

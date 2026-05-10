@@ -1,5 +1,8 @@
+'use client'
+
 import Link from 'next/link'
 import { useLocale } from 'next-intl'
+import { motion, type Variants } from 'framer-motion'
 import { routes } from '@/data/routes'
 import { getRouteBasePrice } from '@/data/pricing'
 import { formatNGN } from '@/lib/utils'
@@ -27,12 +30,28 @@ const ROUTE_BADGES: Record<string, string> = {
 
 const popularRoutes = routes.filter((r) => r.popular)
 
+const container: Variants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.12 } },
+}
+
+const cardVariant: Variants = {
+  hidden: { opacity: 0, y: 40 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] } },
+}
+
 export default function PopularRoutes() {
   const locale = useLocale()
   return (
     <section className="py-20 max-w-[1280px] mx-auto px-4 md:px-10 mt-8">
       {/* Section header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-4">
+      <motion.div
+        className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-4"
+        initial={{ opacity: 0, y: 24 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-80px' }}
+        transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+      >
         <div>
           <span className="text-primary text-label-md tracking-widest uppercase">
             Travel Networks
@@ -46,14 +65,22 @@ export default function PopularRoutes() {
           View all routes
           <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
         </Link>
-      </div>
+      </motion.div>
 
       {/* Routes grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <motion.div
+        className="grid grid-cols-1 md:grid-cols-3 gap-8"
+        variants={container}
+        initial="hidden"
+        whileInView="show"
+        viewport={{ once: true, margin: '-80px' }}
+      >
         {popularRoutes.map((route) => (
-          <div
+          <motion.div
             key={route.id}
-            className="bg-surface-container-lowest rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all border border-outline-variant group"
+            variants={cardVariant}
+            className="bg-surface-container-lowest rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow border border-outline-variant group"
+            whileHover={{ y: -4, transition: { duration: 0.2 } }}
           >
             {/* Image */}
             <div className="h-48 overflow-hidden relative">
@@ -87,9 +114,9 @@ export default function PopularRoutes() {
                 Book This Route
               </Link>
             </div>
-          </div>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
     </section>
   )
 }
