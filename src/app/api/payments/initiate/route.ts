@@ -26,7 +26,7 @@ export async function POST(req: Request) {
 
   const reference = `BFY-${booking.id.slice(-6).toUpperCase()}-${randomBytes(3).toString('hex').toUpperCase()}`
   const secret = process.env.PAYSTACK_SECRET_KEY
-  const email = session.user.email ?? `user-${session.user.id}@beninfy.local`
+  const email = session.user.email ?? `user-${session.user.id}@beninfy.africa`
 
   if (!secret) {
     // Dev/stub mode: mark as paid immediately and let the UI move forward.

@@ -3,7 +3,7 @@ export const siteConfig = {
   tagline: 'Premium West African Transport',
   description:
     'Premium multilingual transport platform for cross-border rides, airport pickups, tours and VIP transport across Nigeria, Benin Republic, Togo and Ghana.',
-  url: 'https://beninfy.com',
+  url: 'https://beninfy.africa',
   ogImage: '/og.jpg',
   links: {
     twitter: 'https://twitter.com/beninfy',
@@ -12,7 +12,7 @@ export const siteConfig = {
     whatsapp: 'https://wa.me/message/beninfy',
   },
   contact: {
-    email: 'hello@beninfy.com',
+    email: 'support@beninfy.africa',
     phone: '+234 800 BENINFY',
     whatsapp: '+234 800 000 0000',
   },
