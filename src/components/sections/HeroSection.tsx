@@ -24,129 +24,58 @@ const TRUST_PILL_ICONS = [
 
 const ROUTES = ['Lagos → Cotonou', 'Cotonou → Lagos', 'Lagos → Lomé', 'Accra → Lagos', 'Cotonou → Abuja']
 
-/** Simple bus SVG for hero road strip */
-function HeroBus() {
-  return (
-    <svg width="64" height="38" viewBox="0 0 64 38" fill="none" aria-hidden>
-      <rect x="2" y="4" width="56" height="24" rx="5" fill="rgba(255,255,255,0.18)" />
-      <rect x="6" y="7" width="10" height="9" rx="2" fill="rgba(255,255,255,0.35)" />
-      <rect x="20" y="7" width="10" height="9" rx="2" fill="rgba(255,255,255,0.35)" />
-      <rect x="34" y="7" width="10" height="9" rx="2" fill="rgba(255,255,255,0.35)" />
-      <rect x="2" y="22" width="56" height="6" rx="0" fill="rgba(0,0,0,0.2)" />
-      <circle cx="14" cy="33" r="5" fill="rgba(0,0,0,0.4)" />
-      <circle cx="14" cy="33" r="2.5" fill="rgba(255,255,255,0.3)" />
-      <circle cx="48" cy="33" r="5" fill="rgba(0,0,0,0.4)" />
-      <circle cx="48" cy="33" r="2.5" fill="rgba(255,255,255,0.3)" />
-      <rect x="58" y="12" width="4" height="6" rx="2" fill="#fbbf24" />
-    </svg>
-  )
-}
 
 export default function HeroSection() {
   const locale = useLocale()
   const t = useTranslations('hero')
 
   return (
-    <section className="relative min-h-[600px] flex items-center pt-20 pb-36 overflow-hidden">
-      {/* Background Image */}
+    <section className="relative h-[614px] flex items-center overflow-hidden">
       <div className="absolute inset-0 z-0">
         <Image
           src="/hero-bg.jpg"
-          alt="Hero Background"
+          alt="Benin landscape"
           fill
           priority
-          sizes="(max-width: 768px) 100vw, 100vw"
+          sizes="100vw"
           className="object-cover"
         />
+        <div className="absolute inset-0 bg-primary/30 mix-blend-multiply"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/80 to-transparent"></div>
       </div>
-      
-      {/* Dark Gradient Overlay for text readability */}
-      <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 via-gray-900/40 to-gray-900/60 z-0" />
 
-      {/* Subtle animated gradient overlay */}
-      <motion.div
-        className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-secondary/10 pointer-events-none"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 1.5 }}
-      />
-
-      <div className="mx-auto max-w-[1280px] px-4 md:px-10 w-full text-white z-10">
-        {/* Headline */}
-        <div className="max-w-2xl mb-12 md:mb-14">
-          <motion.h1
-            className="text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight"
+      <div className="relative z-10 max-w-[1280px] mx-auto px-4 md:px-10 w-full">
+        <div className="max-w-2xl">
+          <motion.span
+            className="text-secondary-fixed font-semibold text-sm uppercase tracking-widest mb-4 block"
             {...fadeUp(0)}
           >
-            {t('title')}<br />{t('titleHighlight')}
+            {t('badge')}
+          </motion.span>
+          <motion.h1
+            className="text-white text-5xl font-bold mb-6 leading-tight"
+            {...fadeUp(0.12)}
+          >
+            {t('title')} {t('titleHighlight')}
           </motion.h1>
           <motion.p
-            className="text-lg opacity-80"
-            {...fadeUp(0.12)}
+            className="text-white/80 text-lg mb-8"
+            {...fadeUp(0.24)}
           >
             {t('subtitle')}
           </motion.p>
-        </div>
-
-        {/* Trust pills */}
-        <motion.div
-          className="flex flex-wrap gap-3 mb-16 md:mb-20"
-          {...fadeUp(0.24)}
-        >
-          {TRUST_PILL_ICONS.map(({ icon, key }) => (
-            <div
-              key={key}
-              className="flex items-center gap-1.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-2 text-label-md"
+          <motion.div
+            className="flex gap-4"
+            {...fadeUp(0.36)}
+          >
+            <Link
+              href={`/${locale}/rides`}
+              className="bg-secondary-container text-on-secondary-container px-8 py-4 rounded-xl flex items-center gap-2 font-semibold text-sm shadow-lg hover:opacity-90 active:scale-95 transition-all"
             >
-              <span className="material-symbols-outlined text-[18px] icon-fill">{icon}</span>
-              {t(key)}
-            </div>
-          ))}
-        </motion.div>
-
-        {/* CTA */}
-        <motion.div
-          className="flex flex-wrap gap-3"
-          {...fadeUp(0.36)}
-        >
-          <Link
-            href={`/${locale}/rides`}
-            className="rounded-xl bg-primary px-8 py-4 text-headline-sm text-on-primary shadow-lg hover:bg-primary-container hover:text-on-primary-container hover:scale-[1.02] active:scale-95 transition-all"
-          >
-            {t('ctaBook')}
-          </Link>
-          <Link
-            href={`/${locale}/tours`}
-            className="rounded-xl border-2 border-secondary-container/80 text-secondary-container px-8 py-4 text-headline-sm hover:bg-secondary-container hover:text-on-secondary-container transition-all"
-          >
-            {t('ctaExplore')}
-          </Link>
-        </motion.div>
-      </div>
-
-      {/* Animated road strip with bus at bottom of hero */}
-      <div className="absolute bottom-0 left-0 right-0 overflow-hidden h-14 pointer-events-none">
-        {/* Road */}
-        <div className="absolute bottom-0 left-0 right-0 h-10 bg-gray-900/60 backdrop-blur-sm" />
-        {/* Center line dashes — scroll animation */}
-        <motion.div
-          className="absolute bottom-3.5 left-0 flex gap-6"
-          style={{ width: '200%' }}
-          animate={{ x: [0, '-50%'] }}
-          transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
-        >
-          {Array.from({ length: 40 }).map((_, i) => (
-            <div key={i} className="h-0.5 w-8 bg-yellow-400/50 rounded-full shrink-0" />
-          ))}
-        </motion.div>
-        {/* Driving bus */}
-        <motion.div
-          className="absolute bottom-2"
-          animate={{ x: ['110vw', '-80px'] }}
-          transition={{ duration: 18, repeat: Infinity, ease: 'linear' }}
-        >
-          <HeroBus />
-        </motion.div>
+              {t('ctaBook')} <span className="material-symbols-outlined">arrow_downward</span>
+            </Link>
+          </motion.div>
+        </div>
       </div>
     </section>
   )
