@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { useLocale, useTranslations } from 'next-intl'
 import FlipText from '@/components/shared/FlipText'
@@ -46,13 +47,22 @@ export default function HeroSection() {
   const t = useTranslations('hero')
 
   return (
-    <section
-      className="relative min-h-[600px] flex items-center pt-20 pb-36 overflow-hidden"
-      style={{
-        background:
-          "linear-gradient(rgba(24,28,32,0.45), rgba(24,28,32,0.65)), url('/hero-bg.jpg') center/cover no-repeat",
-      }}
-    >
+    <section className="relative min-h-[600px] flex items-center pt-20 pb-36 overflow-hidden">
+      {/* Background Image */}
+      <div className="absolute inset-0 z-0">
+        <Image
+          src="/hero-bg.jpg"
+          alt="Hero Background"
+          fill
+          priority
+          sizes="(max-width: 768px) 100vw, 100vw"
+          className="object-cover"
+        />
+      </div>
+      
+      {/* Dark Gradient Overlay for text readability */}
+      <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 via-gray-900/40 to-gray-900/60 z-0" />
+
       {/* Subtle animated gradient overlay */}
       <motion.div
         className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-secondary/10 pointer-events-none"

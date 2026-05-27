@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" fill="none">
+  <!-- Location pin above the i -->
+  <ellipse cx="310" cy="90" rx="22" ry="22" fill="#5B136B"/>
+  <path d="M310 112 Q298 130 310 148 Q322 130 310 112Z" fill="#5B136B"/>
+  <ellipse cx="310" cy="90" rx="9" ry="9" fill="white"/>
+
+  <!-- Beninfy text in script style -->
+  <text
+    x="50"
+    y="290"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-size="148"
+    font-weight="bold"
+    font-style="italic"
+    fill="#5B136B"
+    letter-spacing="-4"
+  >Beninfy</text>
+
+  <!-- Road lines underneath -->
+  <path d="M60 340 Q200 320 440 360" stroke="#5B136B" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <path d="M120 355 Q260 338 460 372" stroke="#5B136B" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.5"/>
+</svg>

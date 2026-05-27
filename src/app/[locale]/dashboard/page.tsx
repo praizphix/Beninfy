@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { useLocale } from 'next-intl'
 import { useSession, signOut } from 'next-auth/react'
 import { formatNGN } from '@/lib/utils'
 import PulseStatus, { DepartureRow } from '@/components/shared/PulseStatus'
+import ProfileTab from './tabs/ProfileTab'
+import SettingsTab from './tabs/SettingsTab'
+import SupportTab from './tabs/SupportTab'
 
 type TripStatus = 'confirmed' | 'pending' | 'completed' | 'active'
 
@@ -66,7 +68,6 @@ type NavItem = 'dashboard' | 'profile' | 'payments' | 'support' | 'settings'
 
 export default function DashboardPage() {
   const locale = useLocale()
-  const router = useRouter()
   const { data: session, status } = useSession()
   const [activeNav, setActiveNav] = useState<NavItem>('dashboard')
   const [trips, setTrips] = useState<Trip[]>([])
@@ -77,7 +78,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (status === 'unauthenticated') {
-      router.replace(`/${locale}/login`)
+      window.location.href = `/${locale}/login`
       return
     }
     if (status !== 'authenticated') return
@@ -104,7 +105,7 @@ export default function DashboardPage() {
     return () => {
       cancelled = true
     }
-  }, [status, router, locale])
+  }, [status, locale])
 
   useEffect(() => {
     if (activeNav !== 'payments' || status !== 'authenticated') return
@@ -120,14 +121,6 @@ export default function DashboardPage() {
   }, [activeNav, status])
 
   const handleNav = (id: NavItem) => {
-    if (id === 'profile' || id === 'settings') {
-      router.push(`/${locale}/profile`)
-      return
-    }
-    if (id === 'support') {
-      window.location.href = 'mailto:support@beninfy.africa'
-      return
-    }
     setActiveNav(id)
   }
 
@@ -171,8 +164,8 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-background">
       <main className="mt-16 max-w-[1280px] mx-auto px-4 md:px-10 py-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Sidebar */}
-          <aside className="hidden lg:block lg:col-span-3 space-y-5">
+          {/* Sidebar (always visible on mobile/desktop) */}
+          <aside className="col-span-12 lg:col-span-3 space-y-5 mb-6 lg:mb-0 lg:block">
             {/* Profile card */}
             <div className="bg-surface-container-lowest p-6 rounded-2xl shadow-sm space-y-4">
               <div className="flex items-center gap-4 pb-4 border-b border-outline-variant">
@@ -251,9 +244,189 @@ export default function DashboardPage() {
             </div>
           </aside>
 
-          {/* Main content */}
-          <div className="lg:col-span-9 space-y-6">
-            {activeNav === 'payments' ? (
+          {/* Main content SPA tabs */}
+          <div className="col-span-12 lg:col-span-9 space-y-6">
+            {activeNav === 'dashboard' && (
+              <>
+                {/* Active trip banner */}
+                {activeTrip ? (
+                  <section className="relative overflow-hidden bg-primary rounded-2xl p-8 text-on-primary shadow-lg">
+                    <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+                      <span className="material-symbols-outlined text-[120px]">directions_car</span>
+                    </div>
+                    <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 bg-primary-container text-on-primary-container px-3 py-1 rounded-full w-fit">
+                          <span className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
+                          <span className="text-label-sm uppercase tracking-wider">Vehicle Assigned</span>
+                        </div>
+                        <h2 className="text-headline-lg">{activeTrip.from} to {activeTrip.to}</h2>
+                        <p className="text-body-md opacity-90">{activeTrip.vehicle} • {activeTrip.plate} • Driver: {activeTrip.driver}</p>
+                        <p className="text-label-sm opacity-75">Ref: #{activeTrip.ref}</p>
+                      </div>
+                    </div>
+                  </section>
+                ) : (
+                  <section className="bg-surface-container-lowest rounded-2xl p-8 border border-outline-variant text-center">
+                    <span className="material-symbols-outlined text-primary text-[48px]">directions_car</span>
+                    <h2 className="text-headline-sm mt-3">Welcome{session?.user?.name ? `, ${session.user.name.split(' ')[0]}` : ''}</h2>
+                    <p className="text-body-md text-on-surface-variant mt-1">{loading ? 'Loading your trips…' : 'You have no active ride. Book one to get started.'}</p>
+                    <Link
+                      href={`/${locale}/rides`}
+                      className="inline-flex items-center gap-2 mt-5 bg-primary text-on-primary px-6 py-3 rounded-xl text-label-md hover:opacity-90 transition-opacity"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">add</span> Book a ride
+                    </Link>
+                  </section>
+                )}
+
+                {/* Upcoming + History grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Upcoming trips */}
+                  <section className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-headline-sm">Upcoming Trips</h3>
+                      <a href="#" className="text-primary text-label-md hover:underline">View All</a>
+                    </div>
+                    <div className="space-y-4">
+                      {upcoming.length === 0 && !loading && (
+                        <p className="text-body-sm text-on-surface-variant">No upcoming trips yet.</p>
+                      )}
+                      {upcoming.map((trip) => (
+                        <div key={trip.id} className="bg-surface-container-lowest p-5 rounded-2xl shadow-sm border border-outline-variant hover:shadow-md transition-shadow">
+                          <div className="flex justify-between items-start mb-4">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-surface-container rounded-xl text-primary">
+                                <span className="material-symbols-outlined text-[20px]">airport_shuttle</span>
+                              </div>
+                              <div>
+                                <p className="text-label-md">{trip.from} → {trip.to}</p>
+                                <p className="text-body-sm text-on-surface-variant">
+                                  {new Date(trip.date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}
+                                </p>
+                              </div>
+                            </div>
+                            <span className="text-label-md text-secondary">{formatNGN(trip.amount)}</span>
+                          </div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <PulseStatus status={trip.status === 'confirmed' ? 'on-time' : trip.status === 'pending' ? 'boarding' : 'en-route'} />
+                            <span className="px-2.5 py-0.5 bg-gray-100 text-gray-500 rounded-lg text-xs">{trip.vehicle}</span>
+                            <span className="px-2.5 py-0.5 bg-gray-100 text-gray-500 rounded-lg text-xs">{trip.passengers} pax</span>
+                          </div>
+                          {trip.driver && (
+                            <p className="text-body-sm text-on-surface-variant mt-3 flex items-center gap-1">
+                              <span className="material-symbols-outlined text-[14px]">person</span> Driver: {trip.driver}
+                            </p>
+                          )}
+                          <div className="mt-4 flex justify-end">
+                            <button
+                              type="button"
+                              onClick={() => handleCancel(trip.id)}
+                              disabled={cancellingId === trip.id}
+                              className="text-label-sm text-red-600 hover:underline disabled:opacity-50 disabled:cursor-wait inline-flex items-center gap-1"
+                            >
+                              <span className="material-symbols-outlined text-[14px]">close</span>
+                              {cancellingId === trip.id ? 'Cancelling…' : 'Cancel booking'}
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                      <Link
+                        href={`/${locale}/rides`}
+                        className="w-full py-3.5 border-2 border-dashed border-outline-variant rounded-2xl text-on-surface-variant text-label-md flex items-center justify-center gap-2 hover:bg-surface-container hover:border-primary hover:text-primary transition-all"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">add</span> Book New Ride
+                      </Link>
+                    </div>
+                  </section>
+
+                  {/* Booking history */}
+                  <section className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-headline-sm">Booking History</h3>
+                      <a href="#" className="text-primary text-label-md hover:underline">View All</a>
+                    </div>
+                    <div className="space-y-3">
+                      {history.length === 0 && !loading && (
+                        <p className="text-body-sm text-on-surface-variant">No past trips yet.</p>
+                      )}
+                      {history.map((trip) => (
+                        <div key={trip.id} className="bg-surface-container-lowest p-4 rounded-2xl border border-outline-variant hover:shadow-sm transition-shadow">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-surface-container rounded-xl text-on-surface-variant">
+                              <span className="material-symbols-outlined text-[18px]">check_circle</span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex justify-between">
+                                <p className="text-label-md truncate">{trip.from} → {trip.to}</p>
+                                <span className="text-label-md text-on-surface-variant ml-2 shrink-0">{formatNGN(trip.amount)}</span>
+                              </div>
+                              <div className="flex items-center gap-2 mt-1">
+                                <p className="text-body-sm text-on-surface-variant">{new Date(trip.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                                <span className="w-1 h-1 bg-outline rounded-full" />
+                                <p className="text-body-sm text-on-surface-variant">{trip.vehicle}</p>
+                              </div>
+                              <p className="text-label-sm text-on-surface-variant/60 mt-0.5">#{trip.ref}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                </div>
+
+                {/* Live Departures board */}
+                <section className="bg-gray-950 rounded-2xl p-6 shadow-lg border border-gray-800">
+                  <div className="flex items-center justify-between mb-5">
+                    <div className="flex items-center gap-3">
+                      <span className="material-symbols-outlined text-yellow-400" style={{ fontSize: 22 }}>departure_board</span>
+                      <h3 className="text-sm font-bold text-white tracking-widest uppercase">Live Departures</h3>
+                    </div>
+                    <PulseStatus status="en-route" />
+                  </div>
+                  <div className="space-y-2">
+                    {LIVE_DEPARTURES.map((dep) => (
+                      <DepartureRow
+                        key={dep.time}
+                        from={dep.from}
+                        to={dep.to}
+                        time={dep.time}
+                        status={dep.status}
+                        vehicle={dep.vehicle}
+                      />
+                    ))}
+                  </div>
+                </section>
+
+                {/* Quick actions */}
+                <section className="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant">
+                  <h3 className="text-headline-sm mb-5">Quick Actions</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {[
+                      { icon: 'directions_car', label: 'Book a Ride', href: `/${locale}/rides` },
+                      { icon: 'map', label: 'Explore Tours', href: `/${locale}/tours` },
+                      { icon: 'security', label: 'Border Info', href: `/${locale}/border-info` },
+                      { icon: 'support_agent', label: 'Get Support', href: `https://wa.me/2348000000000` },
+                    ].map(({ icon, label, href }) => (
+                      <a
+                        key={label}
+                        href={href}
+                        target={href.startsWith('https') ? '_blank' : '_self'}
+                        rel={href.startsWith('https') ? 'noopener noreferrer' : undefined}
+                        className="flex flex-col items-center gap-3 p-5 bg-surface-container-low rounded-2xl hover:bg-primary-container/20 hover:border-primary border border-outline-variant/50 transition-all group"
+                      >
+                        <span className="material-symbols-outlined text-primary text-[28px] group-hover:scale-110 transition-transform">{icon}</span>
+                        <span className="text-label-md text-center">{label}</span>
+                      </a>
+                    ))}
+                  </div>
+                </section>
+              </>
+            )}
+            {activeNav === 'profile' && <ProfileTab />}
+            {activeNav === 'settings' && <SettingsTab />}
+            {activeNav === 'support' && <SupportTab />}
+            {activeNav === 'payments' && (
               <section className="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant">
                 <div className="flex items-center justify-between mb-5">
                   <h2 className="text-headline-sm">Payment history</h2>
@@ -302,182 +475,6 @@ export default function DashboardPage() {
                   </div>
                 )}
               </section>
-            ) : (
-            <>
-            {/* Active trip banner */}
-            {activeTrip ? (
-              <section className="relative overflow-hidden bg-primary rounded-2xl p-8 text-on-primary shadow-lg">
-                <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
-                  <span className="material-symbols-outlined text-[120px]">directions_car</span>
-                </div>
-                <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 bg-primary-container text-on-primary-container px-3 py-1 rounded-full w-fit">
-                      <span className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
-                      <span className="text-label-sm uppercase tracking-wider">Vehicle Assigned</span>
-                    </div>
-                    <h2 className="text-headline-lg">{activeTrip.from} to {activeTrip.to}</h2>
-                    <p className="text-body-md opacity-90">{activeTrip.vehicle} • {activeTrip.plate} • Driver: {activeTrip.driver}</p>
-                    <p className="text-label-sm opacity-75">Ref: #{activeTrip.ref}</p>
-                  </div>
-                </div>
-              </section>
-            ) : (
-              <section className="bg-surface-container-lowest rounded-2xl p-8 border border-outline-variant text-center">
-                <span className="material-symbols-outlined text-primary text-[48px]">directions_car</span>
-                <h2 className="text-headline-sm mt-3">Welcome{session?.user?.name ? `, ${session.user.name.split(' ')[0]}` : ''}</h2>
-                <p className="text-body-md text-on-surface-variant mt-1">{loading ? 'Loading your trips…' : 'You have no active ride. Book one to get started.'}</p>
-                <Link
-                  href={`/${locale}/rides`}
-                  className="inline-flex items-center gap-2 mt-5 bg-primary text-on-primary px-6 py-3 rounded-xl text-label-md hover:opacity-90 transition-opacity"
-                >
-                  <span className="material-symbols-outlined text-[18px]">add</span> Book a ride
-                </Link>
-              </section>
-            )}
-
-            {/* Upcoming + History grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Upcoming trips */}
-              <section className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-headline-sm">Upcoming Trips</h3>
-                  <a href="#" className="text-primary text-label-md hover:underline">View All</a>
-                </div>
-                <div className="space-y-4">
-                  {upcoming.length === 0 && !loading && (
-                    <p className="text-body-sm text-on-surface-variant">No upcoming trips yet.</p>
-                  )}
-                  {upcoming.map((trip) => (
-                    <div key={trip.id} className="bg-surface-container-lowest p-5 rounded-2xl shadow-sm border border-outline-variant hover:shadow-md transition-shadow">
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-surface-container rounded-xl text-primary">
-                            <span className="material-symbols-outlined text-[20px]">airport_shuttle</span>
-                          </div>
-                          <div>
-                            <p className="text-label-md">{trip.from} → {trip.to}</p>
-                            <p className="text-body-sm text-on-surface-variant">
-                              {new Date(trip.date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}
-                            </p>
-                          </div>
-                        </div>
-                        <span className="text-label-md text-secondary">{formatNGN(trip.amount)}</span>
-                      </div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <PulseStatus status={trip.status === 'confirmed' ? 'on-time' : trip.status === 'pending' ? 'boarding' : 'en-route'} />
-                        <span className="px-2.5 py-0.5 bg-gray-100 text-gray-500 rounded-lg text-xs">{trip.vehicle}</span>
-                        <span className="px-2.5 py-0.5 bg-gray-100 text-gray-500 rounded-lg text-xs">{trip.passengers} pax</span>
-                      </div>
-                      {trip.driver && (
-                        <p className="text-body-sm text-on-surface-variant mt-3 flex items-center gap-1">
-                          <span className="material-symbols-outlined text-[14px]">person</span> Driver: {trip.driver}
-                        </p>
-                      )}
-                      <div className="mt-4 flex justify-end">
-                        <button
-                          type="button"
-                          onClick={() => handleCancel(trip.id)}
-                          disabled={cancellingId === trip.id}
-                          className="text-label-sm text-red-600 hover:underline disabled:opacity-50 disabled:cursor-wait inline-flex items-center gap-1"
-                        >
-                          <span className="material-symbols-outlined text-[14px]">close</span>
-                          {cancellingId === trip.id ? 'Cancelling…' : 'Cancel booking'}
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                  <Link
-                    href={`/${locale}/rides`}
-                    className="w-full py-3.5 border-2 border-dashed border-outline-variant rounded-2xl text-on-surface-variant text-label-md flex items-center justify-center gap-2 hover:bg-surface-container hover:border-primary hover:text-primary transition-all"
-                  >
-                    <span className="material-symbols-outlined text-[18px]">add</span> Book New Ride
-                  </Link>
-                </div>
-              </section>
-
-              {/* Booking history */}
-              <section className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-headline-sm">Booking History</h3>
-                  <a href="#" className="text-primary text-label-md hover:underline">View All</a>
-                </div>
-                <div className="space-y-3">
-                  {history.length === 0 && !loading && (
-                    <p className="text-body-sm text-on-surface-variant">No past trips yet.</p>
-                  )}
-                  {history.map((trip) => (
-                    <div key={trip.id} className="bg-surface-container-lowest p-4 rounded-2xl border border-outline-variant hover:shadow-sm transition-shadow">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-surface-container rounded-xl text-on-surface-variant">
-                          <span className="material-symbols-outlined text-[18px]">check_circle</span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex justify-between">
-                            <p className="text-label-md truncate">{trip.from} → {trip.to}</p>
-                            <span className="text-label-md text-on-surface-variant ml-2 shrink-0">{formatNGN(trip.amount)}</span>
-                          </div>
-                          <div className="flex items-center gap-2 mt-1">
-                            <p className="text-body-sm text-on-surface-variant">{new Date(trip.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
-                            <span className="w-1 h-1 bg-outline rounded-full" />
-                            <p className="text-body-sm text-on-surface-variant">{trip.vehicle}</p>
-                          </div>
-                          <p className="text-label-sm text-on-surface-variant/60 mt-0.5">#{trip.ref}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            </div>
-
-            {/* Live Departures board */}
-            <section className="bg-gray-950 rounded-2xl p-6 shadow-lg border border-gray-800">
-              <div className="flex items-center justify-between mb-5">
-                <div className="flex items-center gap-3">
-                  <span className="material-symbols-outlined text-yellow-400" style={{ fontSize: 22 }}>departure_board</span>
-                  <h3 className="text-sm font-bold text-white tracking-widest uppercase">Live Departures</h3>
-                </div>
-                <PulseStatus status="en-route" />
-              </div>
-              <div className="space-y-2">
-                {LIVE_DEPARTURES.map((dep) => (
-                  <DepartureRow
-                    key={dep.time}
-                    from={dep.from}
-                    to={dep.to}
-                    time={dep.time}
-                    status={dep.status}
-                    vehicle={dep.vehicle}
-                  />
-                ))}
-              </div>
-            </section>
-
-            {/* Quick actions */}
-            <section className="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant">
-              <h3 className="text-headline-sm mb-5">Quick Actions</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {[
-                  { icon: 'directions_car', label: 'Book a Ride', href: `/${locale}/rides` },
-                  { icon: 'map', label: 'Explore Tours', href: `/${locale}/tours` },
-                  { icon: 'security', label: 'Border Info', href: `/${locale}/border-info` },
-                  { icon: 'support_agent', label: 'Get Support', href: `https://wa.me/2348000000000` },
-                ].map(({ icon, label, href }) => (
-                  <a
-                    key={label}
-                    href={href}
-                    target={href.startsWith('https') ? '_blank' : '_self'}
-                    rel={href.startsWith('https') ? 'noopener noreferrer' : undefined}
-                    className="flex flex-col items-center gap-3 p-5 bg-surface-container-low rounded-2xl hover:bg-primary-container/20 hover:border-primary border border-outline-variant/50 transition-all group"
-                  >
-                    <span className="material-symbols-outlined text-primary text-[28px] group-hover:scale-110 transition-transform">{icon}</span>
-                    <span className="text-label-md text-center">{label}</span>
-                  </a>
-                ))}
-              </div>
-            </section>
-            </>
             )}
           </div>
         </div>
