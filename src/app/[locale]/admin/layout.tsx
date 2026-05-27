@@ -25,7 +25,7 @@ export default async function AdminLayout({ children, params }: Props) {
   setRequestLocale(locale)
   const session = await auth()
   const role = (session?.user as { role?: string } | undefined)?.role
-  if (!session?.user?.id) redirect(`/${locale}/login?next=/${locale}/admin`)
+  if (!session?.user?.id) redirect(`/${locale}/admin-login`)
   if (role !== 'admin' && role !== 'super_admin') redirect(`/${locale}/dashboard`)
 
   return (
