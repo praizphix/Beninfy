@@ -13,10 +13,10 @@ export default function Footer() {
   const { status } = useSession()
   const signedIn = status === 'authenticated'
 
-  const linkClass = (href: string, base = 'hover:text-primary transition-colors') =>
-    RESTRICTED.has(href) && !signedIn
-      ? `${base} opacity-50 pointer-events-none md:opacity-100 md:pointer-events-auto`
-      : base
+  const linkClass = (href: string, base = 'hover:text-primary transition-colors') => base
+
+  const itemClass = (href: string) =>
+    RESTRICTED.has(href) && !signedIn ? 'hidden md:list-item' : ''
 
   return (
     <footer className="bg-surface-dim border-t border-outline-variant py-10 md:py-16">
@@ -49,7 +49,7 @@ export default function Footer() {
         </div>
 
         {/* Services */}
-        <div>
+        <div className={!signedIn ? 'hidden md:block' : ''}>
           <h4 className="text-label-md font-bold mb-4 uppercase tracking-wider text-on-surface">
             {t('services')}
           </h4>
@@ -60,7 +60,7 @@ export default function Footer() {
               { labelKey: 'groupTours', href: '/tours' },
               { labelKey: 'corporateLogistics', href: '/fleet' },
             ].map(({ labelKey, href }) => (
-              <li key={labelKey}>
+              <li key={labelKey} className={itemClass(href)}>
                 <Link href={`/${locale}${href}`} className={linkClass(href)}>
                   {t(labelKey)}
                 </Link>
@@ -75,7 +75,7 @@ export default function Footer() {
             {t('resources')}
           </h4>
           <ul className="flex flex-col gap-3 text-label-md text-on-surface-variant">
-            <li>
+            <li className={itemClass('/border-info')}>
               <Link href={`/${locale}/border-info`} className={linkClass('/border-info', 'font-bold text-secondary hover:underline')}>
                 {t('borderProtocols')}
               </Link>
@@ -85,7 +85,7 @@ export default function Footer() {
               { labelKey: 'toursPackages', href: '/tours' },
               { labelKey: 'safetyFaq', href: '/about' },
             ].map(({ labelKey, href }) => (
-              <li key={labelKey}>
+              <li key={labelKey} className={itemClass(href)}>
                 <Link href={`/${locale}${href}`} className={linkClass(href)}>
                   {t(labelKey)}
                 </Link>
