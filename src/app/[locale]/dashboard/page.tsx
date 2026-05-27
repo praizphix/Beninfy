@@ -1,8 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useLocale } from 'next-intl'
+import { useSession, signOut } from 'next-auth/react'
 import { formatNGN } from '@/lib/utils'
 import PulseStatus, { DepartureRow } from '@/components/shared/PulseStatus'
 
@@ -23,20 +25,19 @@ interface Trip {
   pickupEta?: string
 }
 
-const mockUpcoming: Trip[] = [
-  { id: '1', ref: 'BFY-44218-KP', from: 'Lagos', to: 'Cotonou', date: '2026-06-12', vehicle: 'Executive SUV', passengers: 2, amount: 185000, status: 'confirmed', driver: 'Moussa Sidikou', plate: 'BJ-924-XT' },
-  { id: '2', ref: 'BFY-55120-TR', from: 'Cotonou', to: 'Lomé', date: '2026-06-28', vehicle: 'Toyota Sienna', passengers: 4, amount: 130000, status: 'pending' },
-]
-
-const mockHistory: Trip[] = [
-  { id: '3', ref: 'BFY-33107-AB', from: 'Lagos', to: 'Accra', date: '2026-05-10', vehicle: 'Toyota Prado', passengers: 3, amount: 310000, status: 'completed' },
-  { id: '4', ref: 'BFY-22095-ZX', from: 'Cotonou', to: 'Lagos', date: '2026-04-22', vehicle: 'Saloon Car', passengers: 1, amount: 95000, status: 'completed' },
-  { id: '5', ref: 'BFY-11080-QM', from: 'Lagos', to: 'Cotonou', date: '2026-03-14', vehicle: 'Toyota Hiace', passengers: 8, amount: 240000, status: 'completed' },
-]
-
-const activeTrip: Trip = {
-  id: '0', ref: 'BFY-99283-XP', from: 'Lagos', to: 'Cotonou', date: '2026-06-05', vehicle: 'Executive SUV', passengers: 2, amount: 185000, status: 'active', driver: 'Moussa Sidikou', plate: 'BJ-924-XT', pickupEta: '14 min',
+interface BookingApi {
+  id: string
+  from: string
+  to: string
+  date: string
+  vehicleId: string
+  passengers: number
+  priceNGN: number
+  status: string
+  createdAt: string
 }
+
+const activeTrip: Trip | null = null
 
 const statusColors: Record<TripStatus, string> = {
   active: 'bg-primary text-on-primary',
@@ -56,7 +57,55 @@ type NavItem = 'dashboard' | 'profile' | 'payments' | 'support' | 'settings'
 
 export default function DashboardPage() {
   const locale = useLocale()
+  const router = useRouter()
+  const { data: session, status } = useSession()
   const [activeNav, setActiveNav] = useState<NavItem>('dashboard')
+  const [trips, setTrips] = useState<Trip[]>([])
+  const [loading, setLoading] = useState(true)
+  const [cancellingId, setCancellingId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.replace(`/${locale}/login`)
+      return
+    }
+    if (status !== 'authenticated') return
+    let cancelled = false
+    setLoading(true)
+    fetch('/api/bookings')
+      .then((r) => (r.ok ? r.json() : { bookings: [] }))
+      .then((data: { bookings?: BookingApi[] }) => {
+        if (cancelled) return
+        const mapped: Trip[] = (data.bookings ?? []).map((b) => ({
+          id: b.id,
+          ref: `BFY-${b.id.slice(-8).toUpperCase()}`,
+          from: b.from,
+          to: b.to,
+          date: b.date,
+          vehicle: b.vehicleId,
+          passengers: b.passengers,
+          amount: b.priceNGN,
+          status: (b.status as TripStatus) ?? 'pending',
+        }))
+        setTrips(mapped)
+      })
+      .finally(() => !cancelled && setLoading(false))
+    return () => {
+      cancelled = true
+    }
+  }, [status, router, locale])
+
+  const now = Date.now()
+  const upcoming = trips.filter((t) => new Date(t.date).getTime() >= now && t.status !== 'completed')
+  const history = trips.filter((t) => new Date(t.date).getTime() < now || t.status === 'completed')
+
+  const userName = session?.user?.name ?? session?.user?.email ?? 'Traveler'
+  const initials = userName
+    .split(/\s+/)
+    .map((s) => s[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
 
   const navItems: { id: NavItem; label: string; icon: string }[] = [
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
@@ -66,7 +115,21 @@ export default function DashboardPage() {
     { id: 'settings', label: 'Settings', icon: 'settings' },
   ]
 
-  const totalSpend = mockHistory.reduce((a, t) => a + t.amount, 0)
+  const totalSpend = history.reduce((a, t) => a + t.amount, 0)
+
+  const handleCancel = async (id: string) => {
+    if (typeof window !== 'undefined' && !window.confirm('Cancel this booking?')) return
+    setCancellingId(id)
+    try {
+      const res = await fetch(`/api/bookings/${id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Cancel failed')
+      setTrips((prev) => prev.filter((t) => t.id !== id))
+    } catch {
+      // swallow; could surface a toast later
+    } finally {
+      setCancellingId(null)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -77,13 +140,24 @@ export default function DashboardPage() {
             {/* Profile card */}
             <div className="bg-surface-container-lowest p-6 rounded-2xl shadow-sm space-y-4">
               <div className="flex items-center gap-4 pb-4 border-b border-outline-variant">
-                <div className="w-14 h-14 rounded-full bg-primary flex items-center justify-center text-on-primary text-headline-sm font-bold">FK</div>
+                <div className="w-14 h-14 rounded-full bg-primary flex items-center justify-center text-on-primary text-headline-sm font-bold">{initials || 'B'}</div>
                 <div>
-                  <p className="text-headline-sm text-primary">Felix Koffi</p>
-                  <p className="text-body-sm text-on-surface-variant">Premium Member</p>
-                  <div className="flex items-center gap-1 mt-1">
-                    <span className="material-symbols-outlined text-secondary icon-fill text-[14px]">star</span>
-                    <span className="text-label-sm text-secondary">4.9 Rating</span>
+                  <p className="text-headline-sm text-primary">{userName}</p>
+                  <p className="text-body-sm text-on-surface-variant">Member</p>
+                  <div className="flex items-center gap-3 mt-1">
+                    <Link
+                      href={`/${locale}/profile`}
+                      className="text-label-sm text-primary hover:underline"
+                    >
+                      Edit profile
+                    </Link>
+                    <span className="text-outline-variant">·</span>
+                    <button
+                      onClick={() => signOut({ callbackUrl: `/${locale}/login` })}
+                      className="text-label-sm text-primary hover:underline"
+                    >
+                      Sign out
+                    </button>
                   </div>
                 </div>
               </div>
@@ -126,7 +200,7 @@ export default function DashboardPage() {
               <h3 className="text-label-md text-on-surface-variant mb-4 uppercase tracking-wider">Your Stats</h3>
               <div className="space-y-4">
                 <div>
-                  <p className="text-headline-sm text-primary">{mockHistory.length + mockUpcoming.length}</p>
+                  <p className="text-headline-sm text-primary">{trips.length}</p>
                   <p className="text-body-sm text-on-surface-variant">Total Trips</p>
                 </div>
                 <div>
@@ -144,45 +218,36 @@ export default function DashboardPage() {
           {/* Main content */}
           <div className="lg:col-span-9 space-y-6">
             {/* Active trip banner */}
-            <section className="relative overflow-hidden bg-primary rounded-2xl p-8 text-on-primary shadow-lg">
-              <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
-                <span className="material-symbols-outlined text-[120px]">directions_car</span>
-              </div>
-              <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 bg-primary-container text-on-primary-container px-3 py-1 rounded-full w-fit">
-                    <span className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
-                    <span className="text-label-sm uppercase tracking-wider">Vehicle Assigned</span>
+            {activeTrip ? (
+              <section className="relative overflow-hidden bg-primary rounded-2xl p-8 text-on-primary shadow-lg">
+                <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+                  <span className="material-symbols-outlined text-[120px]">directions_car</span>
+                </div>
+                <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 bg-primary-container text-on-primary-container px-3 py-1 rounded-full w-fit">
+                      <span className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
+                      <span className="text-label-sm uppercase tracking-wider">Vehicle Assigned</span>
+                    </div>
+                    <h2 className="text-headline-lg">{activeTrip.from} to {activeTrip.to}</h2>
+                    <p className="text-body-md opacity-90">{activeTrip.vehicle} • {activeTrip.plate} • Driver: {activeTrip.driver}</p>
+                    <p className="text-label-sm opacity-75">Ref: #{activeTrip.ref}</p>
                   </div>
-                  <h2 className="text-headline-lg">{activeTrip.from} to {activeTrip.to}</h2>
-                  <p className="text-body-md opacity-90">{activeTrip.vehicle} • {activeTrip.plate} • Driver: {activeTrip.driver}</p>
-                  <p className="text-label-sm opacity-75">Ref: #{activeTrip.ref}</p>
                 </div>
-                <div className="bg-surface-container-lowest/10 backdrop-blur-sm p-5 rounded-xl border border-on-primary/20 flex flex-col items-center">
-                  <span className="text-label-sm uppercase opacity-80 mb-1">Pick up in</span>
-                  <span className="text-display-lg font-bold">{activeTrip.pickupEta}</span>
-                </div>
-              </div>
-              <div className="mt-8 pt-6 border-t border-on-primary/20 flex flex-wrap gap-4">
-                <a
-                  href="tel:+2348000000000"
-                  className="bg-on-primary text-primary px-6 py-3 rounded-xl text-label-md flex items-center gap-2 hover:bg-primary-fixed transition-all active:scale-95"
+              </section>
+            ) : (
+              <section className="bg-surface-container-lowest rounded-2xl p-8 border border-outline-variant text-center">
+                <span className="material-symbols-outlined text-primary text-[48px]">directions_car</span>
+                <h2 className="text-headline-sm mt-3">Welcome{session?.user?.name ? `, ${session.user.name.split(' ')[0]}` : ''}</h2>
+                <p className="text-body-md text-on-surface-variant mt-1">{loading ? 'Loading your trips…' : 'You have no active ride. Book one to get started.'}</p>
+                <Link
+                  href={`/${locale}/rides`}
+                  className="inline-flex items-center gap-2 mt-5 bg-primary text-on-primary px-6 py-3 rounded-xl text-label-md hover:opacity-90 transition-opacity"
                 >
-                  <span className="material-symbols-outlined text-[18px]">phone</span> Call Driver
-                </a>
-                <button className="bg-transparent border border-on-primary/40 text-on-primary px-6 py-3 rounded-xl text-label-md flex items-center gap-2 hover:bg-on-primary/10 transition-all active:scale-95">
-                  <span className="material-symbols-outlined text-[18px]">map</span> Live Track
-                </button>
-                <a
-                  href={`https://wa.me/2348000000000?text=Booking+ref:+%23${activeTrip.ref}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-transparent border border-on-primary/40 text-on-primary px-6 py-3 rounded-xl text-label-md flex items-center gap-2 hover:bg-on-primary/10 transition-all active:scale-95"
-                >
-                  <span className="material-symbols-outlined text-[18px]">chat</span> WhatsApp
-                </a>
-              </div>
-            </section>
+                  <span className="material-symbols-outlined text-[18px]">add</span> Book a ride
+                </Link>
+              </section>
+            )}
 
             {/* Upcoming + History grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -193,7 +258,10 @@ export default function DashboardPage() {
                   <a href="#" className="text-primary text-label-md hover:underline">View All</a>
                 </div>
                 <div className="space-y-4">
-                  {mockUpcoming.map((trip) => (
+                  {upcoming.length === 0 && !loading && (
+                    <p className="text-body-sm text-on-surface-variant">No upcoming trips yet.</p>
+                  )}
+                  {upcoming.map((trip) => (
                     <div key={trip.id} className="bg-surface-container-lowest p-5 rounded-2xl shadow-sm border border-outline-variant hover:shadow-md transition-shadow">
                       <div className="flex justify-between items-start mb-4">
                         <div className="flex items-center gap-3">
@@ -219,6 +287,17 @@ export default function DashboardPage() {
                           <span className="material-symbols-outlined text-[14px]">person</span> Driver: {trip.driver}
                         </p>
                       )}
+                      <div className="mt-4 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => handleCancel(trip.id)}
+                          disabled={cancellingId === trip.id}
+                          className="text-label-sm text-red-600 hover:underline disabled:opacity-50 disabled:cursor-wait inline-flex items-center gap-1"
+                        >
+                          <span className="material-symbols-outlined text-[14px]">close</span>
+                          {cancellingId === trip.id ? 'Cancelling…' : 'Cancel booking'}
+                        </button>
+                      </div>
                     </div>
                   ))}
                   <Link
@@ -237,7 +316,10 @@ export default function DashboardPage() {
                   <a href="#" className="text-primary text-label-md hover:underline">View All</a>
                 </div>
                 <div className="space-y-3">
-                  {mockHistory.map((trip) => (
+                  {history.length === 0 && !loading && (
+                    <p className="text-body-sm text-on-surface-variant">No past trips yet.</p>
+                  )}
+                  {history.map((trip) => (
                     <div key={trip.id} className="bg-surface-container-lowest p-4 rounded-2xl border border-outline-variant hover:shadow-sm transition-shadow">
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-surface-container rounded-xl text-on-surface-variant">

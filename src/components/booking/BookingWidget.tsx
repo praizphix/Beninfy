@@ -2,12 +2,13 @@
 
 import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { bookingCities } from '@/data/routes'
 import { vehicles } from '@/data/vehicles'
 
 export default function BookingWidget() {
   const locale = useLocale()
+  const t = useTranslations('booking')
   const router = useRouter()
 
   const [from, setFrom] = useState('')
@@ -39,7 +40,7 @@ export default function BookingWidget() {
                   : 'border border-outline-variant text-on-surface-variant hover:bg-surface-container'
               }`}
             >
-              {type === 'one-way' ? 'One Way' : 'Round Trip'}
+              {type === 'one-way' ? t('types.oneWay') : t('types.roundTrip')}
             </button>
           ))}
         </div>
@@ -48,7 +49,7 @@ export default function BookingWidget() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* From */}
             <div className="flex flex-col gap-2">
-              <label className="text-label-sm text-on-surface-variant">From</label>
+              <label className="text-label-sm text-on-surface-variant">{t('from')}</label>
               <div className="flex items-center gap-2 border border-outline-variant rounded-lg p-3 focus-within:border-primary transition-colors">
                 <span className="material-symbols-outlined text-primary text-[20px]">location_on</span>
                 <select
@@ -57,7 +58,7 @@ export default function BookingWidget() {
                   className="bg-transparent border-none p-0 focus:ring-0 w-full text-body-md outline-none"
                   required
                 >
-                  <option value="">Select city</option>
+                  <option value="">{t('selectCity')}</option>
                   {bookingCities.map((c) => (
                     <option key={c.code} value={c.city}>
                       {c.city}, {c.country}
@@ -69,7 +70,7 @@ export default function BookingWidget() {
 
             {/* To */}
             <div className="flex flex-col gap-2">
-              <label className="text-label-sm text-on-surface-variant">To</label>
+              <label className="text-label-sm text-on-surface-variant">{t('to')}</label>
               <div className="flex items-center gap-2 border border-outline-variant rounded-lg p-3 focus-within:border-primary transition-colors">
                 <span className="material-symbols-outlined text-primary text-[20px]">near_me</span>
                 <select
@@ -78,7 +79,7 @@ export default function BookingWidget() {
                   className="bg-transparent border-none p-0 focus:ring-0 w-full text-body-md outline-none"
                   required
                 >
-                  <option value="">Select city</option>
+                  <option value="">{t('selectCity')}</option>
                   {bookingCities.map((c) => (
                     <option key={c.code} value={c.city}>
                       {c.city}, {c.country}
@@ -90,7 +91,7 @@ export default function BookingWidget() {
 
             {/* Date */}
             <div className="flex flex-col gap-2">
-              <label className="text-label-sm text-on-surface-variant">Date</label>
+              <label className="text-label-sm text-on-surface-variant">{t('date')}</label>
               <div className="flex items-center gap-2 border border-outline-variant rounded-lg p-3 focus-within:border-primary transition-colors">
                 <span className="material-symbols-outlined text-primary text-[20px]">calendar_month</span>
                 <input
@@ -106,7 +107,7 @@ export default function BookingWidget() {
 
             {/* Vehicle */}
             <div className="flex flex-col gap-2">
-              <label className="text-label-sm text-on-surface-variant">Vehicle</label>
+              <label className="text-label-sm text-on-surface-variant">{t('vehicle')}</label>
               <div className="flex items-center gap-2 border border-outline-variant rounded-lg p-3 focus-within:border-primary transition-colors">
                 <span className="material-symbols-outlined text-primary text-[20px]">directions_car</span>
                 <select
@@ -129,22 +130,22 @@ export default function BookingWidget() {
             <div className="flex flex-wrap gap-4">
               <div className="flex items-center gap-2 text-primary text-label-md">
                 <span className="material-symbols-outlined icon-fill text-[18px]">verified</span>
-                <span>Secure Checkout</span>
+                <span>{t('trustSecure')}</span>
               </div>
               <div className="flex items-center gap-2 text-secondary text-label-md">
                 <span className="material-symbols-outlined icon-fill text-[18px]">language</span>
-                <span>Bilingual Drivers</span>
+                <span>{t('trustDrivers')}</span>
               </div>
               <div className="flex items-center gap-2 text-primary text-label-md">
                 <span className="material-symbols-outlined icon-fill text-[18px]">shield</span>
-                <span>Border Protocol</span>
+                <span>{t('trustBorder')}</span>
               </div>
             </div>
             <button
               type="submit"
               className="w-full md:w-auto bg-primary text-on-primary px-12 py-4 rounded-xl text-headline-sm shadow-lg hover:shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all duration-150"
             >
-              Search Rides
+              {t('search')}
             </button>
           </div>
         </form>

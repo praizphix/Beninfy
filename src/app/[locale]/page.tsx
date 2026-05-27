@@ -6,8 +6,11 @@ import FleetPreview from '@/components/sections/FleetPreview'
 import ToursPreview from '@/components/sections/ToursPreview'
 import BorderInfoPreview from '@/components/sections/BorderInfoPreview'
 import CTABanner from '@/components/sections/CTABanner'
+import { setRequestLocale } from 'next-intl/server'
 
-export default function HomePage() {
+export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params
+  setRequestLocale(locale)
   return (
     <>
       <HeroSection />

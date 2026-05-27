@@ -1,35 +1,10 @@
 'use client'
 
 import { motion } from 'framer-motion'
-
-const WHY_ITEMS = [
-  {
-    icon: 'assignment_ind',
-    title: 'Border Experts',
-    titleFr: 'Experts Frontaliers',
-    desc: 'Skip the hassle. Our team handles all documentation and protocols at every checkpoint.',
-    highlight: false,
-    gold: true,
-  },
-  {
-    icon: 'lock',
-    title: '100% Private',
-    titleFr: '100% Privé',
-    desc: 'No shared rides. The entire vehicle is yours for the journey.',
-    highlight: false,
-    gold: false,
-  },
-  {
-    icon: 'airport_shuttle',
-    title: 'Premium Fleet',
-    titleFr: 'Flotte Premium',
-    desc: 'Modern, air-conditioned vehicles with full amenities and verified drivers.',
-    highlight: false,
-    gold: false,
-  },
-]
+import { useTranslations } from 'next-intl'
 
 export default function WhyBeninfy() {
+  const t = useTranslations('why')
   return (
     <section className="py-20 bg-surface-container-low">
       <div className="max-w-[1280px] mx-auto px-4 md:px-10">
@@ -41,10 +16,9 @@ export default function WhyBeninfy() {
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
         >
-          <h2 className="text-display-lg text-primary mb-4">Why Travel With Beninfy?</h2>
+          <h2 className="text-display-lg text-primary mb-4">{t('sectionTitle')}</h2>
           <p className="text-on-surface-variant max-w-2xl mx-auto text-body-lg">
-            We combine local expertise with international standards to provide the most reliable
-            transport network in the ECOWAS region.
+            {t('sectionSubtitle')}
           </p>
         </motion.div>
 
@@ -65,10 +39,9 @@ export default function WhyBeninfy() {
               security
             </span>
             <div>
-              <h3 className="text-headline-lg mb-4">Security Escort Option</h3>
+              <h3 className="text-headline-lg mb-4">{t('heroCardTitle')}</h3>
               <p className="text-body-lg opacity-90 leading-relaxed">
-                For VIP and corporate clients, we provide trained security personnel to accompany
-                trips — ensuring total peace of mind across all borders.
+                {t('heroCardDesc')}
               </p>
             </div>
             <div className="flex items-center gap-3 mt-8">
@@ -84,7 +57,7 @@ export default function WhyBeninfy() {
                   </div>
                 ))}
               </div>
-              <span className="text-label-md opacity-80">Certified Security Agents</span>
+              <span className="text-label-md opacity-80">{t('heroCardAgents')}</span>
             </div>
           </motion.div>
 
@@ -94,9 +67,9 @@ export default function WhyBeninfy() {
             className="md:col-span-2 bg-secondary-container text-on-secondary-container rounded-3xl p-8 flex items-center justify-between group"
           >
             <div>
-              <h3 className="text-headline-md mb-2">Border Experts</h3>
+              <h3 className="text-headline-md mb-2">{t('borderCardTitle')}</h3>
               <p className="text-body-md opacity-80">
-                Skip the hassle. Our team handles all documentation and protocols at checkpoints.
+                {t('borderCardDesc')}
               </p>
             </div>
             <span className="material-symbols-outlined text-[48px] text-secondary group-hover:rotate-12 transition-transform shrink-0 ml-4">
@@ -110,9 +83,9 @@ export default function WhyBeninfy() {
             className="bg-surface-container-highest rounded-3xl p-8 flex flex-col justify-center group"
           >
             <span className="material-symbols-outlined text-primary text-[40px] mb-4">lock</span>
-            <h3 className="text-headline-sm mb-2">100% Private</h3>
+            <h3 className="text-headline-sm mb-2">{t('privateCardTitle')}</h3>
             <p className="text-body-sm text-on-surface-variant">
-              No shared rides. The entire vehicle is yours.
+              {t('privateCardDesc')}
             </p>
           </motion.div>
 
@@ -124,9 +97,9 @@ export default function WhyBeninfy() {
             <span className="material-symbols-outlined text-primary text-[40px] mb-4">
               airport_shuttle
             </span>
-            <h3 className="text-headline-sm mb-2">Premium Fleet</h3>
+            <h3 className="text-headline-sm mb-2">{t('fleetCardTitle')}</h3>
             <p className="text-body-sm text-on-surface-variant">
-              Modern, air-conditioned vehicles with full amenities.
+              {t('fleetCardDesc')}
             </p>
           </motion.div>
         </motion.div>
@@ -140,18 +113,18 @@ export default function WhyBeninfy() {
           variants={{ hidden: {}, show: { transition: { staggerChildren: 0.1 } } }}
         >
           {[
-            { value: '5', label: 'Official Routes' },
-            { value: '10K+', label: 'Happy Passengers' },
-            { value: '4', label: 'Countries Served' },
-            { value: '24/7', label: 'Customer Support' },
-          ].map(({ value, label }) => (
+            { value: '5', labelKey: 'statsRoutes' },
+            { value: '10K+', labelKey: 'statsPassengers' },
+            { value: '4', labelKey: 'statsCountries' },
+            { value: '24/7', labelKey: 'statsSupport' },
+          ].map(({ value, labelKey }) => (
             <motion.div
-              key={label}
+              key={labelKey}
               className="text-center"
               variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } } }}
             >
               <div className="text-display-lg text-primary">{value}</div>
-              <div className="text-label-md text-on-surface-variant mt-1">{label}</div>
+              <div className="text-label-md text-on-surface-variant mt-1">{t(labelKey)}</div>
             </motion.div>
           ))}
         </motion.div>

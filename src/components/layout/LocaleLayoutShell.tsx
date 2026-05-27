@@ -11,6 +11,7 @@ const AUTH_PAGES = ['/login', '/register']
 export default function LocaleLayoutShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const isAuthPage = AUTH_PAGES.some((p) => pathname.endsWith(p))
+  const isAdmin = pathname.includes('/admin')
 
   if (isAuthPage) {
     return (
@@ -18,6 +19,10 @@ export default function LocaleLayoutShell({ children }: { children: React.ReactN
         <PageTransition>{children}</PageTransition>
       </div>
     )
+  }
+
+  if (isAdmin) {
+    return <>{children}</>
   }
 
   return (

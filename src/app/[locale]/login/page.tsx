@@ -13,12 +13,22 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
     setLoading(true)
-    await new Promise((r) => setTimeout(r, 1500))
-    router.push(`/${locale}/dashboard`)
+    try {
+      const { signIn } = await import('next-auth/react')
+      const result = await signIn('credentials', { email, password, redirect: false })
+      if (result?.error) throw new Error('Invalid email or password')
+      router.push(`/${locale}/dashboard`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Sign in failed')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -149,6 +159,7 @@ export default function LoginPage() {
             >
               {loading ? 'Signing in…' : 'Sign In'}
             </button>
+            {error && <p className="text-body-sm text-error mt-1">{error}</p>}
           </form>
 
           {/* Register link */}

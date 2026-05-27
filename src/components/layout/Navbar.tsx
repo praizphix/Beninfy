@@ -4,21 +4,25 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
+import { useSession, signOut } from 'next-auth/react'
 import { cn } from '@/lib/utils'
 
 const NAV_LINKS = [
-  { href: '/rides', label: 'Rides', labelFr: 'Trajets' },
-  { href: '/tours', label: 'Tours', labelFr: 'Tours' },
-  { href: '/fleet', label: 'Fleet', labelFr: 'Flotte' },
-  { href: '/border-info', label: 'Border Info', labelFr: 'Info Frontières' },
-  { href: '/about', label: 'About', labelFr: 'À propos' },
+  { href: '/rides', key: 'rides' },
+  { href: '/tours', key: 'tours' },
+  { href: '/fleet', key: 'fleet' },
+  { href: '/border-info', key: 'borderInfo' },
+  { href: '/about', key: 'about' },
 ] as const
 
 export default function Navbar() {
   const locale = useLocale()
+  const t = useTranslations('nav')
   const pathname = usePathname()
+  const { data: session, status } = useSession()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [accountOpen, setAccountOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
 
   useEffect(() => {
@@ -71,31 +75,91 @@ export default function Navbar() {
                   : 'text-on-surface-variant'
               )}
             >
-              {locale === 'fr' ? link.labelFr : link.label}
+              {t(link.key)}
             </Link>
           ))}
         </div>
 
         {/* Desktop Right */}
         <div className="hidden items-center gap-4 md:flex">
-          <Link
+          <a
             href={switchPath}
             className="flex items-center gap-1 rounded-full px-3 py-1 text-label-md text-secondary hover:bg-surface-container transition-colors"
           >
             <span className="material-symbols-outlined text-[20px]">language</span>
             <span>{locale === 'en' ? 'EN/FR' : 'FR/EN'}</span>
-          </Link>
+          </a>
           <Link
             href={`/${locale}/rides`}
             className="rounded-xl bg-primary px-6 py-2.5 text-label-md text-on-primary hover:bg-primary-container hover:text-on-primary-container active:scale-95 transition-all duration-150"
           >
-            Book Now
+            {t('bookNow')}
           </Link>
-          <Link href={`/${locale}/login`} aria-label="Account">
-            <span className="material-symbols-outlined text-[28px] text-primary cursor-pointer hover:text-primary-container transition-colors">
-              account_circle
-            </span>
-          </Link>
+          {status === 'authenticated' && session?.user ? (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setAccountOpen((v) => !v)}
+                aria-haspopup="menu"
+                aria-expanded={accountOpen}
+                className="flex items-center gap-2 rounded-full pl-1 pr-3 py-1 hover:bg-surface-container transition-colors"
+              >
+                <span className="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center text-label-sm font-bold">
+                  {(session.user.name ?? session.user.email ?? 'B')
+                    .split(/\s+/)
+                    .map((s) => s[0])
+                    .join('')
+                    .slice(0, 2)
+                    .toUpperCase()}
+                </span>
+                <span className="material-symbols-outlined text-[18px] text-on-surface-variant">expand_more</span>
+              </button>
+              {accountOpen && (
+                <div
+                  role="menu"
+                  className="absolute right-0 mt-2 w-56 rounded-xl border border-outline-variant bg-surface-container-lowest shadow-lg overflow-hidden"
+                  onMouseLeave={() => setAccountOpen(false)}
+                >
+                  <div className="px-4 py-3 border-b border-outline-variant">
+                    <p className="text-label-md truncate">{session.user.name ?? 'Account'}</p>
+                    {session.user.email && (
+                      <p className="text-label-sm text-on-surface-variant truncate">{session.user.email}</p>
+                    )}
+                  </div>
+                  <Link
+                    href={`/${locale}/dashboard`}
+                    className="block px-4 py-2.5 text-label-md hover:bg-surface-container"
+                    onClick={() => setAccountOpen(false)}
+                  >
+                    Dashboard
+                  </Link>
+                  <Link
+                    href={`/${locale}/profile`}
+                    className="block px-4 py-2.5 text-label-md hover:bg-surface-container"
+                    onClick={() => setAccountOpen(false)}
+                  >
+                    Profile
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAccountOpen(false)
+                      signOut({ callbackUrl: `/${locale}` })
+                    }}
+                    className="w-full text-left px-4 py-2.5 text-label-md text-red-600 hover:bg-surface-container"
+                  >
+                    Sign out
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link href={`/${locale}/login`} aria-label="Sign in">
+              <span className="material-symbols-outlined text-[28px] text-primary cursor-pointer hover:text-primary-container transition-colors">
+                account_circle
+              </span>
+            </Link>
+          )}
         </div>
 
         {/* Mobile hamburger */}
@@ -125,22 +189,22 @@ export default function Navbar() {
                     : 'text-on-surface-variant hover:bg-surface-container hover:text-primary'
                 )}
               >
-                {locale === 'fr' ? link.labelFr : link.label}
+                {t(link.key)}
               </Link>
             ))}
             <div className="flex items-center gap-3 border-t border-outline-variant pt-4 mt-4">
-              <Link
+              <a
                 href={switchPath}
                 className="flex items-center gap-1.5 rounded-full border border-outline-variant px-4 py-2 text-label-md text-secondary"
               >
                 <span className="material-symbols-outlined text-[16px]">language</span>
                 {otherLocale.toUpperCase()}
-              </Link>
+              </a>
               <Link
                 href={`/${locale}/rides`}
                 className="flex-1 rounded-xl bg-primary py-3 text-center text-label-md text-on-primary"
               >
-                Book Now
+                {t('bookNow')}
               </Link>
             </div>
           </div>

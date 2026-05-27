@@ -4,7 +4,7 @@ import { Suspense } from 'react'
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { vehicles } from '@/data/vehicles'
 import { routes } from '@/data/routes'
 import { getRouteBasePrice } from '@/data/pricing'
@@ -17,6 +17,7 @@ type PaymentMethod = 'card' | 'mobile-money' | 'bank-transfer'
 
 function PaymentContent() {
   const locale = useLocale()
+  const t = useTranslations('payPage')
   const router = useRouter()
   const params = useSearchParams()
 
@@ -25,6 +26,7 @@ function PaymentContent() {
   const to = params.get('to') ?? 'Cotonou'
   const date = params.get('date') ?? ''
   const passengerName = params.get('name') ?? 'Passenger'
+  const passengers = Math.max(1, parseInt(params.get('passengers') ?? '1', 10) || 1)
 
   const vehicle = vehicles.find((v) => v.id === vehicleId) ?? vehicles[0]
   const matchedRoute = routes.find((r) => r.from === from && r.to === to)
@@ -37,6 +39,7 @@ function PaymentContent() {
   const [method, setMethod] = useState<PaymentMethod>('card')
   const [card, setCard] = useState({ number: '', expiry: '', cvv: '' })
   const [processing, setProcessing] = useState(false)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   const setCardField = (f: keyof typeof card) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setCard((p) => ({ ...p, [f]: e.target.value }))
@@ -44,16 +47,60 @@ function PaymentContent() {
   const handlePay = async (e: React.FormEvent) => {
     e.preventDefault()
     setProcessing(true)
-    await new Promise((r) => setTimeout(r, 2000))
-    const ref = `BFY-${Math.floor(10000 + Math.random() * 90000)}-${Math.random().toString(36).substring(2, 4).toUpperCase()}`
-    const search = new URLSearchParams({ vehicle: vehicleId, from, to, date, ref, name: passengerName })
-    router.push(`/${locale}/rides/confirmed?${search.toString()}`)
+    setErrorMsg(null)
+    try {
+      const bookingRes = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from,
+          to,
+          date: date ? new Date(date).toISOString() : new Date().toISOString(),
+          vehicleId,
+          passengers,
+          priceNGN: total,
+        }),
+      })
+      if (bookingRes.status === 401) {
+        router.replace(`/${locale}/login`)
+        return
+      }
+      if (!bookingRes.ok) {
+        const data = await bookingRes.json().catch(() => ({}))
+        throw new Error(data.error ?? 'Could not create booking')
+      }
+      const { booking } = (await bookingRes.json()) as { booking: { id: string } }
+
+      const payRes = await fetch('/api/payments/initiate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookingId: booking.id }),
+      })
+      const payData = await payRes.json().catch(() => ({}))
+      if (!payRes.ok) throw new Error(payData.error ?? 'Payment init failed')
+
+      if (payData.mode === 'paystack' && payData.authorization_url) {
+        window.location.href = payData.authorization_url as string
+        return
+      }
+
+      const search = new URLSearchParams({
+        id: booking.id,
+        ref: payData.reference,
+        name: passengerName,
+      })
+      router.push(`/${locale}/rides/confirmed?${search.toString()}`)
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : 'Something went wrong')
+    } finally {
+      setProcessing(false)
+    }
   }
 
   const methods: { id: PaymentMethod; label: string; desc: string; icon: string }[] = [
-    { id: 'card', label: 'Credit / Debit Card', desc: 'Visa, Mastercard, Verve', icon: 'credit_card' },
-    { id: 'mobile-money', label: 'Mobile Money', desc: 'MTN MoMo, Orange Money, T-Money', icon: 'smartphone' },
-    { id: 'bank-transfer', label: 'Bank Transfer', desc: 'Direct wire transfer for corporate bookings', icon: 'account_balance' },
+    { id: 'card', label: t('methodCard'), desc: t('methodCardDesc'), icon: 'credit_card' },
+    { id: 'mobile-money', label: t('methodMobile'), desc: t('methodMobileDesc'), icon: 'smartphone' },
+    { id: 'bank-transfer', label: t('methodBank'), desc: t('methodBankDesc'), icon: 'account_balance' },
   ]
 
   return (
@@ -66,15 +113,15 @@ function PaymentContent() {
           className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-primary mb-6 group transition-colors"
         >
           <span className="material-symbols-outlined text-[18px] group-hover:-translate-x-0.5 transition-transform">arrow_back</span>
-          Back to Passenger Details
+          {t('back')}
         </Link>
 
         {/* Road journey tracker */}
         <JourneyTracker steps={[
-          { n: 1, label: 'Search', done: true },
-          { n: 2, label: 'Details', done: true },
-          { n: 3, label: 'Payment', active: true },
-          { n: 4, label: 'Confirmed' },
+          { n: 1, label: t('stepSearch'), done: true },
+          { n: 2, label: t('stepDetails'), done: true },
+          { n: 3, label: t('stepPayment'), active: true },
+          { n: 4, label: t('stepConfirmed') },
         ]} />
 
         <form onSubmit={handlePay}>
@@ -82,7 +129,7 @@ function PaymentContent() {
             {/* LEFT: payment methods */}
             <div className="lg:col-span-7 space-y-5">
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                <h1 className="text-xl font-bold mb-6" style={{ color: '#3e004c' }}>Payment Method</h1>
+                <h1 className="text-xl font-bold mb-6" style={{ color: '#3e004c' }}>{t('paymentMethod')}</h1>
 
                 <div className="space-y-4">
                   {methods.map((m) => (
@@ -105,7 +152,7 @@ function PaymentContent() {
                           {m.id === 'card' && method === 'card' && (
                             <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
                               <div className="col-span-2">
-                                <label className="block text-xs font-medium text-gray-600 mb-1.5">Card Number</label>
+                                <label className="block text-xs font-medium text-gray-600 mb-1.5">{t('cardNumber')}</label>
                                 <div className="relative">
                                   <input
                                     type="text"
@@ -119,7 +166,7 @@ function PaymentContent() {
                                 </div>
                               </div>
                               <div>
-                                <label className="block text-xs font-medium text-gray-600 mb-1.5">Expiry Date</label>
+                                <label className="block text-xs font-medium text-gray-600 mb-1.5">{t('cardExpiry')}</label>
                                 <input
                                   type="text"
                                   value={card.expiry}
@@ -130,7 +177,7 @@ function PaymentContent() {
                                 />
                               </div>
                               <div>
-                                <label className="block text-xs font-medium text-gray-600 mb-1.5">CVC/CVV</label>
+                                <label className="block text-xs font-medium text-gray-600 mb-1.5">{t('cardCVC')}</label>
                                 <input
                                   type="password"
                                   value={card.cvv}
@@ -146,21 +193,21 @@ function PaymentContent() {
                           {/* Mobile money info */}
                           {m.id === 'mobile-money' && method === 'mobile-money' && (
                             <div className="mt-4 p-4 bg-gray-50 rounded-xl">
-                              <p className="text-xs text-gray-500">After confirming, you'll receive a payment prompt on your mobile number. Supports MTN MoMo, Orange Money, and T-Money.</p>
+                              <p className="text-xs text-gray-500">{t('mobileInfo')}</p>
                             </div>
                           )}
 
                           {/* Bank transfer info */}
                           {m.id === 'bank-transfer' && method === 'bank-transfer' && (
                             <div className="mt-4 p-4 bg-gray-50 rounded-xl space-y-2">
-                              <p className="text-xs font-semibold text-gray-900">Beninfy Corporate Account</p>
-                              {[['Bank', 'Zenith Bank Nigeria'], ['Account No.', '2089471234'], ['Sort Code', '057']].map(([label, val]) => (
+                              <p className="text-xs font-semibold text-gray-900">{t('bankTitle')}</p>
+                              {[[t('bankLabel'), 'Zenith Bank Nigeria'], [t('accountLabel'), '2089471234'], [t('sortLabel'), '057']].map(([label, val]) => (
                                 <div key={label} className="flex justify-between text-xs">
                                   <span className="text-gray-400">{label}</span>
                                   <span className="font-mono text-gray-900">{val}</span>
                                 </div>
                               ))}
-                              <p className="text-xs mt-2" style={{ color: '#735c00' }}>Use your booking reference as payment description.</p>
+                              <p className="text-xs mt-2" style={{ color: '#735c00' }}>{t('bankRef')}</p>
                             </div>
                           )}
                         </div>
@@ -172,9 +219,9 @@ function PaymentContent() {
                 {/* Security badges */}
                 <div className="flex flex-wrap items-center justify-center gap-3 mt-6 pt-6 border-t border-gray-100">
                   {[
-                    { icon: 'verified_user', label: 'SSL Encrypted' },
-                    { icon: 'security', label: 'PCI-DSS Compliant' },
-                    { icon: 'gpp_good', label: 'Secure Checkout' },
+                    { icon: 'verified_user', label: t('sslBadge') },
+                    { icon: 'security', label: t('pciDss') },
+                    { icon: 'gpp_good', label: t('secureCheckout') },
                   ].map(({ icon, label }) => (
                     <div key={label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/5">
                       <span className="material-symbols-outlined text-[16px]" style={{ color: '#3e004c' }}>{icon}</span>
@@ -190,7 +237,7 @@ function PaymentContent() {
               <div className="sticky top-24 space-y-4">
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                   <div className="px-6 py-4" style={{ background: '#3e004c' }}>
-                    <p className="text-xs font-bold uppercase tracking-widest text-white/70">Ride Summary</p>
+                    <p className="text-xs font-bold uppercase tracking-widest text-white/70">{t('rideSummary')}</p>
                   </div>
                   <div className="p-6 space-y-5">
                   {/* Vehicle + route */}
@@ -210,21 +257,21 @@ function PaymentContent() {
                   {/* Price breakdown */}
                   <div className="space-y-2.5 py-4 border-y border-gray-100">
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Ride Fare</span>
+                      <span className="text-gray-500">{t('rideFare')}</span>
                       <span className="font-medium text-gray-900">₦<CountUp end={basePrice ?? 0} separator="," duration={1.2} /></span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Border Protocol Fees</span>
+                      <span className="text-gray-500">{t('borderFee')}</span>
                       <span className="font-medium text-gray-900">₦<CountUp end={borderFee} separator="," duration={1.2} /></span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Service Fee (5%)</span>
+                      <span className="text-gray-500">{t('serviceFee')}</span>
                       <span className="font-medium text-gray-900">₦<CountUp end={serviceFee} separator="," duration={1.2} /></span>
                     </div>
                   </div>
 
                   <div className="flex justify-between items-center">
-                    <span className="font-bold text-gray-900">Total Amount</span>
+                    <span className="font-bold text-gray-900">{t('totalAmount')}</span>
                     <span className="font-bold text-base" style={{ color: '#735c00' }}>₦<CountUp end={total} separator="," duration={1.5} /></span>
                   </div>
 
@@ -237,19 +284,23 @@ function PaymentContent() {
                     {processing ? (
                       <>
                         <span className="material-symbols-outlined animate-spin text-[20px]">progress_activity</span>
-                        Processing…
+                        {t('processing')}
                       </>
                     ) : (
                       <>
                         <span className="material-symbols-outlined text-[20px]">lock</span>
-                        Pay Securely {formatNGN(total)}
+                        {t('payButton')} {formatNGN(total)}
                       </>
                     )}
                   </button>
 
+                  {errorMsg && (
+                    <p className="text-xs text-red-500 text-center -mt-2">{errorMsg}</p>
+                  )}
+
                   <p className="text-center text-xs text-gray-400 mt-2">
-                    By paying you agree to our{' '}
-                    <Link href={`/${locale}/terms`} className="underline hover:text-primary">Terms of Service</Link>
+                    {t('termsNote')}{' '}
+                    <Link href={`/${locale}/terms`} className="underline hover:text-primary">{t('termsLink')}</Link>
                   </p>
                   </div>
                 </div>
@@ -258,8 +309,8 @@ function PaymentContent() {
                 <div className="rounded-xl p-4 border flex items-start gap-3" style={{ background: '#fffdf0', borderColor: '#f0e6b0' }}>
                   <span className="material-symbols-outlined shrink-0 mt-0.5" style={{ fontSize: 18, color: '#735c00' }}>verified</span>
                   <div>
-                    <p className="text-xs font-semibold mb-0.5" style={{ color: '#735c00' }}>Beninfy Guarantee</p>
-                    <p className="text-xs text-gray-500 leading-relaxed">All payments held in escrow until your journey completes. 24/7 support included.</p>
+                    <p className="text-xs font-semibold mb-0.5" style={{ color: '#735c00' }}>{t('guarantee')}</p>
+                    <p className="text-xs text-gray-500 leading-relaxed">{t('guaranteeDesc')}</p>
                   </div>
                 </div>
               </div>

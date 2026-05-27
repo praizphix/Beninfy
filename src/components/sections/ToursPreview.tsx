@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { getLocale, getTranslations } from 'next-intl/server'
 import { tours } from '@/data/tours'
 import { formatNGN } from '@/lib/utils'
 
@@ -13,23 +14,25 @@ const TOUR_IMAGES: Record<string, string> = {
     'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?auto=format&fit=crop&w=800&q=80',
 }
 
-const TOUR_TAGS: Record<string, string> = {
-  'benin-history-lake': 'History & Heritage',
-  'lome-aneho-beach': 'Beach & Relaxation',
-  'accra-cape-coast': 'Ghana Experience',
-  'west-africa-grand-tour': 'Grand Tour',
+const TOUR_TAG_KEYS: Record<string, string> = {
+  'benin-history-lake': 'tagHistory',
+  'lome-aneho-beach': 'tagBeach',
+  'accra-cape-coast': 'tagGhana',
+  'west-africa-grand-tour': 'tagGrand',
 }
 
 const previewTours = tours.slice(0, 3)
 
-export default function ToursPreview() {
+export default async function ToursPreview() {
+  const locale = await getLocale()
+  const t = await getTranslations('tours')
   return (
     <section className="py-20 max-w-[1280px] mx-auto px-4 md:px-10">
       {/* Header */}
       <div className="text-center mb-16">
-        <h2 className="text-headline-lg">Exclusive Tourism Packages</h2>
+        <h2 className="text-headline-lg">{t('sectionTitle')}</h2>
         <p className="text-on-surface-variant mt-2 text-body-md">
-          Discover the heart of West Africa with our curated, private tours.
+          {t('subtitle')}
         </p>
       </div>
 
@@ -38,7 +41,7 @@ export default function ToursPreview() {
         {previewTours.map((tour) => (
           <Link
             key={tour.id}
-            href={`/en/tours/${tour.id}`}
+            href={`/${locale}/tours/${tour.id}`}
             className="relative rounded-2xl overflow-hidden aspect-[4/5] group cursor-pointer shadow-lg block"
           >
             <img
@@ -52,15 +55,15 @@ export default function ToursPreview() {
             {/* Content */}
             <div className="absolute bottom-0 left-0 p-8 text-white w-full">
               <span className="bg-secondary text-on-secondary px-3 py-1 rounded-full text-label-sm mb-4 inline-block">
-                {TOUR_TAGS[tour.id]}
+                {t(TOUR_TAG_KEYS[tour.id] ?? 'tagHistory')}
               </span>
               <h3 className="text-headline-md">{tour.title}</h3>
               <p className="text-body-sm text-surface-variant mt-2">
-                {tour.destination} ({tour.durationDays} Days)
+                {tour.destination} ({t('durationDays', { days: tour.durationDays })})
               </p>
               <div className="mt-6 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <span className="text-headline-sm text-secondary-fixed">
-                  From {formatNGN(tour.startingFromNGN)}
+                  {t('from')} {formatNGN(tour.startingFromNGN)}
                 </span>
                 <span className="material-symbols-outlined text-[32px]">arrow_circle_right</span>
               </div>
@@ -72,10 +75,10 @@ export default function ToursPreview() {
       {/* CTA */}
       <div className="text-center mt-12">
         <Link
-          href="/en/tours"
+          href={`/${locale}/tours`}
           className="inline-flex items-center gap-2 rounded-xl border border-primary text-primary px-8 py-4 text-label-md hover:bg-primary hover:text-on-primary transition-all"
         >
-          View All Packages
+          {t('viewAll')}
           <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
         </Link>
       </div>

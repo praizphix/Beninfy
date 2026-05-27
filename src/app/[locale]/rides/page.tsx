@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { useSearchParams } from 'next/navigation'
 import { routes, bookingCities } from '@/data/routes'
 import { vehicles } from '@/data/vehicles'
@@ -37,10 +37,14 @@ export default function RidesPage() {
 
 function RidesContent() {
   const locale = useLocale()
+  const t = useTranslations('ridesPage')
   const searchParams = useSearchParams()
   const [from, setFrom] = useState(searchParams.get('from') ?? 'Lagos')
   const [to, setTo] = useState(searchParams.get('to') ?? 'Cotonou')
   const [date, setDate] = useState(searchParams.get('date') ?? '')
+  const [passengers, setPassengers] = useState<number>(
+    Math.max(1, parseInt(searchParams.get('passengers') ?? '1', 10) || 1)
+  )
   const [selectedVehicles, setSelectedVehicles] = useState<VehicleId[]>(
     searchParams.get('vehicle') ? [searchParams.get('vehicle') as VehicleId] : []
   )
@@ -50,6 +54,10 @@ function RidesContent() {
     if (searchParams.get('from')) setFrom(searchParams.get('from')!)
     if (searchParams.get('to')) setTo(searchParams.get('to')!)
     if (searchParams.get('date')) setDate(searchParams.get('date')!)
+    if (searchParams.get('passengers')) {
+      const n = parseInt(searchParams.get('passengers')!, 10)
+      if (n > 0) setPassengers(n)
+    }
   }, [searchParams])
   const today = new Date().toISOString().split('T')[0]
 
@@ -83,22 +91,22 @@ function RidesContent() {
         {/* Breadcrumb + header */}
         <div className="mb-8">
           <div className="flex items-center gap-2 text-on-surface-variant text-label-md mb-3">
-            <Link href={`/${locale}`} className="hover:text-primary">Home</Link>
+            <Link href={`/${locale}`} className="hover:text-primary">{t('breadcrumbHome')}</Link>
             <span className="material-symbols-outlined text-[16px]">chevron_right</span>
-            <span>Rides</span>
+            <span>{t('breadcrumbRides')}</span>
             {matchedRoute && (
               <>
                 <span className="material-symbols-outlined text-[16px]">chevron_right</span>
-                <span>Search Results</span>
+                <span>{t('breadcrumbResults')}</span>
               </>
             )}
           </div>
           <h1 className="text-display-lg text-primary">
-            {matchedRoute ? `${matchedRoute.from} to ${matchedRoute.to}` : 'Search Rides'}
+            {matchedRoute ? `${matchedRoute.from} to ${matchedRoute.to}` : t('pageTitle')}
           </h1>
           {matchedRoute && (
             <p className="text-on-surface-variant text-body-md mt-1">
-              Cross-border executive transport • Est. duration: {matchedRoute.durationHours}h
+              {t('tagline')} • {t('estDuration')}: {matchedRoute.durationHours}h
             </p>
           )}
         </div>
@@ -108,10 +116,10 @@ function RidesContent() {
           <aside className="lg:col-span-3 bg-surface-container-low p-6 rounded-2xl space-y-8 lg:sticky lg:top-24">
             {/* Route search */}
             <div>
-              <h3 className="text-label-md text-primary mb-4">Route</h3>
+              <h3 className="text-label-md text-primary mb-4">{t('labelRoute')}</h3>
               <div className="space-y-3">
                 <div>
-                  <label className="text-label-sm text-on-surface-variant mb-1 block">From</label>
+                  <label className="text-label-sm text-on-surface-variant mb-1 block">{t('labelFrom')}</label>
                   <div className="flex items-center gap-2 border border-outline-variant rounded-lg p-2.5 focus-within:border-primary bg-surface-container-lowest transition-colors">
                     <span className="material-symbols-outlined text-primary text-[18px]">location_on</span>
                     <select
@@ -126,7 +134,7 @@ function RidesContent() {
                   </div>
                 </div>
                 <div>
-                  <label className="text-label-sm text-on-surface-variant mb-1 block">To</label>
+                  <label className="text-label-sm text-on-surface-variant mb-1 block">{t('labelTo')}</label>
                   <div className="flex items-center gap-2 border border-outline-variant rounded-lg p-2.5 focus-within:border-primary bg-surface-container-lowest transition-colors">
                     <span className="material-symbols-outlined text-primary text-[18px]">near_me</span>
                     <select
@@ -141,7 +149,7 @@ function RidesContent() {
                   </div>
                 </div>
                 <div>
-                  <label className="text-label-sm text-on-surface-variant mb-1 block">Date</label>
+                  <label className="text-label-sm text-on-surface-variant mb-1 block">{t('labelDate')}</label>
                   <div className="flex items-center gap-2 border border-outline-variant rounded-lg p-2.5 focus-within:border-primary bg-surface-container-lowest transition-colors">
                     <span className="material-symbols-outlined text-primary text-[18px]">calendar_month</span>
                     <input
@@ -153,12 +161,26 @@ function RidesContent() {
                     />
                   </div>
                 </div>
+                <div>
+                  <label className="text-label-sm text-on-surface-variant mb-1 block">Passengers</label>
+                  <div className="flex items-center gap-2 border border-outline-variant rounded-lg p-2.5 focus-within:border-primary bg-surface-container-lowest transition-colors">
+                    <span className="material-symbols-outlined text-primary text-[18px]">group</span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={20}
+                      value={passengers}
+                      onChange={(e) => setPassengers(Math.max(1, Math.min(20, parseInt(e.target.value, 10) || 1)))}
+                      className="bg-transparent border-none p-0 focus:ring-0 w-full text-body-sm outline-none"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
             {/* Vehicle type filter */}
             <div>
-              <h3 className="text-label-md text-primary mb-4">Vehicle Type</h3>
+              <h3 className="text-label-md text-primary mb-4">{t('labelVehicle')}</h3>
               <div className="space-y-3">
                 {vehicles.map((v) => (
                   <label key={v.id} className="flex items-center gap-3 cursor-pointer">
@@ -180,7 +202,7 @@ function RidesContent() {
                 onClick={() => setSelectedVehicles([])}
                 className="w-full border border-primary text-primary py-3 rounded-xl text-label-md hover:bg-primary-container hover:text-on-primary-container transition-colors"
               >
-                Reset Filters
+                {t('resetFilters')}
               </button>
             )}
           </aside>
@@ -190,8 +212,8 @@ function RidesContent() {
             {!matchedRoute && (
               <div className="bg-surface-container-low rounded-2xl p-8 text-center">
                 <span className="material-symbols-outlined text-primary text-[48px] mb-4 block">route</span>
-                <h3 className="text-headline-sm mb-2">Select a Route</h3>
-                <p className="text-on-surface-variant text-body-md">Choose your departure and destination city to see available vehicles.</p>
+                <h3 className="text-headline-sm mb-2">{t('selectRoute')}</h3>
+                <p className="text-on-surface-variant text-body-md">{t('selectRoutePlaceholder')}</p>
               </div>
             )}
 
@@ -227,35 +249,35 @@ function RidesContent() {
                         {price ? (
                           <span className="text-headline-sm text-secondary">{price}</span>
                         ) : (
-                          <span className="text-label-sm text-on-surface-variant">Select route for price</span>
+                          <span className="text-label-sm text-on-surface-variant">{t('priceSelect')}</span>
                         )}
                       </div>
                       <p className="text-on-surface-variant text-body-sm mb-4">{vehicle.description}</p>
                       <div className="grid grid-cols-2 gap-y-3 mb-4">
                         <div className="flex items-center gap-2">
                           <span className="material-symbols-outlined text-primary text-[20px]">person</span>
-                          <span className="text-label-md">{vehicle.capacity} Passengers</span>
+                          <span className="text-label-md">{vehicle.capacity} {t('passengers')}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="material-symbols-outlined text-primary text-[20px]">luggage</span>
-                          <span className="text-label-md">{vehicle.luggageCapacity} Bags</span>
+                          <span className="text-label-md">{vehicle.luggageCapacity} {t('bags')}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="material-symbols-outlined text-primary text-[20px]">ac_unit</span>
-                          <span className="text-label-md">Full AC</span>
+                          <span className="text-label-md">{t('fullAC')}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="material-symbols-outlined text-primary text-[20px]">verified_user</span>
-                          <span className="text-label-md">Border Protocol Inc.</span>
+                          <span className="text-label-md">{t('borderProtocol')}</span>
                         </div>
                       </div>
                     </div>
                     <div className="flex gap-3">
                       <Link
-                        href={`/${locale}/rides/book?vehicle=${vehicle.id}&from=${from}&to=${to}&date=${date}`}
+                        href={`/${locale}/rides/book?vehicle=${vehicle.id}&from=${from}&to=${to}&date=${date}&passengers=${passengers}`}
                         className="flex-1 bg-primary text-on-primary py-3 rounded-xl text-label-md text-center hover:opacity-95 active:scale-[0.98] transition-all"
                       >
-                        Book Now
+                        {t('bookNow')}
                       </Link>
                       <Link
                         href={`/${locale}/fleet#${vehicle.id}`}

@@ -1,0 +1,160 @@
+// Prisma schema for Beninfy backend
+// Models: User, Booking, Vehicle, Route, Tour, Payment
+// Auth.js compatible
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String   @id @default(cuid())
+  name          String?
+  email         String?  @unique
+  emailVerified DateTime?
+  image         String?
+  phone         String?
+  hashedPassword String?
+  role          String   @default("user")
+  bookings      Booking[]
+  accounts      Account[]
+  sessions      Session[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?
+  access_token       String?
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?
+  session_state      String?
+  user               User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Booking {
+  id          String   @id @default(cuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  from        String
+  to          String
+  date        DateTime
+  vehicleId   String
+  vehicle     Vehicle  @relation(fields: [vehicleId], references: [id])
+  passengers  Int
+  priceNGN    Int
+  status      String   @default("pending")
+  paymentId   String?
+  payments    Payment[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Vehicle {
+  id              String   @id
+  name            String
+  nameFr          String?
+  capacity        Int
+  luggageCapacity Int      @default(0)
+  available       Boolean  @default(true)
+  image           String?
+  description     String?
+  descriptionFr   String?
+  badge           String?
+  badgeFr         String?
+  features        String[] @default([])
+  featuresFr      String[] @default([])
+  basePriceNGN    Int?
+  bookings        Booking[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Route {
+  id              String   @id
+  from            String
+  fromCode        String?
+  fromCountry     String?
+  to              String
+  toCode          String?
+  toCountry       String?
+  durationHours   Float
+  popular         Boolean  @default(false)
+  image           String?
+  description     String?
+  descriptionFr   String?
+  borderCrossings String[] @default([])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Tour {
+  id              String   @id
+  title           String
+  titleFr         String?
+  destination     String?
+  destinationFr   String?
+  country         String
+  countryFr       String?
+  durationDays    Int
+  startingFromNGN Int
+  image           String?
+  description     String
+  descriptionFr   String?
+  highlights      String[] @default([])
+  highlightsFr    String[] @default([])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model BorderFee {
+  id              String   @id
+  country         String
+  countryFr       String?
+  border          String
+  borderFr        String?
+  countries       String[] @default([])
+  feePerPersonNGN Int
+  feeRoundTripNGN Int
+  popular         Boolean  @default(false)
+  icon            String?
+  services        String[] @default([])
+  servicesFr      String[] @default([])
+  documents       String[] @default([])
+  documentsFr     String[] @default([])
+  tips            String[] @default([])
+  tipsFr          String[] @default([])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Payment {
+  id          String   @id @default(cuid())
+  bookingId   String
+  amountNGN   Int
+  status      String
+  reference   String   @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  booking     Booking  @relation(fields: [bookingId], references: [id])
+}

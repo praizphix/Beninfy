@@ -12,15 +12,43 @@ export default function RegisterPage() {
   const [form, setForm] = useState({ fullName: '', email: '', phone: '', password: '' })
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const set = (f: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((p) => ({ ...p, [f]: e.target.value }))
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
     setLoading(true)
-    await new Promise((r) => setTimeout(r, 1500))
-    router.push(`/${locale}/dashboard`)
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.fullName,
+          email: form.email,
+          password: form.password,
+          phone: form.phone || undefined,
+        }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || 'Registration failed')
+      }
+      const { signIn } = await import('next-auth/react')
+      const result = await signIn('credentials', {
+        email: form.email,
+        password: form.password,
+        redirect: false,
+      })
+      if (result?.error) throw new Error('Could not sign in')
+      router.push(`/${locale}/dashboard`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -148,6 +176,7 @@ export default function RegisterPage() {
             >
               {loading ? 'Creating account…' : 'Create Account'}
             </button>
+            {error && <p className="text-body-sm text-error mt-1">{error}</p>}
           </form>
 
           <p className="text-center text-body-sm text-on-surface-variant mt-6">

@@ -2,18 +2,19 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils'
 
 const BOTTOM_NAV = [
-  { href: '/rides', icon: 'directions_car', label: 'Rides', labelFr: 'Trajets' },
-  { href: '/tours', icon: 'map', label: 'Tours', labelFr: 'Tours' },
-  { href: '/fleet', icon: 'airport_shuttle', label: 'Fleet', labelFr: 'Flotte' },
-  { href: '/border-info', icon: 'security', label: 'Safety', labelFr: 'Sécurité' },
+  { href: '/rides', icon: 'directions_car', key: 'rides' },
+  { href: '/tours', icon: 'map', key: 'tours' },
+  { href: '/fleet', icon: 'airport_shuttle', key: 'fleet' },
+  { href: '/border-info', icon: 'security', key: 'borderInfo' },
 ] as const
 
 export default function BottomNav() {
   const locale = useLocale()
+  const t = useTranslations('nav')
   const pathname = usePathname()
 
   const isActive = (href: string) => pathname.includes(href)
@@ -37,7 +38,7 @@ export default function BottomNav() {
               {item.icon}
             </span>
             <span className="text-label-sm mt-0.5">
-              {locale === 'fr' ? item.labelFr : item.label}
+              {t(item.key)}
             </span>
           </Link>
         )

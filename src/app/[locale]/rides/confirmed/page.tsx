@@ -5,11 +5,15 @@ import { getRouteBasePrice } from '@/data/pricing'
 import { formatNGN } from '@/lib/utils'
 import ConfirmationHeader from '@/components/booking/ConfirmationHeader'
 import PulseStatus from '@/components/shared/PulseStatus'
+import { getTranslations, setRequestLocale } from 'next-intl/server'
+import { auth } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
 import type { VehicleId, RouteId } from '@/types'
 
 interface Props {
   params: Promise<{ locale: string }>
   searchParams: Promise<{
+    id?: string
     vehicle?: string
     from?: string
     to?: string
@@ -21,21 +25,33 @@ interface Props {
 
 export default async function BookingConfirmedPage({ params, searchParams }: Props) {
   const { locale } = await params
+  setRequestLocale(locale)
   const sp = await searchParams
+  const t = await getTranslations('confirmedPage')
 
-  const vehicleId = (sp.vehicle ?? 'saloon') as VehicleId
-  const from = sp.from ?? 'Lagos'
-  const to = sp.to ?? 'Cotonou'
-  const date = sp.date ?? ''
-  const bookingRef = sp.ref ?? `BFY-${Math.floor(10000 + Math.random() * 90000)}-XP`
+  let dbBooking: Awaited<ReturnType<typeof prisma.booking.findUnique>> = null
+  if (sp.id) {
+    const session = await auth()
+    if (session?.user?.id) {
+      const found = await prisma.booking.findUnique({ where: { id: sp.id } })
+      if (found && found.userId === session.user.id) dbBooking = found
+    }
+  }
+
+  const vehicleId = (dbBooking?.vehicleId ?? sp.vehicle ?? 'saloon') as VehicleId
+  const from = dbBooking?.from ?? sp.from ?? 'Lagos'
+  const to = dbBooking?.to ?? sp.to ?? 'Cotonou'
+  const date = dbBooking ? dbBooking.date.toISOString() : (sp.date ?? '')
+  const bookingRef = sp.ref ?? (dbBooking ? `BFY-${dbBooking.id.slice(-8).toUpperCase()}` : `BFY-${Math.floor(10000 + Math.random() * 90000)}-XP`)
   const passengerName = sp.name ?? 'Passenger'
 
   const vehicle = vehicles.find((v) => v.id === vehicleId) ?? vehicles[0]
   const matchedRoute = routes.find((r) => r.from === from && r.to === to)
-  const basePrice = matchedRoute ? getRouteBasePrice(matchedRoute.id as RouteId) : 120000
+  const fallbackBase = matchedRoute ? getRouteBasePrice(matchedRoute.id as RouteId) : 120000
   const borderFee = 5000
-  const serviceFee = Math.round((basePrice ?? 0) * 0.05)
-  const total = (basePrice ?? 0) + borderFee + serviceFee
+  const serviceFee = Math.round((fallbackBase ?? 0) * 0.05)
+  const total = dbBooking?.priceNGN ?? ((fallbackBase ?? 0) + borderFee + serviceFee)
+  const basePrice = dbBooking ? Math.max(0, dbBooking.priceNGN - borderFee - serviceFee) : fallbackBase
 
   const formattedDate = date
     ? new Date(date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
@@ -56,10 +72,10 @@ export default async function BookingConfirmedPage({ params, searchParams }: Pro
             {/* Trip summary card */}
             <div className="md:col-span-8 bg-white rounded-2xl p-7 shadow-sm border border-gray-100 flex flex-col gap-6">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
-                <h2 className="text-xl font-bold text-gray-900">Trip Summary</h2>
+                <h2 className="text-xl font-bold text-gray-900">{t('tripSummary')}</h2>
                 <div className="flex items-center gap-2">
                   <PulseStatus status="on-time" />
-                  <span className="px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider" style={{ background: '#f3e8f8', color: '#3e004c' }}>Premium Transit</span>
+                  <span className="px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider" style={{ background: '#f3e8f8', color: '#3e004c' }}>{t('premiumTransit')}</span>
                 </div>
               </div>
 
@@ -72,11 +88,11 @@ export default async function BookingConfirmedPage({ params, searchParams }: Pro
                 </div>
                 <div className="flex flex-col gap-5 w-full">
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-0.5">Pickup</p>
+                    <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-0.5">{t('pickup')}</p>
                     <p className="text-base font-semibold text-gray-900">{from}</p>
                   </div>
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-0.5">Destination</p>
+                    <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-0.5">{t('destination')}</p>
                     <p className="text-base font-semibold text-gray-900">{to}</p>
                   </div>
                 </div>
@@ -86,17 +102,17 @@ export default async function BookingConfirmedPage({ params, searchParams }: Pro
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
                   <span className="material-symbols-outlined text-gray-400 text-[20px] mb-2 block">calendar_month</span>
-                  <p className="text-xs text-gray-500">Date &amp; Time</p>
+                  <p className="text-xs text-gray-500">{t('dateTime')}</p>
                   <p className="text-sm font-medium text-gray-900 mt-1">{formattedDate}</p>
                 </div>
                 <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
                   <span className="material-symbols-outlined text-gray-400 text-[20px] mb-2 block">airport_shuttle</span>
-                  <p className="text-xs text-gray-500">Vehicle Class</p>
+                  <p className="text-xs text-gray-500">{t('vehicleClass')}</p>
                   <p className="text-sm font-medium text-gray-900 mt-1">{vehicle.name}</p>
                 </div>
                 <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 col-span-2 md:col-span-1">
                   <span className="material-symbols-outlined text-gray-400 text-[20px] mb-2 block">payments</span>
-                  <p className="text-xs text-gray-500">Total Paid</p>
+                  <p className="text-xs text-gray-500">{t('totalPaid')}</p>
                   <p className="text-sm font-medium mt-1" style={{ color: '#735c00' }}>{formatNGN(total)}</p>
                 </div>
               </div>
@@ -104,15 +120,15 @@ export default async function BookingConfirmedPage({ params, searchParams }: Pro
               {/* Price breakdown */}
               <div className="space-y-2 text-sm pt-1 border-t border-gray-100">
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Ride Fare</span>
+                  <span className="text-gray-500">{t('rideFare')}</span>
                   <span className="text-gray-900">{formatNGN(basePrice ?? 0)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Border Protocol Fee</span>
+                  <span className="text-gray-500">{t('borderFee')}</span>
                   <span className="text-gray-900">{formatNGN(borderFee)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Service Fee</span>
+                  <span className="text-gray-500">{t('serviceFee')}</span>
                   <span className="text-gray-900">{formatNGN(serviceFee)}</span>
                 </div>
               </div>
@@ -120,16 +136,16 @@ export default async function BookingConfirmedPage({ params, searchParams }: Pro
 
             {/* What's next card */}
             <div className="md:col-span-4 rounded-2xl p-7 shadow-lg flex flex-col gap-5" style={{ background: '#3e004c', color: '#fff' }}>
-              <h3 className="text-base font-bold">What&apos;s Next?</h3>
+              <h3 className="text-base font-bold">{t('whatsNext')}</h3>
               <p className="text-sm opacity-90">
-                Our team will contact you within <strong style={{ color: '#ffd77a' }}>2 hours</strong> to finalize your personalized pickup details and border clearance protocols.
+                {t('whatsNextDesc', { hours: '2' })}
               </p>
               <div className="mt-auto pt-5 flex flex-col gap-4 border-t border-white/20">
                 {[
-                  { icon: 'verified_user', text: 'Driver vetting complete' },
-                  { icon: 'health_and_safety', text: 'Sanitized vehicle ready' },
-                  { icon: 'support_agent', text: '24/7 concierge support' },
-                  { icon: 'security', text: 'Border clearance pre-arranged' },
+                  { icon: 'verified_user', text: t('check1') },
+                  { icon: 'health_and_safety', text: t('check2') },
+                  { icon: 'support_agent', text: t('check3') },
+                  { icon: 'security', text: t('check4') },
                 ].map(({ icon, text }) => (
                   <div key={text} className="flex items-center gap-3">
                     <span className="material-symbols-outlined text-[18px]" style={{ color: '#ffd77a' }}>{icon}</span>
@@ -147,7 +163,7 @@ export default async function BookingConfirmedPage({ params, searchParams }: Pro
                 style={{ background: '#3e004c' }}
               >
                 <span className="material-symbols-outlined text-[20px]">dashboard</span>
-                Go to Dashboard
+                {t('goDashboard')}
               </Link>
               <button
                 onClick={() => window.print()}
@@ -155,7 +171,7 @@ export default async function BookingConfirmedPage({ params, searchParams }: Pro
                 style={{ color: '#735c00', borderColor: '#735c00' }}
               >
                 <span className="material-symbols-outlined text-[20px]">download</span>
-                Download Receipt
+                {t('downloadReceipt')}
               </button>
               <a
                 href={`https://wa.me/2348000000000?text=My+Beninfy+booking+reference+is+%23${bookingRef}.+I+need+assistance.`}
@@ -164,23 +180,23 @@ export default async function BookingConfirmedPage({ params, searchParams }: Pro
                 className="w-full md:w-auto px-8 py-4 rounded-xl text-sm font-semibold border-2 border-gray-200 text-gray-500 hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2"
               >
                 <span className="material-symbols-outlined text-[20px]">chat</span>
-                WhatsApp Support
+                {t('whatsappSupport')}
               </a>
             </div>
           </div>
 
           {/* Support footer */}
           <div className="mt-16 text-center">
-            <p className="text-sm text-gray-400 mb-4">Need immediate assistance with your crossing?</p>
+            <p className="text-sm text-gray-400 mb-4">{t('needHelp')}</p>
             <div className="flex items-center justify-center gap-6">
               <a href={`/${locale}/about#contact`} className="flex items-center gap-2 text-sm font-medium hover:underline" style={{ color: '#3e004c' }}>
                 <span className="material-symbols-outlined text-[18px]">support_agent</span>
-                Contact Concierge
+                {t('contactConcierge')}
               </a>
               <span className="w-1 h-1 bg-gray-300 rounded-full" />
               <a href={`/${locale}/border-info`} className="flex items-center gap-2 text-sm font-medium hover:underline" style={{ color: '#3e004c' }}>
                 <span className="material-symbols-outlined text-[18px]">help_outline</span>
-                Border FAQ
+                {t('borderFaq')}
               </a>
             </div>
           </div>

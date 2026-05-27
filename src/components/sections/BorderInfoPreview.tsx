@@ -1,20 +1,22 @@
 import Link from 'next/link'
+import { getLocale, getTranslations } from 'next-intl/server'
 import { borderFees } from '@/data/borderFees'
 import { formatNGN } from '@/lib/utils'
 
-export default function BorderInfoPreview() {
+export default async function BorderInfoPreview() {
+  const locale = await getLocale()
+  const t = await getTranslations('border')
   return (
     <section className="py-20 bg-primary-container">
       <div className="max-w-[1280px] mx-auto px-4 md:px-10">
         {/* Header */}
         <div className="text-center mb-12">
           <span className="text-on-primary-container text-label-md tracking-widest uppercase opacity-70">
-            Border Protocols
+            {t('sectionBadge')}
           </span>
-          <h2 className="text-headline-lg text-on-primary mt-2">Cross-Border Fees &amp; Requirements</h2>
+          <h2 className="text-headline-lg text-on-primary mt-2">{t('sectionTitle')}</h2>
           <p className="text-on-primary-container/80 mt-2 max-w-2xl mx-auto text-body-md">
-            We handle everything. Here&apos;s what&apos;s included in your Beninfy booking — transparent, no
-            surprises.
+            {t('sectionSubtitle')}
           </p>
         </div>
 
@@ -41,22 +43,22 @@ export default function BorderInfoPreview() {
               {/* Pricing */}
               <div className="bg-surface-container rounded-xl p-4 mb-4 space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-label-md text-on-surface-variant">One Way</span>
+                  <span className="text-label-md text-on-surface-variant">{t('oneWay')}</span>
                   <span className="text-headline-sm text-secondary font-bold">
                     {formatNGN(border.feePerPersonNGN)}
                     <span className="text-label-sm text-on-surface-variant font-normal">
                       {' '}
-                      /person
+                      {t('perPerson')}
                     </span>
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-label-md text-on-surface-variant">Round Trip</span>
+                  <span className="text-label-md text-on-surface-variant">{t('roundTrip')}</span>
                   <span className="text-headline-sm text-secondary font-bold">
                     {formatNGN(border.feeRoundTripNGN)}
                     <span className="text-label-sm text-on-surface-variant font-normal">
                       {' '}
-                      /person
+                      {t('perPerson')}
                     </span>
                   </span>
                 </div>
@@ -80,10 +82,10 @@ export default function BorderInfoPreview() {
         {/* CTA */}
         <div className="text-center">
           <Link
-            href="/en/border-info"
+            href={`/${locale}/border-info`}
             className="inline-flex items-center gap-2 rounded-xl bg-surface-container-lowest text-primary px-8 py-4 text-label-md hover:shadow-md transition-all"
           >
-            Full Border Protocol Guide
+            {t('viewGuide')}
             <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
           </Link>
         </div>

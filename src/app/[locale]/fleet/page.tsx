@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { vehicles } from '@/data/vehicles'
 import { tourDailyRates, packageRates } from '@/data/pricing'
 import { formatNGN } from '@/lib/utils'
+import { getTranslations, setRequestLocale } from 'next-intl/server'
 
 const VEHICLE_IMAGES: Record<string, string> = {
   saloon: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=800&q=80',
@@ -13,17 +14,23 @@ const VEHICLE_IMAGES: Record<string, string> = {
   coastal: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=800&q=80',
 }
 
-export default function FleetPage() {
+export default async function FleetPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}) {
+  const { locale } = await params
+  setRequestLocale(locale)
+  const t = await getTranslations('fleetPage')
   return (
     <div className="min-h-screen bg-background">
       <main className="mt-16">
         {/* Hero */}
         <section className="py-20 text-center bg-surface-container-low">
           <div className="max-w-[1280px] mx-auto px-4 md:px-10">
-            <h1 className="text-display-lg text-primary mb-4">Our Premium Fleet</h1>
+            <h1 className="text-display-lg text-primary mb-4">{t('heroTitle')}</h1>
             <p className="text-body-lg text-on-surface-variant max-w-2xl mx-auto">
-              Discover the pinnacle of West African logistics. From executive saloons to high-capacity coastal buses,
-              we redefine luxury travel with professional standards.
+              {t('heroSubtitle')}
             </p>
           </div>
         </section>
@@ -31,11 +38,11 @@ export default function FleetPage() {
         {/* Trust badges */}
         <div className="flex flex-wrap justify-center gap-4 py-10 px-4 border-b border-outline-variant">
           {[
-            { icon: 'verified_user', label: 'Verified Drivers' },
-            { icon: 'security', label: 'Security Options' },
-            { icon: 'ac_unit', label: 'Full Climate Control' },
-            { icon: 'wifi', label: 'Onboard Connectivity' },
-            { icon: 'assignment_ind', label: 'Border Protocol Included' },
+            { icon: 'verified_user', label: t('badgeVerified') },
+            { icon: 'security', label: t('badgeSecurity') },
+            { icon: 'ac_unit', label: t('badgeClimate') },
+            { icon: 'wifi', label: t('badgeConnectivity') },
+            { icon: 'assignment_ind', label: t('badgeBorder') },
           ].map(({ icon, label }) => (
             <div key={label} className="flex items-center gap-2 bg-primary/5 px-4 py-2 rounded-full border border-primary/10">
               <span className="material-symbols-outlined text-primary icon-fill text-[18px]">{icon}</span>
@@ -78,30 +85,30 @@ export default function FleetPage() {
                 <div className="grid grid-cols-2 gap-3 mb-5">
                   <div className="flex items-center gap-2">
                     <span className="material-symbols-outlined text-on-surface-variant text-[18px]">person</span>
-                    <span className="text-label-md">{v.capacity} Passengers</span>
+                    <span className="text-label-md">{v.capacity} {t('passengers')}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="material-symbols-outlined text-on-surface-variant text-[18px]">luggage</span>
-                    <span className="text-label-md">{v.luggageCapacity} Bags</span>
+                    <span className="text-label-md">{v.luggageCapacity} {t('bags')}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="material-symbols-outlined text-on-surface-variant text-[18px]">ac_unit</span>
-                    <span className="text-label-md">Full AC</span>
+                    <span className="text-label-md">{t('fullAC')}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="material-symbols-outlined text-on-surface-variant text-[18px]">verified_user</span>
-                    <span className="text-label-md">Border Protocol</span>
+                    <span className="text-label-md">{t('borderProtocol')}</span>
                   </div>
                 </div>
 
                 {/* Pricing tiers */}
                 <div className="bg-surface-container rounded-xl p-4 mb-5 space-y-2">
                   <div className="flex justify-between text-label-sm">
-                    <span className="text-on-surface-variant">Daily Rate</span>
+                    <span className="text-on-surface-variant">{t('dailyRate')}</span>
                     <span className="text-secondary font-semibold">{formatNGN(tourDailyRates[v.id])}</span>
                   </div>
                   <div className="flex justify-between text-label-sm">
-                    <span className="text-on-surface-variant">1.5-Day Package</span>
+                    <span className="text-on-surface-variant">{t('packageRate')}</span>
                     <span className="text-secondary font-semibold">{formatNGN(packageRates[v.id])}</span>
                   </div>
                 </div>
@@ -117,10 +124,10 @@ export default function FleetPage() {
                 </ul>
 
                 <Link
-                  href="/en/rides"
+                  href={`/${locale}/rides`}
                   className="block w-full border-2 border-secondary text-secondary py-3 rounded-xl text-label-md text-center hover:bg-secondary-container/20 transition-colors"
                 >
-                  Book This Vehicle
+                  {t('bookVehicle')}
                 </Link>
               </div>
             </div>
@@ -130,15 +137,15 @@ export default function FleetPage() {
         {/* Bottom CTA */}
         <section className="bg-primary py-16 text-center">
           <div className="max-w-[1280px] mx-auto px-4 md:px-10">
-            <h2 className="text-headline-lg text-on-primary mb-4">Need a Custom Vehicle?</h2>
+            <h2 className="text-headline-lg text-on-primary mb-4">{t('customTitle')}</h2>
             <p className="text-on-primary/80 text-body-lg mb-8 max-w-xl mx-auto">
-              Corporate convoys, diplomatic escorts, or large group travel — we can accommodate any requirement.
+              {t('customDesc')}
             </p>
             <Link
-              href="/en/about#contact"
+              href={`/${locale}/about#contact`}
               className="inline-flex items-center gap-2 bg-secondary text-on-secondary px-10 py-4 rounded-xl text-headline-sm hover:bg-secondary-container hover:text-on-secondary-container transition-all"
             >
-              Contact Us
+              {t('contactUs')}
               <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
             </Link>
           </div>

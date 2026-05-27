@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { tours } from '@/data/tours'
 import { formatNGN } from '@/lib/utils'
+import { getTranslations, setRequestLocale } from 'next-intl/server'
 
 const TOUR_IMAGES: Record<string, string> = {
   'benin-history-lake': 'https://images.unsplash.com/photo-1612890009000-b9a73c018c85?auto=format&fit=crop&w=800&q=80',
@@ -10,14 +11,16 @@ const TOUR_IMAGES: Record<string, string> = {
 }
 
 const TOUR_CATEGORIES: Record<string, string> = {
-  'benin-history-lake': 'History & Heritage',
-  'lome-aneho-beach': 'Beach & Relaxation',
-  'accra-cape-coast': 'Ghana Experience',
-  'west-africa-grand-tour': 'Grand Tour',
+  'benin-history-lake': 'tagHistory',
+  'lome-aneho-beach': 'tagBeach',
+  'accra-cape-coast': 'tagGhana',
+  'west-africa-grand-tour': 'tagGrand',
 }
 
 export default async function ToursPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params
+  setRequestLocale(locale)
+  const t = await getTranslations('toursPage')
 
   return (
     <div className="min-h-screen bg-background">
@@ -30,10 +33,10 @@ export default async function ToursPage({ params }: { params: Promise<{ locale: 
           }}
         >
           <div className="max-w-[1280px] mx-auto px-4 md:px-10">
-            <span className="text-secondary-container text-label-md tracking-widest uppercase">Exclusive Packages</span>
-            <h1 className="text-display-lg text-white mt-3 mb-4">West African Tours</h1>
+            <span className="text-secondary-container text-label-md tracking-widest uppercase">{t('badge')}</span>
+            <h1 className="text-display-lg text-white mt-3 mb-4">{t('title')}</h1>
             <p className="text-body-lg text-white/80 max-w-2xl mx-auto">
-              Curated, private tourism experiences across Benin, Togo and Ghana. Bilingual guides, premium vehicles, and seamless border crossing included.
+              {t('subtitle')}
             </p>
           </div>
         </section>
@@ -53,10 +56,10 @@ export default async function ToursPage({ params }: { params: Promise<{ locale: 
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute top-4 left-4 bg-secondary text-on-secondary px-3 py-1 rounded-full text-label-sm">
-                    {TOUR_CATEGORIES[tour.id]}
+                    {t(TOUR_CATEGORIES[tour.id] as 'tagHistory' | 'tagBeach' | 'tagGhana' | 'tagGrand')}
                   </div>
                   <div className="absolute top-4 right-4 bg-surface-container-lowest/90 backdrop-blur-sm px-3 py-1 rounded-full text-label-sm text-primary">
-                    {tour.durationDays} Days
+                    {tour.durationDays} {t('days')}
                   </div>
                 </div>
 
@@ -64,7 +67,7 @@ export default async function ToursPage({ params }: { params: Promise<{ locale: 
                   <div className="flex justify-between items-start mb-2">
                     <h2 className="text-headline-sm text-on-surface">{tour.title}</h2>
                     <span className="text-secondary text-headline-sm shrink-0 ml-2">
-                      From {formatNGN(tour.startingFromNGN)}
+                      {t('from')} {formatNGN(tour.startingFromNGN)}
                     </span>
                   </div>
                   <p className="text-on-surface-variant text-body-sm mb-4">{tour.description}</p>
@@ -76,7 +79,7 @@ export default async function ToursPage({ params }: { params: Promise<{ locale: 
                     </div>
                     <div className="flex items-center gap-1">
                       <span className="material-symbols-outlined text-[18px] text-primary">schedule</span>
-                      {tour.durationDays} days
+                      {tour.durationDays} {t('days')}
                     </div>
                   </div>
 
@@ -94,13 +97,13 @@ export default async function ToursPage({ params }: { params: Promise<{ locale: 
                       href={`/${locale}/tours/${tour.id}`}
                       className="flex-1 bg-primary text-on-primary py-3 rounded-xl text-label-md text-center hover:opacity-95 active:scale-[0.98] transition-all"
                     >
-                      View Package
+                      {t('viewPackage')}
                     </Link>
                     <Link
                       href={`/${locale}/rides`}
                       className="px-5 border-2 border-secondary text-secondary rounded-xl text-label-md text-center hover:bg-secondary-container/20 transition-colors flex items-center"
                     >
-                      Book Transport
+                      {t('bookTransport')}
                     </Link>
                   </div>
                 </div>
@@ -110,16 +113,16 @@ export default async function ToursPage({ params }: { params: Promise<{ locale: 
 
           <div className="mt-16 bg-primary-container rounded-2xl p-8 flex flex-col md:flex-row items-center justify-between gap-6">
             <div>
-              <h3 className="text-headline-md text-on-primary mb-2">Custom Tour Package?</h3>
+              <h3 className="text-headline-md text-on-primary mb-2">{t('customTitle')}</h3>
               <p className="text-on-primary-container/80 text-body-md">
-                We can design a bespoke West African itinerary tailored to your schedule and preferences.
+                {t('customDesc')}
               </p>
             </div>
             <Link
               href={`/${locale}/about#contact`}
               className="shrink-0 bg-surface-container-lowest text-primary px-8 py-4 rounded-xl text-label-md hover:shadow-md transition-all whitespace-nowrap"
             >
-              Contact Us
+              {t('contactUs')}
             </Link>
           </div>
         </section>

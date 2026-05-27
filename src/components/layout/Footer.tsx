@@ -1,9 +1,12 @@
+'use client'
+
 import Link from 'next/link'
 import Image from 'next/image'
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 
 export default function Footer() {
   const locale = useLocale()
+  const t = useTranslations('footer')
 
   return (
     <footer className="bg-surface-dim border-t border-outline-variant py-16">
@@ -20,7 +23,7 @@ export default function Footer() {
             />
           </Link>
           <p className="text-body-sm text-on-surface-variant pr-8 leading-relaxed">
-            Premium West African transport and logistics. Reliable, safe, and exclusive cross-border solutions.
+            {t('tagline')}
           </p>
           <div className="flex gap-4 mt-6">
             <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="cursor-pointer hover:text-primary text-on-surface-variant transition-colors">
@@ -38,18 +41,18 @@ export default function Footer() {
         {/* Services */}
         <div>
           <h4 className="text-label-md font-bold mb-4 uppercase tracking-wider text-on-surface">
-            Services
+            {t('services')}
           </h4>
           <ul className="flex flex-col gap-3 text-label-md text-on-surface-variant">
             {[
-              { label: 'Private Rides', href: '/rides' },
-              { label: 'VIP Escorts', href: '/rides' },
-              { label: 'Group Tours', href: '/tours' },
-              { label: 'Corporate Logistics', href: '/fleet' },
-            ].map(({ label, href }) => (
-              <li key={label}>
+              { labelKey: 'privateRides', href: '/rides' },
+              { labelKey: 'vipEscorts', href: '/rides' },
+              { labelKey: 'groupTours', href: '/tours' },
+              { labelKey: 'corporateLogistics', href: '/fleet' },
+            ].map(({ labelKey, href }) => (
+              <li key={labelKey}>
                 <Link href={`/${locale}${href}`} className="hover:text-primary transition-colors">
-                  {label}
+                  {t(labelKey)}
                 </Link>
               </li>
             ))}
@@ -59,22 +62,22 @@ export default function Footer() {
         {/* Resources */}
         <div>
           <h4 className="text-label-md font-bold mb-4 uppercase tracking-wider text-on-surface">
-            Resources
+            {t('resources')}
           </h4>
           <ul className="flex flex-col gap-3 text-label-md text-on-surface-variant">
             <li>
               <Link href={`/${locale}/border-info`} className="font-bold text-secondary hover:underline">
-                Border Protocols
+                {t('borderProtocols')}
               </Link>
             </li>
             {[
-              { label: 'Fleet Information', href: '/fleet' },
-              { label: 'Tours & Packages', href: '/tours' },
-              { label: 'Safety FAQ', href: '/about' },
-            ].map(({ label, href }) => (
-              <li key={label}>
+              { labelKey: 'fleetInfo', href: '/fleet' },
+              { labelKey: 'toursPackages', href: '/tours' },
+              { labelKey: 'safetyFaq', href: '/about' },
+            ].map(({ labelKey, href }) => (
+              <li key={labelKey}>
                 <Link href={`/${locale}${href}`} className="hover:text-primary transition-colors">
-                  {label}
+                  {t(labelKey)}
                 </Link>
               </li>
             ))}
@@ -84,18 +87,18 @@ export default function Footer() {
         {/* Company */}
         <div>
           <h4 className="text-label-md font-bold mb-4 uppercase tracking-wider text-on-surface">
-            Company
+            {t('company')}
           </h4>
           <ul className="flex flex-col gap-3 text-label-md text-on-surface-variant">
             {[
-              { label: 'About Us', href: '/about' },
-              { label: 'Contact Support', href: '/about#contact' },
-              { label: 'Privacy Policy', href: '/#' },
-              { label: 'Terms of Service', href: '/#' },
-            ].map(({ label, href }) => (
-              <li key={label}>
+              { labelKey: 'aboutUs', href: '/about' },
+              { labelKey: 'contactSupport', href: '/about#contact' },
+              { labelKey: 'privacyPolicy', href: '/#' },
+              { labelKey: 'termsOfService', href: '/#' },
+            ].map(({ labelKey, href }) => (
+              <li key={labelKey}>
                 <Link href={`/${locale}${href}`} className="hover:text-primary transition-colors">
-                  {label}
+                  {t(labelKey)}
                 </Link>
               </li>
             ))}
@@ -105,7 +108,7 @@ export default function Footer() {
 
       {/* Bottom bar */}
       <div className="mx-auto max-w-[1280px] px-4 md:px-10 mt-16 pt-8 border-t border-outline-variant/40 flex flex-col md:flex-row justify-between items-center gap-2 text-body-sm text-on-surface-variant">
-        <p>© {new Date().getFullYear()} Beninfy Logistics. Premium West African Transport.</p>
+        <p>© {new Date().getFullYear()} Beninfy Logistics. {t('tagline')}</p>
         <div className="flex gap-6 text-label-sm">
           <span>Lagos: +234 800 BENINFY</span>
           <span>Cotonou: +229 97 000 000</span>

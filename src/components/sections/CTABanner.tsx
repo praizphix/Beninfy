@@ -1,6 +1,9 @@
 import Link from 'next/link'
+import { getLocale, getTranslations } from 'next-intl/server'
 
-export default function CTABanner() {
+export default async function CTABanner() {
+  const locale = await getLocale()
+  const t = await getTranslations('cta')
   return (
     <section
       className="py-24 relative overflow-hidden"
@@ -21,44 +24,43 @@ export default function CTABanner() {
 
       <div className="relative max-w-[1280px] mx-auto px-4 md:px-10 text-center text-white">
         <span className="text-secondary-container text-label-md tracking-widest uppercase">
-          Get Started Today
+          {t('badge')}
         </span>
         <h2 className="text-display-lg text-white mt-3 mb-4">
-          Ready to Travel Across West Africa?
+          {t('title')}
         </h2>
         <p className="text-body-lg opacity-80 max-w-2xl mx-auto mb-12">
-          Book a private cross-border ride today. Expert border assistance, premium vehicles, and
-          bilingual drivers — all included.
+          {t('sectionSubtitle')}
         </p>
 
         <div className="flex flex-wrap justify-center gap-4">
           <Link
-            href="/en/rides"
+            href={`/${locale}/rides`}
             className="rounded-xl bg-secondary text-on-secondary px-10 py-4 text-headline-sm shadow-lg hover:bg-secondary-container hover:text-on-secondary-container hover:scale-[1.02] active:scale-95 transition-all"
           >
-            Book a Ride Now
+            {t('btnRides')}
           </Link>
           <Link
-            href="/en/tours"
+            href={`/${locale}/tours`}
             className="rounded-xl border-2 border-white/40 text-white px-10 py-4 text-headline-sm hover:bg-white/10 transition-all"
           >
-            Explore Tours
+            {t('btnTours')}
           </Link>
         </div>
 
         {/* Trust badges */}
         <div className="flex flex-wrap justify-center gap-6 mt-12">
           {[
-            { icon: 'verified', text: 'Verified Drivers' },
-            { icon: 'assignment_ind', text: 'Expert Border Handlers' },
-            { icon: 'lock', text: '100% Private Rides' },
-            { icon: 'support_agent', text: '24/7 Support' },
-          ].map(({ icon, text }) => (
-            <div key={text} className="flex items-center gap-2 text-label-md opacity-80">
+            { icon: 'verified', textKey: 'trustVerified' },
+            { icon: 'assignment_ind', textKey: 'trustBorder' },
+            { icon: 'lock', textKey: 'trustPrivate' },
+            { icon: 'support_agent', textKey: 'trustSupport' },
+          ].map(({ icon, textKey }) => (
+            <div key={textKey} className="flex items-center gap-2 text-label-md opacity-80">
               <span className="material-symbols-outlined icon-fill text-secondary-container text-[18px]">
                 {icon}
               </span>
-              {text}
+              {t(textKey)}
             </div>
           ))}
         </div>

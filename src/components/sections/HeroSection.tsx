@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import FlipText from '@/components/shared/FlipText'
 
 const EASE = [0.22, 1, 0.36, 1] as const
@@ -15,11 +15,11 @@ function fadeUp(delay: number) {
   } as const
 }
 
-const TRUST_PILLS = [
-  { icon: 'verified', label: 'Secure Checkout' },
-  { icon: 'language', label: 'Bilingual Drivers' },
-  { icon: 'shield', label: 'Border Protocol' },
-]
+const TRUST_PILL_ICONS = [
+  { icon: 'verified', key: 'trustSecure' },
+  { icon: 'language', key: 'trustDrivers' },
+  { icon: 'shield', key: 'trustBorder' },
+] as const
 
 const ROUTES = ['Lagos → Cotonou', 'Cotonou → Lagos', 'Lagos → Lomé', 'Accra → Lagos', 'Cotonou → Abuja']
 
@@ -43,6 +43,7 @@ function HeroBus() {
 
 export default function HeroSection() {
   const locale = useLocale()
+  const t = useTranslations('hero')
 
   return (
     <section
@@ -67,14 +68,13 @@ export default function HeroSection() {
             className="text-display-lg text-white mb-4"
             {...fadeUp(0)}
           >
-            Private Cross-Border Travel<br />Across West Africa
+            {t('title')}<br />{t('titleHighlight')}
           </motion.h1>
           <motion.p
             className="text-body-lg opacity-80"
             {...fadeUp(0.12)}
           >
-            Travel safely between Lagos, Cotonou, Togo &amp; Ghana in premium private vehicles with
-            expert border assistance.
+            {t('subtitle')}
           </motion.p>
         </div>
 
@@ -83,13 +83,13 @@ export default function HeroSection() {
           className="flex flex-wrap gap-3 mb-10"
           {...fadeUp(0.24)}
         >
-          {TRUST_PILLS.map(({ icon, label }) => (
+          {TRUST_PILL_ICONS.map(({ icon, key }) => (
             <div
-              key={label}
+              key={key}
               className="flex items-center gap-1.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-2 text-label-md"
             >
               <span className="material-symbols-outlined text-[18px] icon-fill">{icon}</span>
-              {label}
+              {t(key)}
             </div>
           ))}
         </motion.div>
@@ -103,13 +103,13 @@ export default function HeroSection() {
             href={`/${locale}/rides`}
             className="rounded-xl bg-primary px-8 py-4 text-headline-sm text-on-primary shadow-lg hover:bg-primary-container hover:text-on-primary-container hover:scale-[1.02] active:scale-95 transition-all"
           >
-            Book a Ride
+            {t('ctaBook')}
           </Link>
           <Link
             href={`/${locale}/tours`}
             className="rounded-xl border-2 border-secondary-container/80 text-secondary-container px-8 py-4 text-headline-sm hover:bg-secondary-container hover:text-on-secondary-container transition-all"
           >
-            Explore Tours
+            {t('ctaExplore')}
           </Link>
         </motion.div>
       </div>

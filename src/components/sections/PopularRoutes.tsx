@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { motion, type Variants } from 'framer-motion'
 import { routes } from '@/data/routes'
 import { getRouteBasePrice } from '@/data/pricing'
@@ -42,6 +42,7 @@ const cardVariant: Variants = {
 
 export default function PopularRoutes() {
   const locale = useLocale()
+  const t = useTranslations('routes')
   return (
     <section className="py-20 max-w-[1280px] mx-auto px-4 md:px-10 mt-8">
       {/* Section header */}
@@ -54,15 +55,15 @@ export default function PopularRoutes() {
       >
         <div>
           <span className="text-primary text-label-md tracking-widest uppercase">
-            Travel Networks
+            {t('sectionBadge')}
           </span>
-          <h2 className="text-headline-lg mt-2">Popular Cross-Border Routes</h2>
+          <h2 className="text-headline-lg mt-2">{t('sectionTitle')}</h2>
         </div>
         <Link
           href={`/${locale}/rides`}
           className="text-primary text-label-md flex items-center gap-1 hover:underline whitespace-nowrap"
         >
-          View all routes
+          {t('viewAllShort')}
           <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
         </Link>
       </motion.div>
@@ -105,13 +106,13 @@ export default function PopularRoutes() {
                 </span>
               </div>
               <p className="text-on-surface-variant text-body-sm mb-4">
-                Duration: ~{route.durationHours}h &nbsp;|&nbsp; Private Premium Saloon
+                {t('durationLabel')}: ~{route.durationHours}h &nbsp;|&nbsp; {t('vehicleType')}
               </p>
               <Link
                 href={`/${locale}/rides?from=${route.from}&to=${route.to}`}
                 className="block w-full py-3 rounded-lg border border-primary text-primary text-label-md text-center hover:bg-primary-container hover:text-on-primary-container transition-all"
               >
-                Book This Route
+                {t('bookRoute')}
               </Link>
             </div>
           </motion.div>
