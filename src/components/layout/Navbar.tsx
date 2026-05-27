@@ -154,11 +154,20 @@ export default function Navbar() {
               )}
             </div>
           ) : (
-            <Link href={`/${locale}/login`} aria-label="Sign in">
-              <span className="material-symbols-outlined text-[28px] text-primary cursor-pointer hover:text-primary-container transition-colors">
-                account_circle
-              </span>
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link
+                href={`/${locale}/login`}
+                className="text-label-md text-on-surface-variant hover:text-primary px-3 py-2 transition-colors"
+              >
+                {t('signIn')}
+              </Link>
+              <Link
+                href={`/${locale}/register`}
+                className="rounded-xl border border-primary text-primary px-4 py-2 text-label-md hover:bg-primary-container hover:text-on-primary-container transition-colors"
+              >
+                {t('register')}
+              </Link>
+            </div>
           )}
         </div>
 
@@ -207,6 +216,44 @@ export default function Navbar() {
                 {t('bookNow')}
               </Link>
             </div>
+            {status === 'authenticated' && session?.user ? (
+              <div className="border-t border-outline-variant pt-3 mt-3 space-y-1">
+                <div className="px-4 py-2">
+                  <p className="text-label-md truncate">{session.user.name ?? 'Account'}</p>
+                  {session.user.email && (
+                    <p className="text-label-sm text-on-surface-variant truncate">{session.user.email}</p>
+                  )}
+                </div>
+                <Link href={`/${locale}/dashboard`} className="block rounded-lg px-4 py-3 text-label-md text-on-surface-variant hover:bg-surface-container">
+                  Dashboard
+                </Link>
+                <Link href={`/${locale}/profile`} className="block rounded-lg px-4 py-3 text-label-md text-on-surface-variant hover:bg-surface-container">
+                  Profile
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => signOut({ callbackUrl: `/${locale}` })}
+                  className="w-full text-left rounded-lg px-4 py-3 text-label-md text-red-600 hover:bg-surface-container"
+                >
+                  Sign out
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2 border-t border-outline-variant pt-3 mt-3">
+                <Link
+                  href={`/${locale}/login`}
+                  className="rounded-xl border border-outline-variant py-3 text-center text-label-md text-on-surface-variant hover:bg-surface-container"
+                >
+                  {t('signIn')}
+                </Link>
+                <Link
+                  href={`/${locale}/register`}
+                  className="rounded-xl bg-primary py-3 text-center text-label-md text-on-primary"
+                >
+                  {t('register')}
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       )}
