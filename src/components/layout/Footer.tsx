@@ -9,10 +9,10 @@ export default function Footer() {
   const t = useTranslations('footer')
 
   return (
-    <footer className="bg-surface-dim border-t border-outline-variant py-16">
-      <div className="mx-auto max-w-[1280px] px-4 md:px-10 grid grid-cols-1 md:grid-cols-4 gap-6">
+    <footer className="bg-surface-dim border-t border-outline-variant py-10 md:py-16">
+      <div className="mx-auto max-w-[1280px] px-4 md:px-10 grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-6">
         {/* Brand */}
-        <div className="md:col-span-1">
+        <div className="col-span-2 md:col-span-1">
           <Link href={`/${locale}`} className="block mb-4">
             <Image
               src="/logo.png"
@@ -22,7 +22,7 @@ export default function Footer() {
               className="h-12 w-auto object-contain"
             />
           </Link>
-          <p className="text-body-sm text-on-surface-variant pr-8 leading-relaxed">
+          <p className="text-body-sm text-on-surface-variant md:pr-8 leading-relaxed">
             {t('tagline')}
           </p>
           <div className="flex gap-4 mt-6">
@@ -107,9 +107,9 @@ export default function Footer() {
       </div>
 
       {/* Bottom bar */}
-      <div className="mx-auto max-w-[1280px] px-4 md:px-10 mt-16 pt-8 border-t border-outline-variant/40 flex flex-col md:flex-row justify-between items-center gap-2 text-body-sm text-on-surface-variant">
+      <div className="mx-auto max-w-[1280px] px-4 md:px-10 mt-10 md:mt-16 pt-6 md:pt-8 border-t border-outline-variant/40 flex flex-col md:flex-row justify-between items-center gap-3 text-body-sm text-on-surface-variant text-center md:text-left">
         <p>© {new Date().getFullYear()} Beninfy Logistics. {t('tagline')}</p>
-        <div className="flex gap-6 text-label-sm">
+        <div className="flex flex-col sm:flex-row gap-1 sm:gap-6 text-label-sm">
           <span>Lagos: +234 800 BENINFY</span>
           <span>Cotonou: +229 97 000 000</span>
         </div>
