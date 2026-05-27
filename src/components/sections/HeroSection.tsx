@@ -73,15 +73,15 @@ export default function HeroSection() {
 
       <div className="mx-auto max-w-[1280px] px-4 md:px-10 w-full text-white z-10">
         {/* Headline */}
-        <div className="max-w-2xl mb-10">
+        <div className="max-w-2xl mb-12 md:mb-14">
           <motion.h1
-            className="text-display-lg text-white mb-4"
+            className="text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight"
             {...fadeUp(0)}
           >
             {t('title')}<br />{t('titleHighlight')}
           </motion.h1>
           <motion.p
-            className="text-body-lg opacity-80"
+            className="text-lg opacity-80"
             {...fadeUp(0.12)}
           >
             {t('subtitle')}
@@ -90,7 +90,7 @@ export default function HeroSection() {
 
         {/* Trust pills */}
         <motion.div
-          className="flex flex-wrap gap-3 mb-10"
+          className="flex flex-wrap gap-3 mb-16 md:mb-20"
           {...fadeUp(0.24)}
         >
           {TRUST_PILL_ICONS.map(({ icon, key }) => (
