@@ -3,10 +3,20 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useLocale, useTranslations } from 'next-intl'
+import { useSession } from 'next-auth/react'
+
+const RESTRICTED = new Set(['/rides', '/tours', '/fleet', '/border-info'])
 
 export default function Footer() {
   const locale = useLocale()
   const t = useTranslations('footer')
+  const { status } = useSession()
+  const signedIn = status === 'authenticated'
+
+  const linkClass = (href: string, base = 'hover:text-primary transition-colors') =>
+    RESTRICTED.has(href) && !signedIn
+      ? `${base} opacity-50 pointer-events-none md:opacity-100 md:pointer-events-auto`
+      : base
 
   return (
     <footer className="bg-surface-dim border-t border-outline-variant py-10 md:py-16">
@@ -51,7 +61,7 @@ export default function Footer() {
               { labelKey: 'corporateLogistics', href: '/fleet' },
             ].map(({ labelKey, href }) => (
               <li key={labelKey}>
-                <Link href={`/${locale}${href}`} className="hover:text-primary transition-colors">
+                <Link href={`/${locale}${href}`} className={linkClass(href)}>
                   {t(labelKey)}
                 </Link>
               </li>
@@ -66,7 +76,7 @@ export default function Footer() {
           </h4>
           <ul className="flex flex-col gap-3 text-label-md text-on-surface-variant">
             <li>
-              <Link href={`/${locale}/border-info`} className="font-bold text-secondary hover:underline">
+              <Link href={`/${locale}/border-info`} className={linkClass('/border-info', 'font-bold text-secondary hover:underline')}>
                 {t('borderProtocols')}
               </Link>
             </li>
@@ -76,7 +86,7 @@ export default function Footer() {
               { labelKey: 'safetyFaq', href: '/about' },
             ].map(({ labelKey, href }) => (
               <li key={labelKey}>
-                <Link href={`/${locale}${href}`} className="hover:text-primary transition-colors">
+                <Link href={`/${locale}${href}`} className={linkClass(href)}>
                   {t(labelKey)}
                 </Link>
               </li>
