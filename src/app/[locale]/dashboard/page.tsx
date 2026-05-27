@@ -37,6 +37,15 @@ interface BookingApi {
   createdAt: string
 }
 
+interface PaymentApi {
+  id: string
+  reference: string
+  amountNGN: number
+  status: string
+  createdAt: string
+  booking: { id: string; from: string; to: string; date: string } | null
+}
+
 const activeTrip: Trip | null = null
 
 const statusColors: Record<TripStatus, string> = {
@@ -63,6 +72,8 @@ export default function DashboardPage() {
   const [trips, setTrips] = useState<Trip[]>([])
   const [loading, setLoading] = useState(true)
   const [cancellingId, setCancellingId] = useState<string | null>(null)
+  const [payments, setPayments] = useState<PaymentApi[]>([])
+  const [paymentsLoading, setPaymentsLoading] = useState(false)
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -94,6 +105,31 @@ export default function DashboardPage() {
       cancelled = true
     }
   }, [status, router, locale])
+
+  useEffect(() => {
+    if (activeNav !== 'payments' || status !== 'authenticated') return
+    let cancelled = false
+    setPaymentsLoading(true)
+    fetch('/api/payments')
+      .then((r) => (r.ok ? r.json() : { payments: [] }))
+      .then((data: { payments?: PaymentApi[] }) => {
+        if (!cancelled) setPayments(data.payments ?? [])
+      })
+      .finally(() => !cancelled && setPaymentsLoading(false))
+    return () => { cancelled = true }
+  }, [activeNav, status])
+
+  const handleNav = (id: NavItem) => {
+    if (id === 'profile' || id === 'settings') {
+      router.push(`/${locale}/profile`)
+      return
+    }
+    if (id === 'support') {
+      window.location.href = 'mailto:support@beninfy.africa'
+      return
+    }
+    setActiveNav(id)
+  }
 
   const now = Date.now()
   const upcoming = trips.filter((t) => new Date(t.date).getTime() >= now && t.status !== 'completed')
@@ -166,7 +202,7 @@ export default function DashboardPage() {
                 {navItems.map(({ id, label, icon }) => (
                   <button
                     key={id}
-                    onClick={() => setActiveNav(id)}
+                    onClick={() => handleNav(id)}
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl text-label-md transition-colors text-left ${activeNav === id ? 'bg-primary-container text-on-primary-container' : 'text-on-surface-variant hover:bg-surface-container'}`}
                   >
                     <span className={`material-symbols-outlined text-[20px] ${activeNav === id ? 'icon-fill' : ''}`}>{icon}</span>
@@ -217,6 +253,57 @@ export default function DashboardPage() {
 
           {/* Main content */}
           <div className="lg:col-span-9 space-y-6">
+            {activeNav === 'payments' ? (
+              <section className="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant">
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="text-headline-sm">Payment history</h2>
+                  <button
+                    onClick={() => setActiveNav('dashboard')}
+                    className="text-primary text-label-md hover:underline inline-flex items-center gap-1"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+                    Back to dashboard
+                  </button>
+                </div>
+                {paymentsLoading ? (
+                  <p className="text-body-sm text-on-surface-variant">Loading payments…</p>
+                ) : payments.length === 0 ? (
+                  <p className="text-body-sm text-on-surface-variant">No payments yet.</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="text-on-surface-variant text-xs uppercase tracking-wider">
+                        <tr>
+                          <th className="text-left py-2 pr-4">Reference</th>
+                          <th className="text-left py-2 pr-4">Booking</th>
+                          <th className="text-left py-2 pr-4">Amount</th>
+                          <th className="text-left py-2 pr-4">Status</th>
+                          <th className="text-left py-2">Date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {payments.map((p) => (
+                          <tr key={p.id} className="border-t border-outline-variant">
+                            <td className="py-3 pr-4"><code className="text-xs">{p.reference}</code></td>
+                            <td className="py-3 pr-4">{p.booking ? `${p.booking.from} → ${p.booking.to}` : '—'}</td>
+                            <td className="py-3 pr-4">{formatNGN(p.amountNGN)}</td>
+                            <td className="py-3 pr-4">
+                              <span className={`inline-block px-2 py-0.5 rounded-full text-xs ${
+                                p.status === 'paid' ? 'bg-green-50 text-green-700' :
+                                p.status === 'failed' ? 'bg-red-50 text-red-700' :
+                                'bg-amber-50 text-amber-700'
+                              }`}>{p.status}</span>
+                            </td>
+                            <td className="py-3 text-on-surface-variant text-xs">{new Date(p.createdAt).toLocaleString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </section>
+            ) : (
+            <>
             {/* Active trip banner */}
             {activeTrip ? (
               <section className="relative overflow-hidden bg-primary rounded-2xl p-8 text-on-primary shadow-lg">
@@ -390,6 +477,8 @@ export default function DashboardPage() {
                 ))}
               </div>
             </section>
+            </>
+            )}
           </div>
         </div>
       </main>
