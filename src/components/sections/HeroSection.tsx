@@ -50,7 +50,7 @@ export default function HeroSection() {
       className="relative min-h-[600px] flex items-center pt-20 pb-36 overflow-hidden"
       style={{
         background:
-          "linear-gradient(rgba(24,28,32,0.45), rgba(24,28,32,0.65)), url('https://images.unsplash.com/photo-1590487988256-9ed24133863e?auto=format&fit=crop&q=80') center/cover no-repeat",
+          "linear-gradient(rgba(24,28,32,0.45), rgba(24,28,32,0.65)), url('/hero-bg.jpg') center/cover no-repeat",
       }}
     >
       {/* Subtle animated gradient overlay */}
