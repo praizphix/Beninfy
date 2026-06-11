@@ -26,7 +26,7 @@ export default function BookingWidget() {
   }
 
   return (
-    <section className="relative z-20 mx-auto max-w-[1280px] px-4 md:px-10 -mt-16">
+    <section className="relative z-20 mx-auto max-w-[1280px] px-4 md:px-10 -mt-24 md:-mt-16">
       <div className="bg-surface-container-lowest rounded-2xl shadow-xl p-6 md:p-8">
         {/* Trip type toggle */}
         <div className="flex gap-2 mb-6">
