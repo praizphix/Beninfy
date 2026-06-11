@@ -5,20 +5,10 @@ import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
 import { useSearchParams } from 'next/navigation'
 import { routes, bookingCities } from '@/data/routes'
-import { vehicles } from '@/data/vehicles'
 import { routePricing } from '@/data/pricing'
 import { formatNGN } from '@/lib/utils'
+import { useVehicles } from '@/hooks/useVehicles'
 import type { VehicleId, RouteId } from '@/types'
-
-const VEHICLE_IMAGES: Record<VehicleId, string> = {
-  saloon: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=800&q=80',
-  suv: 'https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?auto=format&fit=crop&w=800&q=80',
-  sienna: 'https://images.unsplash.com/photo-1474978528675-2bfa6e89b7b0?auto=format&fit=crop&w=800&q=80',
-  prado: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=800&q=80',
-  sprinter: 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=800&q=80',
-  hiace: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=800&q=80',
-  coastal: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=800&q=80',
-}
 
 const VEHICLE_BADGES: Partial<Record<VehicleId, { text: string; cls: string }>> = {
   saloon: { text: 'Popular', cls: 'bg-primary/90 text-white' },
@@ -39,6 +29,7 @@ function RidesContent() {
   const locale = useLocale()
   const t = useTranslations('ridesPage')
   const searchParams = useSearchParams()
+  const { vehicles } = useVehicles()
   const [from, setFrom] = useState(searchParams.get('from') ?? 'Lagos')
   const [to, setTo] = useState(searchParams.get('to') ?? 'Cotonou')
   const [date, setDate] = useState(searchParams.get('date') ?? '')
@@ -74,7 +65,8 @@ function RidesContent() {
     const pricing = routePricing[matchedRoute.id as RouteId]
     if (!pricing) return null
     const price = pricing[vehicleId]
-    if (!price) return null
+    const vehicle = vehicles.find((v) => v.id === vehicleId)
+    if (!price) return vehicle?.basePriceNGN ? formatNGN(vehicle.basePriceNGN) : null
     if (typeof price === 'number') return formatNGN(price)
     return `${formatNGN(price.min)} – ${formatNGN(price.max)}`
   }
@@ -259,7 +251,7 @@ function RidesContent() {
                   {/* Image */}
                   <div className="md:w-2/5 relative min-h-[200px] bg-surface-container overflow-hidden">
                     <img
-                      src={VEHICLE_IMAGES[vehicle.id]}
+                      src={vehicle.image}
                       alt={vehicle.name}
                       className="w-full h-full object-cover"
                     />

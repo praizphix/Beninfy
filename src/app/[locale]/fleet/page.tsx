@@ -1,18 +1,10 @@
 import Link from 'next/link'
-import { vehicles } from '@/data/vehicles'
 import { tourDailyRates, packageRates } from '@/data/pricing'
 import { formatNGN } from '@/lib/utils'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
+import { getPublicVehicles } from '@/lib/vehicleCatalog'
 
-const VEHICLE_IMAGES: Record<string, string> = {
-  saloon: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=800&q=80',
-  suv: 'https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?auto=format&fit=crop&w=800&q=80',
-  sienna: 'https://images.unsplash.com/photo-1474978528675-2bfa6e89b7b0?auto=format&fit=crop&w=800&q=80',
-  prado: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=800&q=80',
-  sprinter: 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=800&q=80',
-  hiace: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=800&q=80',
-  coastal: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=800&q=80',
-}
+export const dynamic = 'force-dynamic'
 
 export default async function FleetPage({
   params,
@@ -22,6 +14,7 @@ export default async function FleetPage({
   const { locale } = await params
   setRequestLocale(locale)
   const t = await getTranslations('fleetPage')
+  const vehicles = await getPublicVehicles()
   return (
     <div className="min-h-screen bg-background">
       <main className="mt-16">
@@ -62,7 +55,7 @@ export default async function FleetPage({
               {/* Image */}
               <div className="h-56 relative overflow-hidden bg-surface-container">
                 <img
-                  src={VEHICLE_IMAGES[v.id]}
+                  src={v.image}
                   alt={v.name}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
@@ -77,7 +70,7 @@ export default async function FleetPage({
               <div className="p-6 flex flex-col flex-1">
                 <div className="flex justify-between items-start mb-3">
                   <h2 className="text-headline-sm text-on-surface">{v.name}</h2>
-                  <span className="text-secondary text-label-md">From {formatNGN(tourDailyRates[v.id])}/day</span>
+                  <span className="text-secondary text-label-md">From {formatNGN(tourDailyRates[v.id] ?? v.basePriceNGN ?? 0)}/day</span>
                 </div>
                 <p className="text-on-surface-variant text-body-sm mb-5 flex-1">{v.description}</p>
 
@@ -105,11 +98,11 @@ export default async function FleetPage({
                 <div className="bg-surface-container rounded-xl p-4 mb-5 space-y-2">
                   <div className="flex justify-between text-label-sm">
                     <span className="text-on-surface-variant">{t('dailyRate')}</span>
-                    <span className="text-secondary font-semibold">{formatNGN(tourDailyRates[v.id])}</span>
+                    <span className="text-secondary font-semibold">{formatNGN(tourDailyRates[v.id] ?? v.basePriceNGN ?? 0)}</span>
                   </div>
                   <div className="flex justify-between text-label-sm">
                     <span className="text-on-surface-variant">{t('packageRate')}</span>
-                    <span className="text-secondary font-semibold">{formatNGN(packageRates[v.id])}</span>
+                    <span className="text-secondary font-semibold">{formatNGN(packageRates[v.id] ?? v.basePriceNGN ?? 0)}</span>
                   </div>
                 </div>
 

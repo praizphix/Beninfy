@@ -164,7 +164,7 @@ async function main() {
   }
 
   // Promote configured super admin email if it exists
-  const superAdminEmail = process.env.ADMIN_EMAIL ?? 'info@beninfy.africa'
+  const superAdminEmail = process.env.ADMIN_EMAIL ?? 'info@beninfy.com'
   const promoted = await prisma.user.updateMany({
     where: { email: superAdminEmail },
     data: { role: 'super_admin' },

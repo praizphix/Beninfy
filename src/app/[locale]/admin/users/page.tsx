@@ -26,6 +26,10 @@ export default function AdminUsersPage() {
   const [busy, setBusy] = useState<string | null>(null)
   const [showCreate, setShowCreate] = useState(false)
   const [form, setForm] = useState({ name: '', email: '', password: '', phone: '', role: 'admin' as 'admin' | 'user' })
+  const [resetTarget, setResetTarget] = useState<UserRow | null>(null)
+  const [resetPassword, setResetPassword] = useState('')
+  const [resetError, setResetError] = useState<string | null>(null)
+  const [resetting, setResetting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -42,7 +46,12 @@ export default function AdminUsersPage() {
     setLoading(false)
   }, [q])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void load()
+    }, 0)
+    return () => window.clearTimeout(timer)
+  }, [load])
 
   const setRole = async (id: string, role: UserRow['role']) => {
     setBusy(id)
@@ -100,6 +109,29 @@ export default function AdminUsersPage() {
       setForm({ name: '', email: '', password: '', phone: '', role: 'admin' })
       await load()
     } finally { setSubmitting(false) }
+  }
+
+  const submitPasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!resetTarget) return
+    setResetError(null)
+    setResetting(true)
+    try {
+      const res = await fetch(`/api/admin/users/${resetTarget.id}/password`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: resetPassword }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setResetError(data.error ?? 'Password reset failed')
+        return
+      }
+      setResetTarget(null)
+      setResetPassword('')
+    } finally {
+      setResetting(false)
+    }
   }
 
   return (
@@ -180,11 +212,22 @@ export default function AdminUsersPage() {
                   {isSuper && (
                     <td className="px-5 py-3 text-right whitespace-nowrap">
                       {!isThisSuper && (
-                        <button
-                          onClick={() => remove(u.id)}
-                          disabled={busy === u.id}
-                          className="text-xs text-red-600 hover:underline disabled:opacity-50"
-                        >Delete</button>
+                        <>
+                          <button
+                            onClick={() => {
+                              setResetTarget(u)
+                              setResetPassword('')
+                              setResetError(null)
+                            }}
+                            disabled={busy === u.id}
+                            className="text-xs text-purple-700 hover:underline disabled:opacity-50 mr-3"
+                          >Reset password</button>
+                          <button
+                            onClick={() => remove(u.id)}
+                            disabled={busy === u.id}
+                            className="text-xs text-red-600 hover:underline disabled:opacity-50"
+                          >Delete</button>
+                        </>
                       )}
                     </td>
                   )}
@@ -264,6 +307,45 @@ export default function AdminUsersPage() {
                   className="px-4 py-2 rounded-lg text-sm text-white disabled:opacity-50"
                   style={{ background: '#3e004c' }}
                 >{submitting ? 'Creating…' : 'Create'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {resetTarget && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+            <h2 className="text-lg font-bold mb-1" style={{ color: '#3e004c' }}>Reset password</h2>
+            <p className="text-xs text-gray-500 mb-4">
+              Set a new temporary password for {resetTarget.email ?? resetTarget.name ?? 'this user'}.
+            </p>
+            <form onSubmit={submitPasswordReset} className="space-y-3">
+              <div>
+                <label className="block text-xs text-gray-600 mb-1">New password</label>
+                <input
+                  required
+                  type="text"
+                  minLength={8}
+                  value={resetPassword}
+                  onChange={(e) => setResetPassword(e.target.value)}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono"
+                  placeholder="At least 8 chars"
+                />
+              </div>
+              {resetError && <p className="text-xs text-red-600">{resetError}</p>}
+              <div className="flex items-center gap-2 justify-end pt-2">
+                <button
+                  type="button"
+                  onClick={() => { setResetTarget(null); setResetPassword(''); setResetError(null) }}
+                  className="px-4 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
+                >Cancel</button>
+                <button
+                  type="submit"
+                  disabled={resetting}
+                  className="px-4 py-2 rounded-lg text-sm text-white disabled:opacity-50"
+                  style={{ background: '#3e004c' }}
+                >{resetting ? 'Saving...' : 'Reset password'}</button>
               </div>
             </form>
           </div>

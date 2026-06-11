@@ -1,0 +1,39 @@
+import { NextResponse } from 'next/server'
+import bcrypt from 'bcryptjs'
+import { z } from 'zod'
+import { requireSuperAdmin } from '@/lib/admin'
+import { prisma } from '@/lib/prisma'
+
+const schema = z.object({
+  password: z.string().min(8).max(100),
+})
+
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const guard = await requireSuperAdmin()
+  if (!guard.ok) return guard.response
+
+  const { id } = await params
+  const body = await req.json().catch(() => null)
+  const parsed = schema.safeParse(body)
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Password must be at least 8 characters' }, { status: 400 })
+  }
+
+  const target = await prisma.user.findUnique({
+    where: { id },
+    select: { id: true, role: true },
+  })
+  if (!target) return NextResponse.json({ error: 'User not found' }, { status: 404 })
+
+  if (target.role === 'super_admin' && target.id !== guard.session.user!.id) {
+    return NextResponse.json({ error: 'Cannot reset another super admin password' }, { status: 403 })
+  }
+
+  const hashedPassword = await bcrypt.hash(parsed.data.password, 12)
+  await prisma.user.update({
+    where: { id },
+    data: { hashedPassword },
+  })
+
+  return NextResponse.json({ ok: true })
+}

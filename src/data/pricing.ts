@@ -53,7 +53,7 @@ export const routePricing: Record<RouteId, Partial<Record<VehicleId, number | Pr
 }
 
 /** Daily tour-use rate per vehicle (₦/day) */
-export const tourDailyRates: Record<VehicleId, number> = {
+export const tourDailyRates: Partial<Record<VehicleId, number>> = {
   saloon:  105_000,
   suv:     160_000,
   sienna:  150_000,
@@ -64,7 +64,7 @@ export const tourDailyRates: Record<VehicleId, number> = {
 }
 
 /** 1.5-day all-inclusive transport + tour packages (₦) */
-export const packageRates: Record<VehicleId, number> = {
+export const packageRates: Partial<Record<VehicleId, number>> = {
   saloon:  500_000,
   suv:     800_000,
   sienna:  800_000,
@@ -97,4 +97,3 @@ export function formatPriceRange(price: number | PriceRange): string {
   if (typeof price === 'number') return fmt(price)
   return `${fmt(price.min)}\u2013${fmt(price.max)}`
 }
-

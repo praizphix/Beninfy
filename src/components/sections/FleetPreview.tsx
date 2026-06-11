@@ -1,30 +1,13 @@
 import Link from 'next/link'
 import { getLocale, getTranslations } from 'next-intl/server'
-import { vehicles } from '@/data/vehicles'
 import { tourDailyRates } from '@/data/pricing'
 import { formatNGN } from '@/lib/utils'
-
-const VEHICLE_IMAGES: Record<string, string> = {
-  saloon:
-    'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=800&q=80',
-  suv: 'https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?auto=format&fit=crop&w=800&q=80',
-  sienna:
-    'https://images.unsplash.com/photo-1474978528675-2bfa6e89b7b0?auto=format&fit=crop&w=800&q=80',
-  prado:
-    'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=800&q=80',
-  sprinter:
-    'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=800&q=80',
-  hiace:
-    'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=800&q=80',
-  coastal:
-    'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=800&q=80',
-}
-
-const previewVehicles = vehicles.slice(0, 6)
+import { getPublicVehicles } from '@/lib/vehicleCatalog'
 
 export default async function FleetPreview() {
   const locale = await getLocale()
   const t = await getTranslations('fleet')
+  const previewVehicles = (await getPublicVehicles()).slice(0, 6)
   return (
     <section className="py-20 max-w-[1280px] mx-auto px-4 md:px-10">
       {/* Header */}
@@ -66,7 +49,7 @@ export default async function FleetPreview() {
             {/* Image */}
             <div className="h-56 relative overflow-hidden bg-surface-container">
               <img
-                src={VEHICLE_IMAGES[v.id] ?? VEHICLE_IMAGES.saloon}
+                src={v.image}
                 alt={v.name}
                 className="w-full h-full object-cover"
               />
@@ -82,7 +65,7 @@ export default async function FleetPreview() {
               <div className="flex justify-between items-start mb-3">
                 <h3 className="text-headline-sm">{v.name}</h3>
                 <span className="text-secondary text-label-md">
-                  {t('priceFrom')} {formatNGN(tourDailyRates[v.id])}{t('perDay')}
+                  {t('priceFrom')} {formatNGN(tourDailyRates[v.id] ?? 0)}{t('perDay')}
                 </span>
               </div>
               <p className="text-on-surface-variant text-body-sm mb-4 flex-1">{v.description}</p>

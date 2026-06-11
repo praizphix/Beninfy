@@ -5,9 +5,9 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { motion } from 'framer-motion'
-import { vehicles } from '@/data/vehicles'
 import { routes } from '@/data/routes'
 import { getRouteBasePrice } from '@/data/pricing'
+import { useVehicles } from '@/hooks/useVehicles'
 import JourneyTracker from '@/components/booking/JourneyTracker'
 import RouteMapSVG from '@/components/shared/RouteMapSVG'
 import CountUp from 'react-countup'
@@ -23,6 +23,7 @@ function PassengerDetailsContent() {
   const t = useTranslations('bookPage')
   const router = useRouter()
   const params = useSearchParams()
+  const { vehicles } = useVehicles()
 
   const vehicleId = (params.get('vehicle') ?? 'saloon') as VehicleId
   const from = params.get('from') ?? 'Lagos'
@@ -31,7 +32,7 @@ function PassengerDetailsContent() {
   const returnDate = params.get('returnDate') ?? ''
   const tripType = params.get('tripType') === 'round-trip' ? 'round-trip' : 'one-way'
 
-  const vehicle = vehicles.find((v) => v.id === vehicleId) ?? vehicles[0]
+  const vehicle = vehicles.find((v) => v.id === vehicleId)
   const matchedRoute = routes.find((r) => r.from === from && r.to === to)
   const basePrice = matchedRoute ? getRouteBasePrice(matchedRoute.id as RouteId) : null
 
@@ -283,8 +284,8 @@ function PassengerDetailsContent() {
                         <span className="material-symbols-outlined" style={{ fontSize: 16, color: '#3e004c' }}>airport_shuttle</span>
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">{vehicle.name}</p>
-                        <p className="text-xs text-gray-500">{vehicle.capacity} passengers • {tripType}</p>
+                        <p className="text-sm font-medium text-gray-900">{vehicle?.name ?? vehicleId}</p>
+                        <p className="text-xs text-gray-500">{vehicle?.capacity ?? '—'} passengers • {tripType}</p>
                       </div>
                     </div>
 

@@ -20,6 +20,7 @@ const NAV = [
   { href: '/routes', label: 'Routes', icon: 'route' },
   { href: '/tours', label: 'Tours', icon: 'travel_explore' },
   { href: '/border-fees', label: 'Border fees', icon: 'currency_exchange' },
+  { href: '/settings', label: 'Settings', icon: 'settings' },
 ]
 
 export default async function AdminLayout({ children, params }: Props) {

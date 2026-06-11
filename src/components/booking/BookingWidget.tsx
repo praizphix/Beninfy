@@ -4,12 +4,13 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { bookingCities } from '@/data/routes'
-import { vehicles } from '@/data/vehicles'
+import { useVehicles } from '@/hooks/useVehicles'
 
 export default function BookingWidget() {
   const locale = useLocale()
   const t = useTranslations('booking')
   const router = useRouter()
+  const { vehicles } = useVehicles()
 
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')

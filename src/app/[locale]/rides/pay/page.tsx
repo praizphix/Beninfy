@@ -5,10 +5,10 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
-import { vehicles } from '@/data/vehicles'
 import { routes } from '@/data/routes'
 import { getRouteBasePrice } from '@/data/pricing'
 import { formatNGN } from '@/lib/utils'
+import { useVehicles } from '@/hooks/useVehicles'
 import JourneyTracker from '@/components/booking/JourneyTracker'
 import CountUp from 'react-countup'
 import type { VehicleId, RouteId } from '@/types'
@@ -20,6 +20,7 @@ function PaymentContent() {
   const t = useTranslations('payPage')
   const router = useRouter()
   const params = useSearchParams()
+  const { vehicles } = useVehicles()
 
   const vehicleId = (params.get('vehicle') ?? 'saloon') as VehicleId
   const from = params.get('from') ?? 'Lagos'
@@ -33,9 +34,9 @@ function PaymentContent() {
   const passportId = params.get('passportId') ?? ''
   const passengers = Math.max(1, parseInt(params.get('passengers') ?? '1', 10) || 1)
 
-  const vehicle = vehicles.find((v) => v.id === vehicleId) ?? vehicles[0]
+  const vehicle = vehicles.find((v) => v.id === vehicleId)
   const matchedRoute = routes.find((r) => r.from === from && r.to === to)
-  const basePrice = matchedRoute ? getRouteBasePrice(matchedRoute.id as RouteId) : 120000
+  const basePrice = matchedRoute ? getRouteBasePrice(matchedRoute.id as RouteId) : (vehicle?.basePriceNGN ?? 120000)
 
   const legCount = tripType === 'round-trip' ? 2 : 1
   const rideFare = (basePrice ?? 0) * legCount
@@ -259,7 +260,7 @@ function PaymentContent() {
                       <span className="material-symbols-outlined text-[32px]" style={{ color: '#3e004c' }}>airport_shuttle</span>
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-gray-900">{vehicle.name}</p>
+                      <p className="text-sm font-semibold text-gray-900">{vehicle?.name ?? vehicleId}</p>
                       <p className="text-xs text-gray-500">{from} → {to}</p>
                       {tripType === 'round-trip' && <p className="text-xs text-gray-500">{to} → {from}</p>}
                       {date && (

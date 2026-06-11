@@ -2,14 +2,7 @@ export type Locale = 'en' | 'fr'
 
 export type TripType = 'one-way' | 'round-trip'
 
-export type VehicleId =
-  | 'saloon'
-  | 'suv'
-  | 'sienna'
-  | 'prado'
-  | 'sprinter'
-  | 'hiace'
-  | 'coastal'
+export type VehicleId = string
 
 export type RouteId =
   | 'lagos-cotonou'
@@ -53,6 +46,7 @@ export interface Vehicle {
   description: string
   descriptionFr: string
   available: boolean
+  basePriceNGN?: number | null
   badge?: string
   badgeFr?: string
 }

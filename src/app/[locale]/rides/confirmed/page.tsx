@@ -1,8 +1,8 @@
 import Link from 'next/link'
-import { vehicles } from '@/data/vehicles'
 import { routes } from '@/data/routes'
 import { getRouteBasePrice } from '@/data/pricing'
 import { formatNGN } from '@/lib/utils'
+import { getPublicVehicles } from '@/lib/vehicleCatalog'
 import ConfirmationHeader from '@/components/booking/ConfirmationHeader'
 import PulseStatus from '@/components/shared/PulseStatus'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
@@ -68,7 +68,8 @@ export default async function BookingConfirmedPage({ params, searchParams }: Pro
   const bookingRef = paystackReference ?? (dbBooking ? `BFY-${dbBooking.id.slice(-8).toUpperCase()}` : 'BFY-PENDING')
   const passengerName = sp.name ?? 'Passenger'
 
-  const vehicle = vehicles.find((v) => v.id === vehicleId) ?? vehicles[0]
+  const vehicles = await getPublicVehicles({ availableOnly: false })
+  const vehicle = vehicles.find((v) => v.id === vehicleId)
   const matchedRoute = routes.find((r) => r.from === from && r.to === to)
   const fallbackBase = matchedRoute ? getRouteBasePrice(matchedRoute.id as RouteId) : 120000
   const borderFee = 5000
@@ -131,7 +132,7 @@ export default async function BookingConfirmedPage({ params, searchParams }: Pro
                 <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
                   <span className="material-symbols-outlined text-gray-400 text-[20px] mb-2 block">airport_shuttle</span>
                   <p className="text-xs text-gray-500">{t('vehicleClass')}</p>
-                  <p className="text-sm font-medium text-gray-900 mt-1">{vehicle.name}</p>
+                  <p className="text-sm font-medium text-gray-900 mt-1">{vehicle?.name ?? vehicleId}</p>
                 </div>
                 <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 col-span-2 md:col-span-1">
                   <span className="material-symbols-outlined text-gray-400 text-[20px] mb-2 block">payments</span>
