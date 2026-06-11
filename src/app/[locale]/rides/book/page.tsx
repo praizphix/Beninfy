@@ -8,7 +8,6 @@ import { motion } from 'framer-motion'
 import { vehicles } from '@/data/vehicles'
 import { routes } from '@/data/routes'
 import { getRouteBasePrice } from '@/data/pricing'
-import { formatNGN } from '@/lib/utils'
 import JourneyTracker from '@/components/booking/JourneyTracker'
 import RouteMapSVG from '@/components/shared/RouteMapSVG'
 import CountUp from 'react-countup'
@@ -29,7 +28,8 @@ function PassengerDetailsContent() {
   const from = params.get('from') ?? 'Lagos'
   const to = params.get('to') ?? 'Cotonou'
   const date = params.get('date') ?? ''
-  const tripType = params.get('tripType') ?? 'one-way'
+  const returnDate = params.get('returnDate') ?? ''
+  const tripType = params.get('tripType') === 'round-trip' ? 'round-trip' : 'one-way'
 
   const vehicle = vehicles.find((v) => v.id === vehicleId) ?? vehicles[0]
   const matchedRoute = routes.find((r) => r.from === from && r.to === to)
@@ -59,21 +59,28 @@ function PassengerDetailsContent() {
   const handleContinue = (e: React.FormEvent) => {
     e.preventDefault()
     if (!validate()) return
+    if (tripType === 'round-trip' && !returnDate) return
     const passengers = params.get('passengers') ?? '1'
     const search = new URLSearchParams({
-      vehicle: vehicleId, from, to, date, tripType, passengers,
+      vehicle: vehicleId, from, to, date, returnDate, tripType, passengers,
       price: String(total),
       name: form.fullName, email: form.email, phone: form.phone,
+      passportId: form.passportId,
     })
     router.push(`/${locale}/rides/pay?${search.toString()}`)
   }
 
-  const borderProtocolFee = 5000
-  const serviceFee = basePrice ? Math.round(basePrice * 0.05) : 0
-  const total = (basePrice ?? 0) + borderProtocolFee + serviceFee
+  const legCount = tripType === 'round-trip' ? 2 : 1
+  const rideFare = (basePrice ?? 0) * legCount
+  const borderProtocolFee = 5000 * legCount
+  const serviceFee = rideFare ? Math.round(rideFare * 0.05) : 0
+  const total = rideFare + borderProtocolFee + serviceFee
 
   const formattedDate = date
     ? new Date(date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+    : null
+  const formattedReturnDate = returnDate
+    ? new Date(returnDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
     : null
 
   return (
@@ -291,13 +298,22 @@ function PassengerDetailsContent() {
                       </div>
                     )}
 
+                    {tripType === 'round-trip' && (
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: '#f3e8f8' }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: 16, color: '#3e004c' }}>event_repeat</span>
+                        </div>
+                        <p className="text-sm font-medium text-gray-900">{formattedReturnDate ?? 'Return date required'}</p>
+                      </div>
+                    )}
+
                     {/* Price breakdown */}
                     {basePrice && (
                       <>
                         <div className="border-t border-gray-100" />
                         <div className="space-y-2.5">
                           {[
-                            { label: t('rideFare'), value: basePrice },
+                            { label: t('rideFare'), value: rideFare },
                             { label: t('borderFee'), value: borderProtocolFee },
                             { label: t('serviceFee'), value: serviceFee },
                           ].map(({ label, value }) => (

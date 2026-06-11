@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter, usePathname } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { bookingCities } from '@/data/routes'
 import { vehicles } from '@/data/vehicles'
@@ -14,6 +14,7 @@ export default function BookingWidget() {
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
   const [date, setDate] = useState('')
+  const [returnDate, setReturnDate] = useState('')
   const [vehicle, setVehicle] = useState('saloon')
   const [tripType, setTripType] = useState<'one-way' | 'round-trip'>('one-way')
 
@@ -22,6 +23,7 @@ export default function BookingWidget() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     const params = new URLSearchParams({ from, to, date, vehicle, tripType })
+    if (tripType === 'round-trip') params.set('returnDate', returnDate)
     router.push(`/${locale}/rides?${params.toString()}`)
   }
 
@@ -98,12 +100,32 @@ export default function BookingWidget() {
                   type="date"
                   value={date}
                   min={today}
-                  onChange={(e) => setDate(e.target.value)}
+                  onChange={(e) => {
+                    setDate(e.target.value)
+                    if (returnDate && returnDate < e.target.value) setReturnDate('')
+                  }}
                   className="bg-transparent border-none p-0 focus:ring-0 w-full text-body-md outline-none"
                   required
                 />
               </div>
             </div>
+
+            {tripType === 'round-trip' && (
+              <div className="flex flex-col gap-2">
+                <label className="text-label-sm text-on-surface-variant">Return date</label>
+                <div className="flex items-center gap-2 border border-outline-variant rounded-lg p-3 focus-within:border-primary transition-colors">
+                  <span className="material-symbols-outlined text-primary text-[20px]">event_repeat</span>
+                  <input
+                    type="date"
+                    value={returnDate}
+                    min={date || today}
+                    onChange={(e) => setReturnDate(e.target.value)}
+                    className="bg-transparent border-none p-0 focus:ring-0 w-full text-body-md outline-none"
+                    required
+                  />
+                </div>
+              </div>
+            )}
 
             {/* Vehicle */}
             <div className="flex flex-col gap-2">

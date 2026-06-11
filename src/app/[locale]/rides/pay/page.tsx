@@ -25,16 +25,23 @@ function PaymentContent() {
   const from = params.get('from') ?? 'Lagos'
   const to = params.get('to') ?? 'Cotonou'
   const date = params.get('date') ?? ''
+  const returnDate = params.get('returnDate') ?? ''
+  const tripType = params.get('tripType') === 'round-trip' ? 'round-trip' : 'one-way'
   const passengerName = params.get('name') ?? 'Passenger'
+  const passengerEmail = params.get('email') ?? ''
+  const passengerPhone = params.get('phone') ?? ''
+  const passportId = params.get('passportId') ?? ''
   const passengers = Math.max(1, parseInt(params.get('passengers') ?? '1', 10) || 1)
 
   const vehicle = vehicles.find((v) => v.id === vehicleId) ?? vehicles[0]
   const matchedRoute = routes.find((r) => r.from === from && r.to === to)
   const basePrice = matchedRoute ? getRouteBasePrice(matchedRoute.id as RouteId) : 120000
 
-  const borderFee = 5000
-  const serviceFee = Math.round((basePrice ?? 0) * 0.05)
-  const total = (basePrice ?? 0) + borderFee + serviceFee
+  const legCount = tripType === 'round-trip' ? 2 : 1
+  const rideFare = (basePrice ?? 0) * legCount
+  const borderFee = 5000 * legCount
+  const serviceFee = Math.round(rideFare * 0.05)
+  const total = rideFare + borderFee + serviceFee
 
   const [method, setMethod] = useState<PaymentMethod>('card')
   const [card, setCard] = useState({ number: '', expiry: '', cvv: '' })
@@ -56,9 +63,15 @@ function PaymentContent() {
           from,
           to,
           date: date ? new Date(date).toISOString() : new Date().toISOString(),
+          returnDate: returnDate ? new Date(returnDate).toISOString() : undefined,
+          tripType,
           vehicleId,
           passengers,
           priceNGN: total,
+          passengerName,
+          passengerEmail,
+          passengerPhone,
+          passportId,
         }),
       })
       if (bookingRes.status === 401) {
@@ -248,8 +261,12 @@ function PaymentContent() {
                     <div>
                       <p className="text-sm font-semibold text-gray-900">{vehicle.name}</p>
                       <p className="text-xs text-gray-500">{from} → {to}</p>
+                      {tripType === 'round-trip' && <p className="text-xs text-gray-500">{to} → {from}</p>}
                       {date && (
                         <p className="text-xs text-gray-400 mt-0.5">{new Date(date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                      )}
+                      {tripType === 'round-trip' && returnDate && (
+                        <p className="text-xs text-gray-400 mt-0.5">Return: {new Date(returnDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                       )}
                     </div>
                   </div>
@@ -258,7 +275,7 @@ function PaymentContent() {
                   <div className="space-y-2.5 py-4 border-y border-gray-100">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">{t('rideFare')}</span>
-                      <span className="font-medium text-gray-900">₦<CountUp end={basePrice ?? 0} separator="," duration={1.2} /></span>
+                      <span className="font-medium text-gray-900">₦<CountUp end={rideFare} separator="," duration={1.2} /></span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">{t('borderFee')}</span>

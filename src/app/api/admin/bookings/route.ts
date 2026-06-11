@@ -31,6 +31,13 @@ export async function GET(req: Request) {
       user: { select: { id: true, name: true, email: true, phone: true } },
       vehicle: { select: { id: true, name: true } },
       payments: { select: { id: true, status: true, amountNGN: true, reference: true, createdAt: true } },
+      legs: {
+        orderBy: { departureDate: 'asc' },
+        include: {
+          fleetVehicle: { select: { id: true, label: true, plateNumber: true } },
+          driver: { select: { id: true, name: true, phone: true } },
+        },
+      },
     },
   })
 

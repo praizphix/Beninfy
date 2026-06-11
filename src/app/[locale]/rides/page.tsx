@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, Suspense } from 'react'
 import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
 import { useSearchParams } from 'next/navigation'
 import { routes, bookingCities } from '@/data/routes'
 import { vehicles } from '@/data/vehicles'
-import { routePricing, formatPriceRange } from '@/data/pricing'
+import { routePricing } from '@/data/pricing'
 import { formatNGN } from '@/lib/utils'
 import type { VehicleId, RouteId } from '@/types'
 
@@ -42,6 +42,10 @@ function RidesContent() {
   const [from, setFrom] = useState(searchParams.get('from') ?? 'Lagos')
   const [to, setTo] = useState(searchParams.get('to') ?? 'Cotonou')
   const [date, setDate] = useState(searchParams.get('date') ?? '')
+  const [returnDate, setReturnDate] = useState(searchParams.get('returnDate') ?? '')
+  const [tripType, setTripType] = useState<'one-way' | 'round-trip'>(
+    searchParams.get('tripType') === 'round-trip' ? 'round-trip' : 'one-way'
+  )
   const [passengers, setPassengers] = useState<number>(
     Math.max(1, parseInt(searchParams.get('passengers') ?? '1', 10) || 1)
   )
@@ -49,16 +53,6 @@ function RidesContent() {
     searchParams.get('vehicle') ? [searchParams.get('vehicle') as VehicleId] : []
   )
 
-  // Re-sync when query params change (e.g. back-navigation)
-  useEffect(() => {
-    if (searchParams.get('from')) setFrom(searchParams.get('from')!)
-    if (searchParams.get('to')) setTo(searchParams.get('to')!)
-    if (searchParams.get('date')) setDate(searchParams.get('date')!)
-    if (searchParams.get('passengers')) {
-      const n = parseInt(searchParams.get('passengers')!, 10)
-      if (n > 0) setPassengers(n)
-    }
-  }, [searchParams])
   const today = new Date().toISOString().split('T')[0]
 
   const matchedRoute = routes.find(
@@ -119,6 +113,23 @@ function RidesContent() {
               <h3 className="text-label-md text-primary mb-4">{t('labelRoute')}</h3>
               <div className="space-y-3">
                 <div>
+                  <label className="text-label-sm text-on-surface-variant mb-1 block">Trip type</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {(['one-way', 'round-trip'] as const).map((type) => (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => setTripType(type)}
+                        className={`rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
+                          tripType === type ? 'bg-primary text-white' : 'bg-surface-container-lowest border border-outline-variant text-on-surface-variant'
+                        }`}
+                      >
+                        {type === 'one-way' ? 'One way' : 'Round trip'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
                   <label className="text-label-sm text-on-surface-variant mb-1 block">{t('labelFrom')}</label>
                   <div className="flex items-center gap-2 border border-outline-variant rounded-lg p-2.5 focus-within:border-primary bg-surface-container-lowest transition-colors">
                     <span className="material-symbols-outlined text-primary text-[18px]">location_on</span>
@@ -156,11 +167,29 @@ function RidesContent() {
                       type="date"
                       value={date}
                       min={today}
-                      onChange={(e) => setDate(e.target.value)}
+                      onChange={(e) => {
+                        setDate(e.target.value)
+                        if (returnDate && returnDate < e.target.value) setReturnDate('')
+                      }}
                       className="bg-transparent border-none p-0 focus:ring-0 w-full text-body-sm outline-none"
                     />
                   </div>
                 </div>
+                {tripType === 'round-trip' && (
+                  <div>
+                    <label className="text-label-sm text-on-surface-variant mb-1 block">Return date</label>
+                    <div className="flex items-center gap-2 border border-outline-variant rounded-lg p-2.5 focus-within:border-primary bg-surface-container-lowest transition-colors">
+                      <span className="material-symbols-outlined text-primary text-[18px]">event_repeat</span>
+                      <input
+                        type="date"
+                        value={returnDate}
+                        min={date || today}
+                        onChange={(e) => setReturnDate(e.target.value)}
+                        className="bg-transparent border-none p-0 focus:ring-0 w-full text-body-sm outline-none"
+                      />
+                    </div>
+                  </div>
+                )}
                 <div>
                   <label className="text-label-sm text-on-surface-variant mb-1 block">Passengers</label>
                   <div className="flex items-center gap-2 border border-outline-variant rounded-lg p-2.5 focus-within:border-primary bg-surface-container-lowest transition-colors">
@@ -274,7 +303,7 @@ function RidesContent() {
                     </div>
                     <div className="flex gap-3">
                       <Link
-                        href={`/${locale}/rides/book?vehicle=${vehicle.id}&from=${from}&to=${to}&date=${date}&passengers=${passengers}`}
+                        href={`/${locale}/rides/book?vehicle=${vehicle.id}&from=${from}&to=${to}&date=${date}&returnDate=${returnDate}&tripType=${tripType}&passengers=${passengers}`}
                         className="flex-1 bg-primary text-on-primary py-3 rounded-xl text-label-md text-center hover:opacity-95 active:scale-[0.98] transition-all"
                       >
                         {t('bookNow')}
