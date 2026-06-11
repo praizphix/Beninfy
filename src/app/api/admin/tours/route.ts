@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { requireAdmin } from '@/lib/admin'
 import { prisma } from '@/lib/prisma'
+import { ensureDefaultTours } from '@/lib/tourCatalog'
 
 const schema = z.object({
   id: z.string().min(1).max(80),
@@ -23,6 +24,7 @@ const schema = z.object({
 export async function GET() {
   const guard = await requireAdmin()
   if (!guard.ok) return guard.response
+  await ensureDefaultTours()
   const tours = await prisma.tour.findMany({ orderBy: { startingFromNGN: 'asc' } })
   return NextResponse.json({ tours })
 }

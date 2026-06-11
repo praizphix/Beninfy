@@ -1,5 +1,6 @@
 'use client'
 
+import { useRef, useState } from 'react'
 import { CrudTable } from '@/components/admin/CrudTable'
 import { formatNGN } from '@/lib/utils'
 
@@ -11,14 +12,77 @@ interface Vehicle {
   luggageCapacity: number
   available: boolean
   badge: string | null
+  image: string | null
   basePriceNGN: number | null
   features: string[]
   [key: string]: unknown
 }
 
+function VehicleImageUploader({ vehicle, onUploaded }: { vehicle: Vehicle; onUploaded: () => void }) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = useState(false)
+
+  const upload = async (file: File) => {
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.set('image', file)
+      const res = await fetch(`/api/admin/vehicles/${vehicle.id}/image`, {
+        method: 'POST',
+        body: formData,
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        alert(data.error ?? 'Image upload failed')
+        return
+      }
+      onUploaded()
+    } finally {
+      setUploading(false)
+      if (inputRef.current) inputRef.current.value = ''
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-3 min-w-[180px]">
+      <div className="h-12 w-16 rounded-lg overflow-hidden bg-gray-100 border border-gray-200 shrink-0">
+        {vehicle.image ? (
+          <img src={vehicle.image} alt={vehicle.name} className="h-full w-full object-cover" />
+        ) : (
+          <div className="h-full w-full flex items-center justify-center text-[10px] text-gray-400">No image</div>
+        )}
+      </div>
+      <div>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/avif"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0]
+            if (file) void upload(file)
+          }}
+        />
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          disabled={uploading}
+          className="text-xs text-purple-700 hover:underline disabled:opacity-50"
+        >
+          {uploading ? 'Uploading...' : 'Upload'}
+        </button>
+        <p className="text-[10px] text-gray-400 mt-0.5">Max 2MB</p>
+      </div>
+    </div>
+  )
+}
+
 export default function AdminVehiclesPage() {
+  const [reloadKey, setReloadKey] = useState(0)
+
   return (
     <CrudTable<Vehicle>
+      key={reloadKey}
       title="Vehicles"
       description="Manage the fleet catalog."
       fetchUrl="/api/admin/vehicles"
@@ -27,6 +91,7 @@ export default function AdminVehiclesPage() {
       createUrl="/api/admin/vehicles"
       itemUrl={(id) => `/api/admin/vehicles/${id}`}
       columns={[
+        { header: 'Image', render: (v) => <VehicleImageUploader vehicle={v} onUploaded={() => setReloadKey((key) => key + 1)} /> },
         { header: 'ID', render: (v) => <code className="text-xs text-gray-500">{v.id}</code> },
         { header: 'Name', render: (v) => <p className="font-medium text-gray-800">{v.name}</p> },
         { header: 'Capacity', render: (v) => `${v.capacity} pax` },

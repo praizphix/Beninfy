@@ -1,14 +1,7 @@
 import Link from 'next/link'
-import { tours } from '@/data/tours'
 import { formatNGN } from '@/lib/utils'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
-
-const TOUR_IMAGES: Record<string, string> = {
-  'benin-history-lake': 'https://images.unsplash.com/photo-1612890009000-b9a73c018c85?auto=format&fit=crop&w=800&q=80',
-  'lome-aneho-beach': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80',
-  'accra-cape-coast': 'https://images.unsplash.com/photo-1532375810709-75b1da00537c?auto=format&fit=crop&w=800&q=80',
-  'west-africa-grand-tour': 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?auto=format&fit=crop&w=800&q=80',
-}
+import { getPublicTours } from '@/lib/tourCatalog'
 
 const TOUR_CATEGORIES: Record<string, string> = {
   'benin-history-lake': 'tagHistory',
@@ -17,10 +10,13 @@ const TOUR_CATEGORIES: Record<string, string> = {
   'west-africa-grand-tour': 'tagGrand',
 }
 
+export const dynamic = 'force-dynamic'
+
 export default async function ToursPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params
   setRequestLocale(locale)
   const t = await getTranslations('toursPage')
+  const tours = await getPublicTours()
 
   return (
     <div className="min-h-screen bg-background">
@@ -51,7 +47,7 @@ export default async function ToursPage({ params }: { params: Promise<{ locale: 
               >
                 <div className="h-64 overflow-hidden relative">
                   <img
-                    src={TOUR_IMAGES[tour.id] ?? TOUR_IMAGES['benin-history-lake']}
+                    src={tour.image}
                     alt={tour.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />

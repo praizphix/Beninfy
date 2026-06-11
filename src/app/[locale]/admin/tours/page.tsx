@@ -1,5 +1,6 @@
 'use client'
 
+import { useRef, useState } from 'react'
 import { CrudTable } from '@/components/admin/CrudTable'
 import { formatNGN } from '@/lib/utils'
 
@@ -9,13 +10,76 @@ interface Tour {
   country: string
   durationDays: number
   startingFromNGN: number
+  image: string | null
   highlights: string[]
   [key: string]: unknown
 }
 
+function TourImageUploader({ tour, onUploaded }: { tour: Tour; onUploaded: () => void }) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = useState(false)
+
+  const upload = async (file: File) => {
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.set('image', file)
+      const res = await fetch(`/api/admin/tours/${tour.id}/image`, {
+        method: 'POST',
+        body: formData,
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        alert(data.error ?? 'Image upload failed')
+        return
+      }
+      onUploaded()
+    } finally {
+      setUploading(false)
+      if (inputRef.current) inputRef.current.value = ''
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-3 min-w-[180px]">
+      <div className="h-12 w-16 rounded-lg overflow-hidden bg-gray-100 border border-gray-200 shrink-0">
+        {tour.image ? (
+          <img src={tour.image} alt={tour.title} className="h-full w-full object-cover" />
+        ) : (
+          <div className="h-full w-full flex items-center justify-center text-[10px] text-gray-400">No image</div>
+        )}
+      </div>
+      <div>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/avif"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0]
+            if (file) void upload(file)
+          }}
+        />
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          disabled={uploading}
+          className="text-xs text-purple-700 hover:underline disabled:opacity-50"
+        >
+          {uploading ? 'Uploading...' : 'Upload'}
+        </button>
+        <p className="text-[10px] text-gray-400 mt-0.5">Max 2MB</p>
+      </div>
+    </div>
+  )
+}
+
 export default function AdminToursPage() {
+  const [reloadKey, setReloadKey] = useState(0)
+
   return (
     <CrudTable<Tour>
+      key={reloadKey}
       title="Tours"
       description="Manage tour packages."
       fetchUrl="/api/admin/tours"
@@ -24,6 +88,7 @@ export default function AdminToursPage() {
       createUrl="/api/admin/tours"
       itemUrl={(id) => `/api/admin/tours/${id}`}
       columns={[
+        { header: 'Image', render: (t) => <TourImageUploader tour={t} onUploaded={() => setReloadKey((key) => key + 1)} /> },
         { header: 'ID', render: (t) => <code className="text-xs text-gray-500">{t.id}</code> },
         { header: 'Title', render: (t) => <p className="font-medium text-gray-800">{t.title}</p> },
         { header: 'Country', render: (t) => t.country },

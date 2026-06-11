@@ -58,6 +58,7 @@ export interface Tour {
   destination: string
   destinationFr: string
   country: string
+  countryFr?: string | null
   durationDays: number
   startingFromNGN: number
   image: string

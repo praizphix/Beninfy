@@ -1,18 +1,7 @@
 import Link from 'next/link'
 import { getLocale, getTranslations } from 'next-intl/server'
-import { tours } from '@/data/tours'
 import { formatNGN } from '@/lib/utils'
-
-const TOUR_IMAGES: Record<string, string> = {
-  'benin-history-lake':
-    'https://images.unsplash.com/photo-1612890009000-b9a73c018c85?auto=format&fit=crop&w=800&q=80',
-  'lome-aneho-beach':
-    'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80',
-  'accra-cape-coast':
-    'https://images.unsplash.com/photo-1532375810709-75b1da00537c?auto=format&fit=crop&w=800&q=80',
-  'west-africa-grand-tour':
-    'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?auto=format&fit=crop&w=800&q=80',
-}
+import { getPublicTours } from '@/lib/tourCatalog'
 
 const TOUR_TAG_KEYS: Record<string, string> = {
   'benin-history-lake': 'tagHistory',
@@ -21,11 +10,10 @@ const TOUR_TAG_KEYS: Record<string, string> = {
   'west-africa-grand-tour': 'tagGrand',
 }
 
-const previewTours = tours.slice(0, 3)
-
 export default async function ToursPreview() {
   const locale = await getLocale()
   const t = await getTranslations('tours')
+  const previewTours = (await getPublicTours()).slice(0, 3)
   return (
     <section className="py-20 max-w-[1280px] mx-auto px-4 md:px-10">
       {/* Header */}
@@ -45,7 +33,7 @@ export default async function ToursPreview() {
             className="relative rounded-2xl overflow-hidden aspect-[4/5] group cursor-pointer shadow-lg block"
           >
             <img
-              src={TOUR_IMAGES[tour.id] ?? TOUR_IMAGES['benin-history-lake']}
+              src={tour.image}
               alt={tour.title}
               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
             />
