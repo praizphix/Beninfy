@@ -69,7 +69,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
         <script
           dangerouslySetInnerHTML={{
-            __html: `if(document.fonts&&document.fonts.load){document.fonts.load("24px 'Material Symbols Outlined'").then(function(){document.documentElement.classList.add('fonts-loaded')}).catch(function(){document.documentElement.classList.add('fonts-loaded')});setTimeout(function(){document.documentElement.classList.add('fonts-loaded')},3000);}else{document.documentElement.classList.add('fonts-loaded');}`,
+            __html: `!function(){var d=document.documentElement,f="24px 'Material Symbols Outlined'";function ready(){return document.fonts&&document.fonts.check&&document.fonts.check(f)}function reveal(){if(ready())d.classList.add("fonts-loaded")}if(!document.fonts){d.classList.add("fonts-loaded");return}reveal();document.fonts.load(f).then(reveal).catch(function(){});document.fonts.ready.then(reveal).catch(function(){});var n=0,t=setInterval(function(){reveal();if(d.classList.contains("fonts-loaded")||++n>40)clearInterval(t)},100) }();`,
           }}
         />
       </head>
@@ -80,4 +80,3 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   )
 }
-

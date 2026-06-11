@@ -57,7 +57,7 @@ export default function AdminLoginPage() {
                 required
                 autoComplete="username"
                 className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 focus:border-purple-700 focus:ring-2 focus:ring-purple-200 outline-none text-sm"
-                placeholder="admin@beninfy.africa"
+                placeholder="admin@beninfy.com"
               />
             </div>
 

@@ -103,7 +103,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
               {[
                 { icon: 'call', title: t('contactLagos'), value: '+234 (0) 800 BENINFY', sub: t('contactLagosSub') },
                 { icon: 'call', title: t('contactCotonou'), value: '+229 (0) 97 BENINFY', sub: t('contactCotSub') },
-                { icon: 'alternate_email', title: t('contactEmail'), value: 'support@beninfy.africa', sub: t('contactEmailSub') },
+                { icon: 'alternate_email', title: t('contactEmail'), value: 'support@beninfy.com', sub: t('contactEmailSub') },
               ].map(({ icon, title, value, sub }) => (
                 <div key={title} className="bg-primary-container rounded-2xl p-6 text-center">
                   <span className="material-symbols-outlined text-on-primary text-[32px] mb-3 block">{icon}</span>

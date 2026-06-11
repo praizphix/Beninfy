@@ -8,6 +8,7 @@ import PulseStatus from '@/components/shared/PulseStatus'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getPaystackSecret, settlePaymentFromPaystack, verifyPaystackTransaction } from '@/lib/paystack'
 import type { VehicleId, RouteId } from '@/types'
 
 interface Props {
@@ -19,6 +20,7 @@ interface Props {
     to?: string
     date?: string
     ref?: string
+    reference?: string
     name?: string
   }>
 }
@@ -28,13 +30,34 @@ export default async function BookingConfirmedPage({ params, searchParams }: Pro
   setRequestLocale(locale)
   const sp = await searchParams
   const t = await getTranslations('confirmedPage')
+  const session = await auth()
+  const paystackReference = sp.reference ?? sp.ref
 
   let dbBooking: Awaited<ReturnType<typeof prisma.booking.findUnique>> = null
-  if (sp.id) {
-    const session = await auth()
-    if (session?.user?.id) {
-      const found = await prisma.booking.findUnique({ where: { id: sp.id } })
-      if (found && found.userId === session.user.id) dbBooking = found
+
+  if (paystackReference && session?.user?.id) {
+    const payment = await prisma.payment.findUnique({
+      where: { reference: paystackReference },
+      include: { booking: true },
+    })
+    if (payment?.booking.userId === session.user.id) {
+      const secret = getPaystackSecret()
+      if (secret && payment.status !== 'paid') {
+        try {
+          const verified = await verifyPaystackTransaction(secret, paystackReference)
+          await settlePaymentFromPaystack(paystackReference, verified)
+        } catch {
+          // Keep the page renderable; dashboard/webhook can still reflect final status.
+        }
+      }
+      dbBooking = await prisma.booking.findUnique({ where: { id: payment.bookingId } })
+    }
+  }
+
+  if (!dbBooking && sp.id && session?.user?.id) {
+    const found = await prisma.booking.findUnique({ where: { id: sp.id } })
+    if (found && found.userId === session.user.id) {
+      dbBooking = found
     }
   }
 
@@ -42,7 +65,7 @@ export default async function BookingConfirmedPage({ params, searchParams }: Pro
   const from = dbBooking?.from ?? sp.from ?? 'Lagos'
   const to = dbBooking?.to ?? sp.to ?? 'Cotonou'
   const date = dbBooking ? dbBooking.date.toISOString() : (sp.date ?? '')
-  const bookingRef = sp.ref ?? (dbBooking ? `BFY-${dbBooking.id.slice(-8).toUpperCase()}` : `BFY-${Math.floor(10000 + Math.random() * 90000)}-XP`)
+  const bookingRef = paystackReference ?? (dbBooking ? `BFY-${dbBooking.id.slice(-8).toUpperCase()}` : 'BFY-PENDING')
   const passengerName = sp.name ?? 'Passenger'
 
   const vehicle = vehicles.find((v) => v.id === vehicleId) ?? vehicles[0]

@@ -361,7 +361,13 @@
   }
   /* Hide ligature text until the icon font is ready (prevents FOUT flash of words like "menu") */
   .material-symbols-outlined {
-    font-family: 'Material Symbols Outlined', sans-serif;
+    display: inline-block;
+    width: 1em;
+    min-width: 1em;
+    overflow: hidden;
+    flex-shrink: 0;
+    vertical-align: -0.125em;
+    font-family: 'Material Symbols Outlined';
     font-weight: normal;
     font-style: normal;
     line-height: 1;

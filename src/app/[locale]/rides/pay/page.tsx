@@ -74,13 +74,13 @@ function PaymentContent() {
       const payRes = await fetch('/api/payments/initiate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bookingId: booking.id }),
+        body: JSON.stringify({ bookingId: booking.id, locale, passengerName }),
       })
       const payData = await payRes.json().catch(() => ({}))
       if (!payRes.ok) throw new Error(payData.error ?? 'Payment init failed')
 
       if (payData.mode === 'paystack' && payData.authorization_url) {
-        window.location.href = payData.authorization_url as string
+        window.location.assign(payData.authorization_url as string)
         return
       }
 

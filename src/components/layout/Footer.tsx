@@ -42,7 +42,7 @@ export default function Footer() {
             <a href="https://x.com" target="_blank" rel="noopener noreferrer" aria-label="X / Twitter" className="cursor-pointer hover:text-primary text-on-surface-variant transition-colors">
               <span className="material-symbols-outlined">language</span>
             </a>
-            <a href="mailto:support@beninfy.africa" aria-label="Email" className="cursor-pointer hover:text-primary text-on-surface-variant transition-colors">
+            <a href="mailto:support@beninfy.com" aria-label="Email" className="cursor-pointer hover:text-primary text-on-surface-variant transition-colors">
               <span className="material-symbols-outlined">alternate_email</span>
             </a>
           </div>

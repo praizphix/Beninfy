@@ -1,6 +1,6 @@
 # Beninfy
 
-Beninfy.africa — cross-border rides, tours, and border-fee guidance for West Africa. Built on Next.js 16 (App Router + Turbopack), Prisma 7 (with the pg driver adapter), Auth.js v5, and next-intl.
+Beninfy.com — cross-border rides, tours, and border-fee guidance for West Africa. Built on Next.js 16 (App Router + Turbopack), Prisma 7 (with the pg driver adapter), Auth.js v5, and next-intl.
 
 ## Local development
 
@@ -12,7 +12,7 @@ npm run db:seed            # seed vehicles, routes, tours, border fees
 npm run dev
 ```
 
-Register `info@beninfy.africa` from `/register` (or the email matching `ADMIN_EMAIL`) and you will be auto-promoted to **super admin**.
+Register `info@beninfy.com` from `/register` (or the email matching `ADMIN_EMAIL`) and you will be auto-promoted to **super admin**.
 
 ## Roles
 
@@ -39,7 +39,7 @@ Backoffice lives at `/[locale]/admin`.
 3. Add the env vars from `.env.example` in the Vercel project settings.
 4. The included `vercel.json` runs `prisma migrate deploy && prisma generate && next build` so migrations are applied automatically on every deploy.
 5. After the first deploy:
-   - Visit `https://<your-domain>/en/register` and create the super-admin account with `ADMIN_EMAIL`.
+   - Visit `https://beninfy.com/en/register` and create the super-admin account with `ADMIN_EMAIL`.
    - Sign in, open `/en/admin`, and create additional admins from the Users page.
 
 ### Notes
