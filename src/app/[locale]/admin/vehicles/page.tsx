@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
+import { Upload } from 'lucide-react'
 import { CrudTable } from '@/components/admin/CrudTable'
 import { formatNGN } from '@/lib/utils'
 
@@ -44,9 +45,10 @@ function VehicleImageUploader({ vehicle, onUploaded }: { vehicle: Vehicle; onUpl
   }
 
   return (
-    <div className="flex items-center gap-3 min-w-[180px]">
-      <div className="h-12 w-16 rounded-lg overflow-hidden bg-gray-100 border border-gray-200 shrink-0">
+    <div className="flex items-center gap-3 min-w-[230px]">
+      <div className="h-16 w-24 rounded-lg overflow-hidden bg-gray-100 border border-gray-200 shrink-0">
         {vehicle.image ? (
+          // eslint-disable-next-line @next/next/no-img-element
           <img src={vehicle.image} alt={vehicle.name} className="h-full w-full object-cover" />
         ) : (
           <div className="h-full w-full flex items-center justify-center text-[10px] text-gray-400">No image</div>
@@ -67,11 +69,12 @@ function VehicleImageUploader({ vehicle, onUploaded }: { vehicle: Vehicle; onUpl
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={uploading}
-          className="text-xs text-purple-700 hover:underline disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-md border border-purple-200 bg-purple-50 px-3 py-1.5 text-xs font-medium text-purple-700 transition hover:bg-purple-100 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {uploading ? 'Uploading...' : 'Upload'}
+          <Upload aria-hidden="true" className="h-4 w-4" />
+          {uploading ? 'Uploading...' : 'Upload image'}
         </button>
-        <p className="text-[10px] text-gray-400 mt-0.5">Max 2MB</p>
+        <p className="mt-1 text-[10px] text-gray-400">JPEG, PNG, WebP, AVIF · Max 6MB</p>
       </div>
     </div>
   )
@@ -84,7 +87,7 @@ export default function AdminVehiclesPage() {
     <CrudTable<Vehicle>
       key={reloadKey}
       title="Vehicles"
-      description="Manage the fleet catalog."
+      description="Manage the fleet catalog. Use the Image column to upload vehicle photos."
       fetchUrl="/api/admin/vehicles"
       collectionKey="vehicles"
       itemKey="id"

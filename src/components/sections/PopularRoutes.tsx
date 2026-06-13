@@ -8,12 +8,9 @@ import { getRouteBasePrice } from '@/data/pricing'
 import { formatNGN } from '@/lib/utils'
 
 const ROUTE_IMAGES: Record<string, string> = {
-  'lagos-cotonou':
-    'https://images.unsplash.com/photo-1590487988256-9ed24133863e?auto=format&fit=crop&w=800&q=80',
-  'cotonou-togo':
-    'https://images.unsplash.com/photo-1611348586804-61bf6c080437?auto=format&fit=crop&w=800&q=80',
-  'togo-ghana':
-    'https://images.unsplash.com/photo-1627894483216-2138af692e32?auto=format&fit=crop&w=800&q=80',
+  'lagos-cotonou': '/images/routes/lagos-cotonou.jpg',
+  'cotonou-togo': '/images/routes/cotonou-lome.jpg',
+  'togo-ghana': '/images/routes/lome-accra.jpg',
   'lagos-togo':
     'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?auto=format&fit=crop&w=800&q=80',
   'lagos-ghana':
