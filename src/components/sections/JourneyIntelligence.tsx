@@ -1,7 +1,8 @@
 'use client'
 
+import { useRef } from 'react'
 import CountUp from 'react-countup'
-import { motion, type Variants } from 'framer-motion'
+import { motion, useScroll, useSpring, useTransform, type Variants } from 'framer-motion'
 import { useTranslations } from 'next-intl'
 import { BusFront, Clock3, MapPinned, Route, ShieldCheck } from 'lucide-react'
 
@@ -35,12 +36,21 @@ const fadeUp: Variants = {
 
 export default function JourneyIntelligence() {
   const t = useTranslations('journey')
+  const sectionRef = useRef<HTMLElement>(null)
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ['start 78%', 'end 38%'],
+  })
+  const routeProgress = useSpring(scrollYProgress, { stiffness: 90, damping: 24, mass: 0.35 })
+  const busLeft = useTransform(routeProgress, [0, 0.24, 0.45, 0.7, 1], ['8%', '29%', '47%', '68%', '91%'])
+  const busTop = useTransform(routeProgress, [0, 0.24, 0.45, 0.7, 1], ['68%', '58%', '50%', '42%', '34%'])
+  const busRotate = useTransform(routeProgress, [0, 0.24, 0.45, 0.7, 1], [-24, -22, -21, -20, -18])
 
   return (
-    <section className="relative overflow-hidden bg-[#11151c] py-20 text-white">
+    <section ref={sectionRef} className="relative min-h-[135vh] overflow-visible bg-[#11151c] py-20 text-white lg:min-h-[150vh]">
       <div className="absolute inset-0 bg-[linear-gradient(120deg,rgba(62,0,76,0.92),rgba(17,21,28,0.96)_48%,rgba(115,92,0,0.74))]" />
       <div className="absolute inset-x-0 top-0 h-px bg-white/15" />
-      <div className="relative mx-auto grid max-w-[1280px] grid-cols-1 gap-10 px-4 md:px-10 lg:grid-cols-[0.92fr_1.08fr] lg:items-center">
+      <div className="sticky top-20 mx-auto grid max-w-[1280px] grid-cols-1 gap-10 px-4 md:px-10 lg:top-24 lg:grid-cols-[0.92fr_1.08fr] lg:items-center">
         <motion.div
           initial="hidden"
           whileInView="show"
@@ -91,14 +101,30 @@ export default function JourneyIntelligence() {
           transition={{ duration: 0.7, ease: EASE }}
         >
           <div className="absolute inset-0 opacity-40 [background-image:linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] [background-size:48px_48px]" />
-          <div className="absolute left-[8%] right-[9%] top-[34%] h-[3px] origin-left -rotate-[15deg] rounded-full bg-white/20" />
-          <motion.div
-            className="absolute left-[8%] right-[9%] top-[34%] h-[3px] origin-left -rotate-[15deg] rounded-full bg-secondary-fixed"
-            initial={{ scaleX: 0 }}
-            whileInView={{ scaleX: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 1.4, delay: 0.35, ease: EASE }}
-          />
+          <svg
+            className="absolute inset-0 h-full w-full"
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+            aria-hidden="true"
+          >
+            <polyline
+              points="8,68 29,58 47,50 68,42 91,34"
+              fill="none"
+              stroke="rgba(255,255,255,0.18)"
+              strokeWidth="0.7"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <motion.polyline
+              points="8,68 29,58 47,50 68,42 91,34"
+              fill="none"
+              stroke="rgb(254,214,91)"
+              strokeWidth="0.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ pathLength: routeProgress }}
+            />
+          </svg>
 
           {stages.map((stage, index) => (
             <motion.div
@@ -122,10 +148,7 @@ export default function JourneyIntelligence() {
 
           <motion.div
             className="absolute z-20 flex h-14 w-14 items-center justify-center rounded-2xl bg-secondary-fixed text-on-secondary-container shadow-xl shadow-secondary/25"
-            initial={{ left: '8%', top: '68%' }}
-            whileInView={{ left: '91%', top: '34%' }}
-            viewport={{ once: true }}
-            transition={{ duration: 4.5, delay: 0.75, ease: 'easeInOut' }}
+            style={{ left: busLeft, top: busTop, rotate: busRotate, x: '-50%', y: '-50%' }}
           >
             <BusFront className="h-7 w-7" aria-hidden="true" />
           </motion.div>
