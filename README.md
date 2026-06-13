@@ -26,7 +26,7 @@ Backoffice lives at `/[locale]/admin`.
 
 | Name | Required | Notes |
 | --- | --- | --- |
-| `DATABASE_URL` | yes | Postgres connection string. Use the pooled URL on Vercel. |
+| `DATABASE_URL` | yes | Postgres connection string. Use the pooled URL on Vercel for runtime queries. |
 | `AUTH_SECRET` | yes | `openssl rand -base64 32` |
 | `ADMIN_EMAIL` | yes | Email that gets auto-promoted to `super_admin`. |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | optional | Google OAuth. |
@@ -37,7 +37,7 @@ Backoffice lives at `/[locale]/admin`.
 1. Push this repo to GitHub.
 2. In Vercel, **Import Project** and select the repo. Framework auto-detected.
 3. Add the env vars from `.env.example` in the Vercel project settings.
-4. The included `vercel.json` runs `prisma migrate deploy && prisma generate && next build` so migrations are applied automatically on every deploy.
+4. The included `vercel.json` runs `npm run build` on deploy. Run `npm run db:migrate` separately when a deployment includes new Prisma migrations.
 5. After the first deploy:
    - Visit `https://beninfy.com/en/register` and create the super-admin account with `ADMIN_EMAIL`.
    - Sign in, open `/en/admin`, and create additional admins from the Users page.
