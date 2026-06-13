@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
+import { useSession } from 'next-auth/react'
 import { cn } from '@/lib/utils'
 
 const BOTTOM_NAV = [
@@ -16,6 +17,9 @@ export default function BottomNav() {
   const locale = useLocale()
   const t = useTranslations('nav')
   const pathname = usePathname()
+  const { status } = useSession()
+
+  if (status !== 'authenticated') return null
 
   const localizedHome = `/${locale}`
   const isActive = (href: string) => {
