@@ -1,9 +1,9 @@
 import Link from 'next/link'
-import Image from 'next/image'
 import { getLocale, getTranslations } from 'next-intl/server'
 import { tourDailyRates } from '@/data/pricing'
 import { formatNGN } from '@/lib/utils'
 import { getPublicVehicles } from '@/lib/vehicleCatalog'
+import CatalogImage from '@/components/shared/CatalogImage'
 
 export default async function FleetPreview() {
   const locale = await getLocale()
@@ -49,10 +49,9 @@ export default async function FleetPreview() {
           >
             {/* Image */}
             <div className="h-56 relative overflow-hidden bg-surface-container">
-              <Image
+              <CatalogImage
                 src={v.image}
                 alt={v.name}
-                fill
                 sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
                 className="w-full h-full object-cover"
               />

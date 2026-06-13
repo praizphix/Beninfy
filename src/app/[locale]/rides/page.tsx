@@ -2,7 +2,6 @@
 
 import { useState, Suspense } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { useLocale, useTranslations } from 'next-intl'
 import { useSearchParams } from 'next/navigation'
 import { routes, bookingCities } from '@/data/routes'
@@ -10,6 +9,7 @@ import { routePricing } from '@/data/pricing'
 import { formatNGN } from '@/lib/utils'
 import { useVehicles } from '@/hooks/useVehicles'
 import type { VehicleId, RouteId } from '@/types'
+import CatalogImage from '@/components/shared/CatalogImage'
 
 const VEHICLE_BADGES: Partial<Record<VehicleId, { text: string; cls: string }>> = {
   saloon: { text: 'Popular', cls: 'bg-primary/90 text-white' },
@@ -251,10 +251,9 @@ function RidesContent() {
                 >
                   {/* Image */}
                   <div className="md:w-2/5 relative min-h-[200px] bg-surface-container overflow-hidden">
-                    <Image
+                    <CatalogImage
                       src={vehicle.image}
                       alt={vehicle.name}
-                      fill
                       sizes="(min-width: 768px) 40vw, 100vw"
                       className="w-full h-full object-cover"
                     />
