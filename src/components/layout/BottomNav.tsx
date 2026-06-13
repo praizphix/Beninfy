@@ -6,10 +6,10 @@ import { useLocale, useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils'
 
 const BOTTOM_NAV = [
+  { href: '', icon: 'home', key: 'home' },
   { href: '/rides', icon: 'directions_car', key: 'rides' },
   { href: '/tours', icon: 'map', key: 'tours' },
   { href: '/fleet', icon: 'airport_shuttle', key: 'fleet' },
-  { href: '/border-info', icon: 'security', key: 'borderInfo' },
 ] as const
 
 export default function BottomNav() {
@@ -17,7 +17,11 @@ export default function BottomNav() {
   const t = useTranslations('nav')
   const pathname = usePathname()
 
-  const isActive = (href: string) => pathname.includes(href)
+  const localizedHome = `/${locale}`
+  const isActive = (href: string) => {
+    if (!href) return pathname === localizedHome || pathname === `${localizedHome}/`
+    return pathname.includes(href)
+  }
 
   return (
     <nav className="fixed bottom-0 left-0 w-full flex justify-around items-center px-2 py-2 bg-surface-container border-t border-outline-variant md:hidden z-50 shadow-[0_-2px_8px_rgba(0,0,0,0.08)]">

@@ -9,6 +9,7 @@ import { useSession, signOut } from 'next-auth/react'
 import { cn } from '@/lib/utils'
 
 const NAV_LINKS = [
+  { href: '', key: 'home' },
   { href: '/rides', key: 'rides' },
   { href: '/tours', key: 'tours' },
   { href: '/fleet', key: 'fleet' },
@@ -31,14 +32,14 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  useEffect(() => {
-    setMenuOpen(false)
-  }, [pathname])
-
   const otherLocale = locale === 'en' ? 'fr' : 'en'
   const switchPath = pathname.replace(`/${locale}`, `/${otherLocale}`) || `/${otherLocale}`
 
-  const isActive = (href: string) => pathname.includes(href)
+  const localizedHome = `/${locale}`
+  const isActive = (href: string) => {
+    if (!href) return pathname === localizedHome || pathname === `${localizedHome}/`
+    return pathname.includes(href)
+  }
 
   return (
     <header
@@ -191,6 +192,7 @@ export default function Navbar() {
               <Link
                 key={link.href}
                 href={`/${locale}${link.href}`}
+                onClick={() => setMenuOpen(false)}
                 className={cn(
                   'block rounded-lg px-4 py-3 text-label-md transition-colors',
                   isActive(link.href)
@@ -204,6 +206,7 @@ export default function Navbar() {
             <div className="flex items-center gap-3 border-t border-outline-variant pt-4 mt-4">
               <a
                 href={switchPath}
+                onClick={() => setMenuOpen(false)}
                 className="flex items-center gap-1.5 rounded-full border border-outline-variant px-4 py-2 text-label-md text-secondary"
               >
                 <span className="material-symbols-outlined text-[16px]">language</span>
@@ -211,6 +214,7 @@ export default function Navbar() {
               </a>
               <Link
                 href={`/${locale}/rides`}
+                onClick={() => setMenuOpen(false)}
                 className="flex-1 rounded-xl bg-primary py-3 text-center text-label-md text-on-primary"
               >
                 {t('bookNow')}
@@ -224,10 +228,10 @@ export default function Navbar() {
                     <p className="text-label-sm text-on-surface-variant truncate">{session.user.email}</p>
                   )}
                 </div>
-                <Link href={`/${locale}/dashboard`} className="block rounded-lg px-4 py-3 text-label-md text-on-surface-variant hover:bg-surface-container">
+                <Link href={`/${locale}/dashboard`} onClick={() => setMenuOpen(false)} className="block rounded-lg px-4 py-3 text-label-md text-on-surface-variant hover:bg-surface-container">
                   Dashboard
                 </Link>
-                <Link href={`/${locale}/profile`} className="block rounded-lg px-4 py-3 text-label-md text-on-surface-variant hover:bg-surface-container">
+                <Link href={`/${locale}/profile`} onClick={() => setMenuOpen(false)} className="block rounded-lg px-4 py-3 text-label-md text-on-surface-variant hover:bg-surface-container">
                   Profile
                 </Link>
                 <button
@@ -242,12 +246,14 @@ export default function Navbar() {
               <div className="grid grid-cols-2 gap-2 border-t border-outline-variant pt-3 mt-3">
                 <Link
                   href={`/${locale}/login`}
+                  onClick={() => setMenuOpen(false)}
                   className="rounded-xl border border-outline-variant py-3 text-center text-label-md text-on-surface-variant hover:bg-surface-container"
                 >
                   {t('signIn')}
                 </Link>
                 <Link
                   href={`/${locale}/register`}
+                  onClick={() => setMenuOpen(false)}
                   className="rounded-xl bg-primary py-3 text-center text-label-md text-on-primary"
                 >
                   {t('register')}
