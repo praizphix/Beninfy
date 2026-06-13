@@ -112,6 +112,34 @@
     "statsCountries": "Countries Served",
     "statsSupport": "Customer Support"
   },
+  "journey": {
+    "badge": "Route Operations",
+    "title": "A managed corridor from Lagos to Accra.",
+    "subtitle": "Beninfy coordinates private vehicles, bilingual drivers, border handoffs and route timing across Nigeria, Benin, Togo and Ghana.",
+    "capabilities": {
+      "border": {
+        "title": "Border-ready teams",
+        "desc": "Documentation support and checkpoint coordination on every cross-border ride."
+      },
+      "dispatch": {
+        "title": "Operational dispatch",
+        "desc": "Trips are planned around departure dates, vehicle class and route conditions."
+      },
+      "coverage": {
+        "title": "Regional coverage",
+        "desc": "Core service across Lagos, Cotonou, Porto-Novo, Lome and Accra."
+      }
+    },
+    "stats": {
+      "passengers": "Passengers moved",
+      "cities": "Connected cities",
+      "satisfaction": "Satisfaction target",
+      "monthlyTrips": "Monthly trips"
+    },
+    "panelLabel": "Live corridor model",
+    "panelText": "A premium ride should feel planned before the passenger enters the vehicle.",
+    "countries": "Countries"
+  },
   "fleet": {
     "title": "Our Fleet",
     "subtitle": "A curated selection of premium vehicles for every journey",

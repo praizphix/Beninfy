@@ -2,6 +2,7 @@
 
 import { useState, Suspense } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useLocale, useTranslations } from 'next-intl'
 import { useSearchParams } from 'next/navigation'
 import { routes, bookingCities } from '@/data/routes'
@@ -250,9 +251,11 @@ function RidesContent() {
                 >
                   {/* Image */}
                   <div className="md:w-2/5 relative min-h-[200px] bg-surface-container overflow-hidden">
-                    <img
+                    <Image
                       src={vehicle.image}
                       alt={vehicle.name}
+                      fill
+                      sizes="(min-width: 768px) 40vw, 100vw"
                       className="w-full h-full object-cover"
                     />
                     {badge && (

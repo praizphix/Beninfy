@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { formatNGN } from '@/lib/utils'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { getPublicTours } from '@/lib/tourCatalog'
@@ -46,9 +47,11 @@ export default async function ToursPage({ params }: { params: Promise<{ locale: 
                 className="bg-surface-container-lowest rounded-2xl overflow-hidden border border-outline-variant shadow-sm hover:shadow-xl transition-shadow group"
               >
                 <div className="h-64 overflow-hidden relative">
-                  <img
+                  <Image
                     src={tour.image}
                     alt={tour.title}
+                    fill
+                    sizes="(min-width: 768px) 50vw, 100vw"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute top-4 left-4 bg-secondary text-on-secondary px-3 py-1 rounded-full text-label-sm">

@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { tourDailyRates, packageRates } from '@/data/pricing'
 import { formatNGN } from '@/lib/utils'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
@@ -54,9 +55,11 @@ export default async function FleetPage({
             >
               {/* Image */}
               <div className="h-56 relative overflow-hidden bg-surface-container">
-                <img
+                <Image
                   src={v.image}
                   alt={v.name}
+                  fill
+                  sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 {v.badge && (

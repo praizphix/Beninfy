@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useLocale, useTranslations } from 'next-intl'
 import { motion, type Variants } from 'framer-motion'
 import { routes } from '@/data/routes'
@@ -82,9 +83,11 @@ export default function PopularRoutes() {
           >
             {/* Image */}
             <div className="h-48 overflow-hidden relative">
-              <img
+              <Image
                 src={ROUTE_IMAGES[route.id] ?? ROUTE_IMAGES['lagos-cotonou']}
                 alt={`${route.from} to ${route.to}`}
+                fill
+                sizes="(min-width: 768px) 33vw, 100vw"
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
               />
               <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-label-sm text-primary">

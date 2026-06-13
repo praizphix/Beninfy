@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { vehicles as defaultVehicles } from '@/data/vehicles'
 import type { Vehicle } from '@/types'
+import { catalogImageUrl } from '@/lib/mediaImage'
 
 const VEHICLE_IMAGE_FALLBACKS: Record<string, string> = {
   saloon: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=800&q=80',
@@ -61,7 +62,7 @@ export async function getPublicVehicles({ availableOnly = true } = {}) {
     luggageCapacity: v.luggageCapacity,
     features: v.features,
     featuresFr: v.featuresFr,
-    image: v.image || fallbackVehicleImage(v.id),
+    image: catalogImageUrl('vehicles', v.id, v.image, v.updatedAt) || fallbackVehicleImage(v.id),
     description: v.description ?? '',
     descriptionFr: v.descriptionFr ?? v.description ?? '',
     available: v.available,

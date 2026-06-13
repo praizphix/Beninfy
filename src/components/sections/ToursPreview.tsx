@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { getLocale, getTranslations } from 'next-intl/server'
 import { formatNGN } from '@/lib/utils'
 import { getPublicTours } from '@/lib/tourCatalog'
@@ -32,9 +33,11 @@ export default async function ToursPreview() {
             href={`/${locale}/tours/${tour.id}`}
             className="relative rounded-2xl overflow-hidden aspect-[4/5] group cursor-pointer shadow-lg block"
           >
-            <img
+            <Image
               src={tour.image}
               alt={tour.title}
+              fill
+              sizes="(min-width: 768px) 33vw, 100vw"
               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
             />
             {/* Overlay */}

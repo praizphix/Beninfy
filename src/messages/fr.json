@@ -112,6 +112,34 @@
     "statsCountries": "Pays Desservis",
     "statsSupport": "Support Client"
   },
+  "journey": {
+    "badge": "Opérations de Route",
+    "title": "Un corridor géré de Lagos à Accra.",
+    "subtitle": "Beninfy coordonne les véhicules privés, les conducteurs bilingues, les passages frontaliers et les horaires entre le Nigeria, le Bénin, le Togo et le Ghana.",
+    "capabilities": {
+      "border": {
+        "title": "Équipes prêtes aux frontières",
+        "desc": "Assistance documentaire et coordination aux checkpoints pour chaque trajet transfrontalier."
+      },
+      "dispatch": {
+        "title": "Dispatch opérationnel",
+        "desc": "Les trajets sont planifiés selon les dates, la classe de véhicule et les conditions de route."
+      },
+      "coverage": {
+        "title": "Couverture régionale",
+        "desc": "Service principal sur Lagos, Cotonou, Porto-Novo, Lomé et Accra."
+      }
+    },
+    "stats": {
+      "passengers": "Passagers transportés",
+      "cities": "Villes connectées",
+      "satisfaction": "Objectif satisfaction",
+      "monthlyTrips": "Trajets mensuels"
+    },
+    "panelLabel": "Modèle de corridor",
+    "panelText": "Un trajet premium doit être organisé avant même que le passager monte à bord.",
+    "countries": "Pays"
+  },
   "fleet": {
     "title": "Notre Flotte",
     "subtitle": "Une sélection soignée de véhicules premium pour chaque voyage",

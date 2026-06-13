@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { tours as defaultTours } from '@/data/tours'
 import type { Tour } from '@/types'
+import { catalogImageUrl } from '@/lib/mediaImage'
 
 const TOUR_IMAGE_FALLBACKS: Record<string, string> = {
   'benin-history-lake': 'https://images.unsplash.com/photo-1612890009000-b9a73c018c85?auto=format&fit=crop&w=800&q=80',
@@ -59,7 +60,7 @@ export async function getPublicTours() {
     country: t.country,
     durationDays: t.durationDays,
     startingFromNGN: t.startingFromNGN,
-    image: t.image || fallbackTourImage(t.id),
+    image: catalogImageUrl('tours', t.id, t.image, t.updatedAt) || fallbackTourImage(t.id),
     description: t.description,
     descriptionFr: t.descriptionFr ?? t.description,
     highlights: t.highlights,
