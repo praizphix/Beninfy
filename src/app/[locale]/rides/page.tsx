@@ -44,6 +44,7 @@ function RidesContent() {
   const [selectedVehicles, setSelectedVehicles] = useState<VehicleId[]>(
     searchParams.get('vehicle') ? [searchParams.get('vehicle') as VehicleId] : []
   )
+  const [filtersOpen, setFiltersOpen] = useState(false)
 
   const today = new Date().toISOString().split('T')[0]
 
@@ -74,10 +75,10 @@ function RidesContent() {
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="max-w-[1280px] mx-auto px-4 md:px-10 py-8 mt-16">
+      <main className="max-w-[1280px] mx-auto px-4 md:px-10 py-6 md:py-8 mt-16">
         {/* Breadcrumb + header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-2 text-on-surface-variant text-label-md mb-3">
+        <div className="mb-6 md:mb-8">
+          <div className="flex items-center gap-2 text-on-surface-variant text-label-sm md:text-label-md mb-3 overflow-x-auto whitespace-nowrap">
             <Link href={`/${locale}`} className="hover:text-primary">{t('breadcrumbHome')}</Link>
             <span className="material-symbols-outlined text-[16px]">chevron_right</span>
             <span>{t('breadcrumbRides')}</span>
@@ -88,7 +89,7 @@ function RidesContent() {
               </>
             )}
           </div>
-          <h1 className="text-display-lg text-primary">
+          <h1 className="text-headline-lg md:text-display-lg text-primary">
             {matchedRoute ? `${matchedRoute.from} to ${matchedRoute.to}` : t('pageTitle')}
           </h1>
           {matchedRoute && (
@@ -100,7 +101,17 @@ function RidesContent() {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Filters sidebar */}
-          <aside className="lg:col-span-3 bg-surface-container-low p-6 rounded-2xl space-y-8 lg:sticky lg:top-24">
+          <aside className="lg:col-span-3 bg-surface-container-low p-4 md:p-6 rounded-2xl lg:sticky lg:top-24">
+            <button
+              type="button"
+              onClick={() => setFiltersOpen((open) => !open)}
+              className="flex w-full items-center justify-between rounded-xl bg-surface-container-lowest px-4 py-3 text-left text-label-md text-primary lg:hidden"
+            >
+              <span>Search filters</span>
+              <span className="material-symbols-outlined text-[20px]">{filtersOpen ? 'expand_less' : 'tune'}</span>
+            </button>
+
+            <div className={`${filtersOpen ? 'block' : 'hidden'} mt-5 space-y-8 lg:mt-0 lg:block`}>
             {/* Route search */}
             <div>
               <h3 className="text-label-md text-primary mb-4">{t('labelRoute')}</h3>
@@ -227,6 +238,7 @@ function RidesContent() {
                 {t('resetFilters')}
               </button>
             )}
+            </div>
           </aside>
 
           {/* Results */}
@@ -250,7 +262,7 @@ function RidesContent() {
                   className="bg-surface-container-lowest border border-outline-variant rounded-2xl overflow-hidden flex flex-col md:flex-row hover:shadow-lg transition-shadow"
                 >
                   {/* Image */}
-                  <div className="md:w-2/5 relative min-h-[200px] bg-surface-container overflow-hidden">
+                  <div className="relative min-h-[210px] bg-surface-container overflow-hidden md:w-2/5">
                     <CatalogImage
                       src={vehicle.image}
                       alt={vehicle.name}
@@ -265,9 +277,9 @@ function RidesContent() {
                   </div>
 
                   {/* Content */}
-                  <div className="md:w-3/5 p-6 flex flex-col justify-between">
+                  <div className="md:w-3/5 p-4 md:p-6 flex flex-col justify-between">
                     <div>
-                      <div className="flex justify-between items-start mb-2">
+                      <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-start mb-2">
                         <h2 className="text-headline-sm text-primary">{vehicle.name}</h2>
                         {price ? (
                           <span className="text-headline-sm text-secondary">{price}</span>

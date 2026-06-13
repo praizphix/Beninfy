@@ -29,15 +29,15 @@ export default function BookingWidget() {
   }
 
   return (
-    <section className="relative z-20 mx-auto max-w-[1280px] px-4 md:px-10 -mt-24 md:-mt-16">
-      <div className="bg-surface-container-lowest rounded-2xl shadow-xl p-6 md:p-8">
+    <section className="relative z-20 mx-auto max-w-[1280px] px-4 md:px-10 -mt-10 md:-mt-16">
+      <div className="bg-surface-container-lowest rounded-2xl shadow-xl p-4 md:p-8">
         {/* Trip type toggle */}
-        <div className="flex gap-2 mb-6">
+        <div className="grid grid-cols-2 gap-2 mb-5 md:flex md:gap-2 md:mb-6">
           {(['one-way', 'round-trip'] as const).map((type) => (
             <button
               key={type}
               onClick={() => setTripType(type)}
-              className={`rounded-full px-5 py-2 text-label-md transition-all ${
+              className={`rounded-full px-4 py-2.5 text-label-md transition-all ${
                 tripType === type
                   ? 'bg-primary text-on-primary'
                   : 'border border-outline-variant text-on-surface-variant hover:bg-surface-container'
@@ -49,7 +49,7 @@ export default function BookingWidget() {
         </div>
 
         <form onSubmit={handleSearch}>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-4 md:gap-4">
             {/* From */}
             <div className="flex flex-col gap-2">
               <label className="text-label-sm text-on-surface-variant">{t('from')}</label>
@@ -149,8 +149,8 @@ export default function BookingWidget() {
           </div>
 
           {/* Footer row */}
-          <div className="flex flex-col md:flex-row justify-between items-center mt-6 gap-4">
-            <div className="flex flex-wrap gap-4">
+          <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center mt-5 md:mt-6 gap-4">
+            <div className="grid grid-cols-1 gap-2 text-sm md:flex md:flex-wrap md:gap-4">
               <div className="flex items-center gap-2 text-primary text-label-md">
                 <span className="material-symbols-outlined icon-fill text-[18px]">verified</span>
                 <span>{t('trustSecure')}</span>

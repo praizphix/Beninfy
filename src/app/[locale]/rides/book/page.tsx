@@ -86,12 +86,12 @@ function PassengerDetailsContent() {
 
   return (
     <div className="min-h-screen" style={{ background: '#f4f2f8' }}>
-      <div className="pt-24 pb-20 max-w-[1280px] mx-auto px-4 md:px-10">
+      <div className="pt-20 pb-12 md:pt-24 md:pb-20 max-w-[1280px] mx-auto px-4 md:px-10">
 
         {/* Back */}
         <Link
           href={`/${locale}/rides`}
-          className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-primary mb-6 group transition-colors"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-primary mb-4 md:mb-6 group transition-colors"
         >
           <span className="material-symbols-outlined text-[18px] group-hover:-translate-x-0.5 transition-transform">arrow_back</span>
           Back to Rides
@@ -107,12 +107,12 @@ function PassengerDetailsContent() {
 
         {/* Title */}
         <motion.div
-          className="mb-8"
+          className="mb-6 md:mb-8"
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
         >
-          <h1 className="text-3xl font-bold" style={{ color: '#3e004c' }}>{t('pageTitle')}</h1>
+          <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#3e004c' }}>{t('pageTitle')}</h1>
           <p className="text-gray-500 mt-1 text-sm">{t('pageSubtitle')}</p>
         </motion.div>
 
@@ -127,7 +127,7 @@ function PassengerDetailsContent() {
               transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
             >
               {/* Passenger info card */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 md:p-6">
                 <div className="flex items-center gap-3 mb-5 pb-4 border-b border-gray-100">
                   <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: '#f3e8f8' }}>
                     <span className="material-symbols-outlined" style={{ fontSize: 20, color: '#3e004c' }}>person</span>
@@ -188,7 +188,7 @@ function PassengerDetailsContent() {
               </div>
 
               {/* Pickup & drop-off card */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 md:p-6">
                 <div className="flex items-center gap-3 mb-5 pb-4 border-b border-gray-100">
                   <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: '#f3e8f8' }}>
                     <span className="material-symbols-outlined" style={{ fontSize: 20, color: '#3e004c' }}>location_on</span>
@@ -235,7 +235,7 @@ function PassengerDetailsContent() {
               </div>
 
               {/* Border protocol notice */}
-              <div className="rounded-2xl p-5 border flex gap-4 items-start" style={{ background: '#fdf5ff', borderColor: '#e4c8f0' }}>
+              <div className="rounded-2xl p-4 md:p-5 border flex gap-3 md:gap-4 items-start" style={{ background: '#fdf5ff', borderColor: '#e4c8f0' }}>
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: '#ead5f5' }}>
                   <span className="material-symbols-outlined" style={{ fontSize: 20, color: '#3e004c' }}>verified_user</span>
                 </div>
@@ -265,14 +265,14 @@ function PassengerDetailsContent() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1], delay: 0.25 }}
             >
-              <div className="sticky top-24 space-y-4">
+              <div className="space-y-4 lg:sticky lg:top-24">
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                   {/* Header strip */}
-                  <div className="px-6 py-4" style={{ background: '#3e004c' }}>
+                  <div className="px-4 py-4 md:px-6" style={{ background: '#3e004c' }}>
                     <p className="text-xs font-bold uppercase tracking-widest text-white/70">{t('summaryTitle')}</p>
                   </div>
 
-                  <div className="p-6 space-y-5">
+                  <div className="p-4 md:p-6 space-y-5">
                     {/* Animated route map */}
                     <RouteMapSVG from={from} to={to} duration="~6 hrs" distance="~140 km" />
 

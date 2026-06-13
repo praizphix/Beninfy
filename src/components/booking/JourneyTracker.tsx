@@ -43,7 +43,8 @@ export default function JourneyTracker({ steps }: { steps: Step[] }) {
   const DASHES = 9
 
   return (
-    <div className="mb-10 select-none px-1">
+    <div className="mb-6 select-none overflow-x-auto px-1 pb-2 md:mb-10">
+      <div className="min-w-[440px]">
       {/* Road + vehicle layer */}
       <div className="relative" style={{ height: 56 }}>
         {/* Road surface */}
@@ -165,6 +166,7 @@ export default function JourneyTracker({ steps }: { steps: Step[] }) {
             )}
           </div>
         ))}
+      </div>
       </div>
     </div>
   )

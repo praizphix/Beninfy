@@ -119,12 +119,12 @@ function PaymentContent() {
 
   return (
     <div className="min-h-screen" style={{ background: '#f4f2f8' }}>
-      <div className="pt-24 pb-20 max-w-[1280px] mx-auto px-4 md:px-10">
+      <div className="pt-20 pb-12 md:pt-24 md:pb-20 max-w-[1280px] mx-auto px-4 md:px-10">
 
         {/* Back link */}
         <Link
           href={`/${locale}/rides/book?vehicle=${vehicleId}&from=${from}&to=${to}&date=${date}`}
-          className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-primary mb-6 group transition-colors"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-primary mb-4 md:mb-6 group transition-colors"
         >
           <span className="material-symbols-outlined text-[18px] group-hover:-translate-x-0.5 transition-transform">arrow_back</span>
           {t('back')}
@@ -142,22 +142,22 @@ function PaymentContent() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* LEFT: payment methods */}
             <div className="lg:col-span-7 space-y-5">
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                <h1 className="text-xl font-bold mb-6" style={{ color: '#3e004c' }}>{t('paymentMethod')}</h1>
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 md:p-6">
+                <h1 className="text-lg md:text-xl font-bold mb-5 md:mb-6" style={{ color: '#3e004c' }}>{t('paymentMethod')}</h1>
 
                 <div className="space-y-4">
                   {methods.map((m) => (
                     <div
                       key={m.id}
                       onClick={() => setMethod(m.id)}
-                      className={`rounded-xl border-2 p-4 cursor-pointer transition-all ${method === m.id ? 'border-primary bg-primary/5' : 'border-gray-200 bg-gray-50 hover:border-primary/40'}`}
+                      className={`rounded-xl border-2 p-3.5 md:p-4 cursor-pointer transition-all ${method === m.id ? 'border-primary bg-primary/5' : 'border-gray-200 bg-gray-50 hover:border-primary/40'}`}
                     >
-                      <div className="flex items-start gap-4">
+                      <div className="flex items-start gap-3 md:gap-4">
                           <span className={`material-symbols-outlined text-[22px] mt-0.5 ${method === m.id ? 'text-primary' : 'text-gray-300'}`}>
                             {method === m.id ? 'radio_button_checked' : 'radio_button_unchecked'}
                           </span>
                           <div className="flex-1">
-                            <div className="flex justify-between items-center mb-1">
+                            <div className="flex justify-between items-center gap-3 mb-1">
                               <span className="text-sm font-semibold text-gray-900">{m.label}</span>
                               <span className="material-symbols-outlined text-gray-400 text-[20px]">{m.icon}</span>
                             </div>
@@ -165,7 +165,7 @@ function PaymentContent() {
                           {/* Card form */}
                           {m.id === 'card' && method === 'card' && (
                             <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div className="col-span-2">
+                              <div className="md:col-span-2">
                                 <label className="block text-xs font-medium text-gray-600 mb-1.5">{t('cardNumber')}</label>
                                 <div className="relative">
                                   <input
@@ -248,12 +248,12 @@ function PaymentContent() {
 
             {/* RIGHT: booking summary */}
             <div className="lg:col-span-5">
-              <div className="sticky top-24 space-y-4">
+              <div className="space-y-4 lg:sticky lg:top-24">
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                  <div className="px-6 py-4" style={{ background: '#3e004c' }}>
+                  <div className="px-4 py-4 md:px-6" style={{ background: '#3e004c' }}>
                     <p className="text-xs font-bold uppercase tracking-widest text-white/70">{t('rideSummary')}</p>
                   </div>
-                  <div className="p-6 space-y-5">
+                  <div className="p-4 md:p-6 space-y-5">
                   {/* Vehicle + route */}
                   <div className="flex gap-4 mb-2">
                     <div className="w-20 h-14 rounded-lg flex-shrink-0 flex items-center justify-center" style={{ background: '#f3e8f8' }}>
