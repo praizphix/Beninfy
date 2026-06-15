@@ -3,11 +3,11 @@ const DEFAULT_BUCKET = 'beninfy-media'
 type CatalogKind = 'vehicles' | 'tours'
 
 function getSupabaseStorageConfig() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, '')
+  const url = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL)?.replace(/\/$/, '')
   const key = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY
   const bucket = process.env.SUPABASE_STORAGE_BUCKET || DEFAULT_BUCKET
 
-  if (!url) return { error: 'NEXT_PUBLIC_SUPABASE_URL is not configured' as const }
+  if (!url) return { error: 'SUPABASE_URL or NEXT_PUBLIC_SUPABASE_URL is not configured' as const }
   if (!key) return { error: 'SUPABASE_SECRET_KEY is not configured' as const }
 
   return { url, key, bucket }
