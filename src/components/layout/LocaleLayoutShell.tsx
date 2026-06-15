@@ -8,7 +8,7 @@ import BottomNav from '@/components/layout/BottomNav'
 import PageTransition from '@/components/shared/PageTransition'
 import { cn } from '@/lib/utils'
 
-const AUTH_PAGES = ['/login', '/register']
+const AUTH_PAGES = ['/login', '/register', '/admin-login', '/admin-signup']
 
 export default function LocaleLayoutShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()

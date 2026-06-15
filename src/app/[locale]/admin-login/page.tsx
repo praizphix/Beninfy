@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLocale } from 'next-intl'
 import Image from 'next/image'
+import Link from 'next/link'
 
 export default function AdminLoginPage() {
   const locale = useLocale()
@@ -99,6 +100,11 @@ export default function AdminLoginPage() {
           </form>
 
           <p className="text-center text-xs text-gray-400 mt-6">
+            Have an onboarding code?{' '}
+            <Link href={`/${locale}/admin-signup`} className="text-purple-700 hover:underline">Create admin account</Link>
+          </p>
+
+          <p className="text-center text-xs text-gray-400 mt-3">
             Not an admin?{' '}
             <a href={`/${locale}/login`} className="text-purple-700 hover:underline">Go to user sign in</a>
           </p>
