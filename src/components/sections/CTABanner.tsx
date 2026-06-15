@@ -9,7 +9,7 @@ export default async function CTABanner() {
       className="py-24 relative overflow-hidden"
       style={{
         background:
-          "linear-gradient(135deg, rgba(62,0,76,0.95) 0%, rgba(91,19,107,0.95) 100%), url('https://images.unsplash.com/photo-1532375810709-75b1da00537c?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat",
+          "linear-gradient(135deg, rgba(62,0,76,0.88) 0%, rgba(91,19,107,0.82) 100%), url('/images/cta/togo-metallic-flag-textured-flag-grunge-flag.jpg') center/cover no-repeat",
       }}
     >
       {/* Decorative circles */}
