@@ -16,6 +16,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { protocol: 'https', hostname: 'images.unsplash.com' },
       { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
+      { protocol: 'https', hostname: '*.supabase.co' },
     ],
   },
   experimental: {
@@ -25,4 +26,3 @@ const nextConfig: NextConfig = {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default withNextIntl(pwaConfig(nextConfig as any) as any)
-
