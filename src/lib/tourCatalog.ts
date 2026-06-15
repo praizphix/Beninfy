@@ -1,4 +1,3 @@
-import { prisma } from '@/lib/prisma'
 import { tours as defaultTours } from '@/data/tours'
 import type { Tour } from '@/types'
 import { catalogImageUrl } from '@/lib/mediaImage'
@@ -14,7 +13,15 @@ export function fallbackTourImage(tourId: string) {
   return TOUR_IMAGE_FALLBACKS[tourId] ?? TOUR_IMAGE_FALLBACKS['west-africa-grand-tour']
 }
 
+function publicTourFallback() {
+  return defaultTours.map((tour) => ({
+    ...tour,
+    image: tour.image || fallbackTourImage(tour.id),
+  }))
+}
+
 export async function ensureDefaultTours() {
+  const { prisma } = await import('@/lib/prisma')
   const existing = await prisma.tour.findMany({ select: { id: true } })
   const existingIds = new Set(existing.map((t) => t.id))
   const missing = defaultTours.filter((t) => !existingIds.has(t.id))
@@ -46,26 +53,32 @@ export async function ensureDefaultTours() {
 }
 
 export async function getPublicTours() {
-  await ensureDefaultTours()
-  const tours = await prisma.tour.findMany({
-    orderBy: [{ startingFromNGN: 'asc' }, { title: 'asc' }],
-  })
+  try {
+    await ensureDefaultTours()
+    const { prisma } = await import('@/lib/prisma')
+    const tours = await prisma.tour.findMany({
+      orderBy: [{ startingFromNGN: 'asc' }, { title: 'asc' }],
+    })
 
-  return tours.map((t): Tour => ({
-    id: t.id,
-    title: t.title,
-    titleFr: t.titleFr ?? t.title,
-    destination: t.destination ?? t.country,
-    destinationFr: t.destinationFr ?? t.destination ?? t.country,
-    country: t.country,
-    durationDays: t.durationDays,
-    startingFromNGN: t.startingFromNGN,
-    image: catalogImageUrl('tours', t.id, t.image, t.updatedAt) || fallbackTourImage(t.id),
-    description: t.description,
-    descriptionFr: t.descriptionFr ?? t.description,
-    highlights: t.highlights,
-    highlightsFr: t.highlightsFr,
-    included: [],
-    includedFr: [],
-  }))
+    return tours.map((t): Tour => ({
+      id: t.id,
+      title: t.title,
+      titleFr: t.titleFr ?? t.title,
+      destination: t.destination ?? t.country,
+      destinationFr: t.destinationFr ?? t.destination ?? t.country,
+      country: t.country,
+      durationDays: t.durationDays,
+      startingFromNGN: t.startingFromNGN,
+      image: catalogImageUrl('tours', t.id, t.image, t.updatedAt) || fallbackTourImage(t.id),
+      description: t.description,
+      descriptionFr: t.descriptionFr ?? t.description,
+      highlights: t.highlights,
+      highlightsFr: t.highlightsFr,
+      included: [],
+      includedFr: [],
+    }))
+  } catch (error) {
+    console.error('Falling back to default tour catalog', error)
+    return publicTourFallback()
+  }
 }

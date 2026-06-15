@@ -1,4 +1,3 @@
-import { prisma } from '@/lib/prisma'
 import { vehicles as defaultVehicles } from '@/data/vehicles'
 import type { Vehicle } from '@/types'
 import { catalogImageUrl } from '@/lib/mediaImage'
@@ -17,7 +16,17 @@ export function fallbackVehicleImage(vehicleId: string) {
   return VEHICLE_IMAGE_FALLBACKS[vehicleId] ?? VEHICLE_IMAGE_FALLBACKS.saloon
 }
 
+function publicVehicleFallback({ availableOnly = true } = {}) {
+  return defaultVehicles
+    .filter((vehicle) => !availableOnly || vehicle.available)
+    .map((vehicle) => ({
+      ...vehicle,
+      image: vehicle.image || fallbackVehicleImage(vehicle.id),
+    }))
+}
+
 export async function ensureDefaultVehicles() {
+  const { prisma } = await import('@/lib/prisma')
   const existing = await prisma.vehicle.findMany({ select: { id: true } })
   const existingIds = new Set(existing.map((v) => v.id))
   const missing = defaultVehicles.filter((v) => !existingIds.has(v.id))
@@ -48,26 +57,32 @@ export async function ensureDefaultVehicles() {
 }
 
 export async function getPublicVehicles({ availableOnly = true } = {}) {
-  await ensureDefaultVehicles()
-  const vehicles = await prisma.vehicle.findMany({
-    where: availableOnly ? { available: true } : undefined,
-    orderBy: [{ capacity: 'asc' }, { name: 'asc' }],
-  })
+  try {
+    await ensureDefaultVehicles()
+    const { prisma } = await import('@/lib/prisma')
+    const vehicles = await prisma.vehicle.findMany({
+      where: availableOnly ? { available: true } : undefined,
+      orderBy: [{ capacity: 'asc' }, { name: 'asc' }],
+    })
 
-  return vehicles.map((v): Vehicle => ({
-    id: v.id,
-    name: v.name,
-    nameFr: v.nameFr ?? v.name,
-    capacity: v.capacity,
-    luggageCapacity: v.luggageCapacity,
-    features: v.features,
-    featuresFr: v.featuresFr,
-    image: catalogImageUrl('vehicles', v.id, v.image, v.updatedAt) || fallbackVehicleImage(v.id),
-    description: v.description ?? '',
-    descriptionFr: v.descriptionFr ?? v.description ?? '',
-    available: v.available,
-    basePriceNGN: v.basePriceNGN,
-    badge: v.badge ?? undefined,
-    badgeFr: v.badgeFr ?? undefined,
-  }))
+    return vehicles.map((v): Vehicle => ({
+      id: v.id,
+      name: v.name,
+      nameFr: v.nameFr ?? v.name,
+      capacity: v.capacity,
+      luggageCapacity: v.luggageCapacity,
+      features: v.features,
+      featuresFr: v.featuresFr,
+      image: catalogImageUrl('vehicles', v.id, v.image, v.updatedAt) || fallbackVehicleImage(v.id),
+      description: v.description ?? '',
+      descriptionFr: v.descriptionFr ?? v.description ?? '',
+      available: v.available,
+      basePriceNGN: v.basePriceNGN,
+      badge: v.badge ?? undefined,
+      badgeFr: v.badgeFr ?? undefined,
+    }))
+  } catch (error) {
+    console.error('Falling back to default vehicle catalog', error)
+    return publicVehicleFallback({ availableOnly })
+  }
 }
