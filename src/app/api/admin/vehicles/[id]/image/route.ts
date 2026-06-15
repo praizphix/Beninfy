@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin'
 import { prisma } from '@/lib/prisma'
+import { uploadCatalogImage } from '@/lib/supabaseStorage'
 
 const MAX_IMAGE_BYTES = 6 * 1024 * 1024
 const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/avif'])
@@ -28,12 +29,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({ error: 'Vehicle not found' }, { status: 404 })
   }
 
-  const bytes = Buffer.from(await file.arrayBuffer())
-  const image = `data:${file.type};base64,${bytes.toString('base64')}`
+  const uploaded = await uploadCatalogImage('vehicles', id, file)
+  if (!uploaded.ok) {
+    return NextResponse.json({ error: uploaded.error }, { status: 503 })
+  }
 
   const vehicle = await prisma.vehicle.update({
     where: { id },
-    data: { image },
+    data: { image: uploaded.url },
     select: { id: true, image: true },
   })
 
