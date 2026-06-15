@@ -11,6 +11,8 @@ const schema = z.object({
   code: z.string().trim().min(1),
 })
 
+export const runtime = 'nodejs'
+
 function getDatabaseConfigError() {
   const databaseUrl = process.env.DATABASE_URL
   if (!databaseUrl) return 'DATABASE_URL is missing in deployment settings'
@@ -23,6 +25,17 @@ function getDatabaseConfigError() {
   }
   if (databaseUrl.includes('[YOUR-PASSWORD]')) return 'DATABASE_URL still contains the password placeholder'
   return null
+}
+
+function describeError(error: unknown) {
+  if (!(error instanceof Error)) return 'Unknown non-error exception'
+
+  const safeMessage = error.message
+    .replace(/postgres(?:ql)?:\/\/[^\s'")]+/gi, 'postgresql://[redacted]')
+    .replace(/password=[^&\s'")]+/gi, 'password=[redacted]')
+    .slice(0, 220)
+
+  return `${error.name}: ${safeMessage || 'No message'}`
 }
 
 export async function POST(req: Request) {
@@ -79,6 +92,6 @@ export async function POST(req: Request) {
     if (error instanceof Error && /connection string|database url|invalid url|postgres/i.test(error.message)) {
       return NextResponse.json({ error: 'Database connection string is invalid in deployment settings' }, { status: 500 })
     }
-    return NextResponse.json({ error: 'Server error. Check deployment logs.' }, { status: 500 })
+    return NextResponse.json({ error: `Server error: ${describeError(error)}` }, { status: 500 })
   }
 }
