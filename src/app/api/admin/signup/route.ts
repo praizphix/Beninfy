@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client'
 import { NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { z } from 'zod'
@@ -24,7 +25,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Invalid input', issues: parsed.error.flatten() }, { status: 400 })
     }
 
-    const { name, email, password, phone, code } = parsed.data
+    const { name, password, phone, code } = parsed.data
+    const email = parsed.data.email.toLowerCase()
     if (code !== signupCode) {
       return NextResponse.json({ error: 'Invalid admin signup code' }, { status: 403 })
     }
@@ -44,7 +46,11 @@ export async function POST(req: Request) {
     })
 
     return NextResponse.json({ user }, { status: 201 })
-  } catch {
-    return NextResponse.json({ error: 'Server error' }, { status: 500 })
+  } catch (error) {
+    console.error('Admin signup failed', error)
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      return NextResponse.json({ error: `Database error: ${error.code}` }, { status: 500 })
+    }
+    return NextResponse.json({ error: 'Server error. Check deployment logs.' }, { status: 500 })
   }
 }
