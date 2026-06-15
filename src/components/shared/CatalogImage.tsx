@@ -9,11 +9,11 @@ interface CatalogImageProps {
 }
 
 export default function CatalogImage({ src, alt, sizes, className, priority = false }: CatalogImageProps) {
-  const isUploadedImage = src.startsWith('/api/media/') || src.includes('.supabase.co/storage/v1/object/')
+  const isApiMediaImage = src.startsWith('/api/media/')
 
-  if (isUploadedImage) {
+  if (isApiMediaImage) {
     return (
-      // Uploaded catalog images are already served by cacheable media/storage endpoints.
+      // API-backed legacy uploads are already served by a cacheable media endpoint.
       // Native img avoids production optimizer issues with dynamic API-backed files.
       // eslint-disable-next-line @next/next/no-img-element
       <img
