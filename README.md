@@ -26,7 +26,9 @@ Backoffice lives at `/[locale]/admin`.
 
 | Name | Required | Notes |
 | --- | --- | --- |
-| `DATABASE_URL` | yes | Postgres connection string. Use the pooled URL on Vercel for runtime queries. |
+| `DATABASE_URL` | yes | Postgres connection string. Use the pooled Supabase/Postgres URL on Vercel for runtime queries. |
+| `DIRECT_URL` | recommended | Direct Postgres connection string for Prisma migrations. |
+| `PRISMA_MIGRATE_URL` | optional | Migration-only override. Takes precedence over `DIRECT_URL`. |
 | `AUTH_SECRET` | yes | `openssl rand -base64 32` |
 | `ADMIN_EMAIL` | yes | Email that gets auto-promoted to `super_admin`. |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | optional | Google OAuth. |
@@ -45,7 +47,19 @@ Backoffice lives at `/[locale]/admin`.
 ### Notes
 - `trustHost: true` is set in `src/lib/auth.ts` so Auth.js works behind the Vercel proxy without `AUTH_URL`.
 - Prisma 7 requires a driver adapter — `src/lib/prisma.ts` uses `@prisma/adapter-pg`.
+- Prisma CLI uses `PRISMA_MIGRATE_URL || DIRECT_URL || DATABASE_URL` from `prisma.config.js`; the app runtime uses `DATABASE_URL`.
 - `postinstall: prisma generate` ensures the client is built on every Vercel install.
+
+## Move Database to Supabase
+
+1. Create a Supabase project and copy the Postgres connection strings.
+2. In `.env` and Vercel, set `DATABASE_URL` to the pooled/runtime Supabase URL.
+3. Set `DIRECT_URL` to the direct Supabase database URL for migrations.
+4. Run `npm run db:migrate` once to create the schema in Supabase.
+5. Run `npm run db:seed` to seed routes, vehicles, tours, fees, and the admin email.
+6. Update Vercel environment variables, then redeploy.
+
+If existing Neon data must be preserved, export from Neon with `pg_dump` and restore into Supabase before switching Vercel to the new `DATABASE_URL`.
 
 ## Scripts
 
