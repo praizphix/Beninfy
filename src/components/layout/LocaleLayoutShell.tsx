@@ -6,6 +6,7 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import BottomNav from '@/components/layout/BottomNav'
 import PageTransition from '@/components/shared/PageTransition'
+import SupportBot from '@/components/support/SupportBot'
 import { cn } from '@/lib/utils'
 
 const AUTH_PAGES = ['/login', '/register', '/admin-login', '/admin-signup']
@@ -37,6 +38,7 @@ export default function LocaleLayoutShell({ children }: { children: React.ReactN
       </main>
       <Footer />
       <BottomNav />
+      <SupportBot />
     </div>
   )
 }
