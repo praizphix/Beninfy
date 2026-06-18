@@ -35,8 +35,18 @@ export default function AdminDriversPage() {
       fields={[
         { name: 'name', label: 'Name', type: 'text', required: true },
         { name: 'phone', label: 'Phone', type: 'text', required: true },
-        { name: 'email', label: 'Email', type: 'text' },
-        { name: 'status', label: 'Status', type: 'text', required: true, placeholder: 'available, off_duty, inactive' },
+        { name: 'email', label: 'Email', type: 'text', placeholder: 'Optional' },
+        {
+          name: 'status',
+          label: 'Status',
+          type: 'select',
+          required: true,
+          options: [
+            { label: 'Available', value: 'available' },
+            { label: 'Off duty', value: 'off_duty' },
+            { label: 'Inactive', value: 'inactive' },
+          ],
+        },
         { name: 'homeCity', label: 'Home city', type: 'text' },
         { name: 'licenseNumber', label: 'License number', type: 'text' },
         { name: 'notes', label: 'Notes', type: 'textarea' },

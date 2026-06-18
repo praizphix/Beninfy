@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 
-export type FieldType = 'text' | 'number' | 'textarea' | 'boolean' | 'array'
+export type FieldType = 'text' | 'number' | 'textarea' | 'boolean' | 'array' | 'select'
 
 export interface FieldDef {
   name: string
@@ -10,6 +10,7 @@ export interface FieldDef {
   type: FieldType
   required?: boolean
   placeholder?: string
+  options?: Array<{ label: string; value: string }>
   // shown only on create
   createOnly?: boolean
 }
@@ -82,6 +83,7 @@ export function CrudTable<T extends { id: string } & Record<string, unknown>>({
         if (f.type === 'boolean') initial[f.name] = false
         else if (f.type === 'array') initial[f.name] = ''
         else if (f.type === 'number') initial[f.name] = ''
+        else if (f.type === 'select') initial[f.name] = f.options?.[0]?.value ?? ''
         else initial[f.name] = ''
       } else if (f.type === 'array' && Array.isArray(initial[f.name])) {
         initial[f.name] = (initial[f.name] as string[]).join('\n')
@@ -278,6 +280,23 @@ export function CrudTable<T extends { id: string } & Record<string, unknown>>({
                       />
                       {f.label}
                     </label>
+                  )
+                }
+                if (f.type === 'select') {
+                  return (
+                    <div key={f.name}>
+                      <label className="block text-xs font-medium text-gray-600 mb-1.5">{f.label}{f.required && ' *'}</label>
+                      <select
+                        value={String(value)}
+                        onChange={(e) => setForm({ ...form, [f.name]: e.target.value })}
+                        required={f.required && open.mode === 'create'}
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white"
+                      >
+                        {f.options?.map((option) => (
+                          <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
+                      </select>
+                    </div>
                   )
                 }
                 return (

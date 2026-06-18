@@ -1,6 +1,7 @@
 'use client'
 
 import { CrudTable } from '@/components/admin/CrudTable'
+import { vehicles } from '@/data/vehicles'
 
 interface FleetVehicle {
   id: string
@@ -33,10 +34,26 @@ export default function AdminFleetVehiclesPage() {
         { header: 'Notes', render: (v) => v.notes ?? '—' },
       ]}
       fields={[
-        { name: 'vehicleId', label: 'Vehicle type ID', type: 'text', required: true, placeholder: 'e.g. saloon, suv, sienna' },
+        {
+          name: 'vehicleId',
+          label: 'Vehicle type',
+          type: 'select',
+          required: true,
+          options: vehicles.map((vehicle) => ({ label: vehicle.name, value: vehicle.id })),
+        },
         { name: 'label', label: 'Unit label', type: 'text', required: true, placeholder: 'e.g. Sienna 01' },
         { name: 'plateNumber', label: 'Plate number', type: 'text', required: true },
-        { name: 'status', label: 'Status', type: 'text', required: true, placeholder: 'available, maintenance, inactive' },
+        {
+          name: 'status',
+          label: 'Status',
+          type: 'select',
+          required: true,
+          options: [
+            { label: 'Available', value: 'available' },
+            { label: 'Maintenance', value: 'maintenance' },
+            { label: 'Inactive', value: 'inactive' },
+          ],
+        },
         { name: 'currentCity', label: 'Current city', type: 'text' },
         { name: 'notes', label: 'Notes', type: 'textarea' },
       ]}

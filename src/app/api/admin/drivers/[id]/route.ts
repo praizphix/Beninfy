@@ -1,16 +1,25 @@
 import { NextResponse } from 'next/server'
+import { Prisma } from '@prisma/client'
 import { z } from 'zod'
 import { requireAdmin } from '@/lib/admin'
 import { prisma } from '@/lib/prisma'
 
+const optionalText = z.preprocess(
+  (value) => (typeof value === 'string' && value.trim() === '' ? null : value),
+  z.string().trim().nullable().optional()
+)
+
 const patchSchema = z.object({
-  name: z.string().min(1).max(120).optional(),
-  phone: z.string().min(1).max(40).optional(),
-  email: z.string().email().nullable().optional(),
+  name: z.string().trim().min(1).max(120).optional(),
+  phone: z.string().trim().min(1).max(40).optional(),
+  email: z.preprocess(
+    (value) => (typeof value === 'string' && value.trim() === '' ? null : value),
+    z.string().trim().email().nullable().optional()
+  ),
   status: z.enum(['available', 'off_duty', 'inactive']).optional(),
-  homeCity: z.string().nullable().optional(),
-  licenseNumber: z.string().nullable().optional(),
-  notes: z.string().nullable().optional(),
+  homeCity: optionalText,
+  licenseNumber: optionalText,
+  notes: optionalText,
 })
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -20,8 +29,15 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const body = await req.json().catch(() => null)
   const parsed = patchSchema.safeParse(body)
   if (!parsed.success) return NextResponse.json({ error: 'Invalid input', issues: parsed.error.flatten() }, { status: 400 })
-  const driver = await prisma.driver.update({ where: { id }, data: parsed.data })
-  return NextResponse.json({ driver })
+  try {
+    const driver = await prisma.driver.update({ where: { id }, data: parsed.data })
+    return NextResponse.json({ driver })
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      return NextResponse.json({ error: 'A driver with this unique value already exists' }, { status: 409 })
+    }
+    throw error
+  }
 }
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
