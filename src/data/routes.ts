@@ -36,6 +36,23 @@ export const routes: Route[] = [
     borderCrossings: ['Hillacondji–Sanvee Condji'],
   },
   {
+    id: 'lagos-porto-novo',
+    from: 'Lagos',
+    fromCode: 'LOS',
+    fromCountry: 'Nigeria',
+    to: 'Porto Novo',
+    toCode: 'PNO',
+    toCountry: 'Benin Republic',
+    durationHours: 4,
+    popular: false,
+    image: '/images/routes/lagos-cotonou.jpg',
+    description:
+      'Private drop-off service from Lagos to Porto Novo via the Seme–Kraké border and Cotonou corridor.',
+    descriptionFr:
+      'Service de dépose privé de Lagos à Porto-Novo via la frontière Seme–Kraké et le corridor de Cotonou.',
+    borderCrossings: ['Seme–Kraké'],
+  },
+  {
     id: 'lagos-ouidah',
     from: 'Lagos',
     fromCode: 'LOS',
@@ -143,6 +160,7 @@ export const routes: Route[] = [
 export const bookingCities = [
   { city: 'Lagos', country: 'Nigeria', code: 'LOS' },
   { city: 'Cotonou', country: 'Benin Republic', code: 'COT' },
+  { city: 'Porto Novo', country: 'Benin Republic', code: 'PNO' },
   { city: 'Ouidah', country: 'Benin Republic', code: 'OUI' },
   { city: 'Lomé', country: 'Togo', code: 'LFW' },
   { city: 'Aneho', country: 'Togo', code: 'ANE' },

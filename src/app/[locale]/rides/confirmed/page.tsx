@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { routes } from '@/data/routes'
-import { getRouteBasePrice } from '@/data/pricing'
+import { getRouteDropoffPrice } from '@/data/pricing'
 import { formatNGN } from '@/lib/utils'
 import { getPublicVehicles } from '@/lib/vehicleCatalog'
 import ConfirmationHeader from '@/components/booking/ConfirmationHeader'
@@ -22,6 +22,7 @@ interface Props {
     ref?: string
     reference?: string
     name?: string
+    tripType?: string
   }>
 }
 
@@ -65,17 +66,20 @@ export default async function BookingConfirmedPage({ params, searchParams }: Pro
   const from = dbBooking?.from ?? sp.from ?? 'Lagos'
   const to = dbBooking?.to ?? sp.to ?? 'Cotonou'
   const date = dbBooking ? dbBooking.date.toISOString() : (sp.date ?? '')
+  const tripType = dbBooking?.tripType === 'round_trip' || sp.tripType === 'round-trip' ? 'round-trip' : 'one-way'
   const bookingRef = paystackReference ?? (dbBooking ? `BFY-${dbBooking.id.slice(-8).toUpperCase()}` : 'BFY-PENDING')
   const passengerName = sp.name ?? 'Passenger'
 
   const vehicles = await getPublicVehicles({ availableOnly: false })
   const vehicle = vehicles.find((v) => v.id === vehicleId)
   const matchedRoute = routes.find((r) => r.from === from && r.to === to)
-  const fallbackBase = matchedRoute ? getRouteBasePrice(matchedRoute.id as RouteId) : 120000
-  const borderFee = 5000
-  const serviceFee = Math.round((fallbackBase ?? 0) * 0.05)
-  const total = dbBooking?.priceNGN ?? ((fallbackBase ?? 0) + borderFee + serviceFee)
-  const basePrice = dbBooking ? Math.max(0, dbBooking.priceNGN - borderFee - serviceFee) : fallbackBase
+  const legCount = tripType === 'round-trip' ? 2 : 1
+  const fallbackDropoff = matchedRoute ? getRouteDropoffPrice(matchedRoute.id as RouteId, vehicleId) : 120000
+  const fallbackRideFare = (fallbackDropoff ?? 0) * legCount
+  const borderFee = 5000 * legCount
+  const serviceFee = Math.round(fallbackRideFare * 0.05)
+  const total = dbBooking?.priceNGN ?? (fallbackRideFare + borderFee + serviceFee)
+  const basePrice = dbBooking ? Math.max(0, dbBooking.priceNGN - borderFee - serviceFee) : fallbackRideFare
 
   const formattedDate = date
     ? new Date(date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
@@ -144,7 +148,7 @@ export default async function BookingConfirmedPage({ params, searchParams }: Pro
               {/* Price breakdown */}
               <div className="space-y-2 text-sm pt-1 border-t border-gray-100">
                 <div className="flex justify-between">
-                  <span className="text-gray-500">{t('rideFare')}</span>
+                  <span className="text-gray-500">{tripType === 'round-trip' ? `${t('rideFare')} (drop-off x 2)` : `${t('rideFare')} (drop-off)`}</span>
                   <span className="text-gray-900">{formatNGN(basePrice ?? 0)}</span>
                 </div>
                 <div className="flex justify-between">

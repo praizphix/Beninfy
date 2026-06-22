@@ -6,6 +6,7 @@ export type VehicleId = string
 
 export type RouteId =
   | 'lagos-cotonou'
+  | 'lagos-porto-novo'
   | 'lagos-ouidah'
   | 'cotonou-togo'
   | 'togo-ghana'

@@ -1,11 +1,21 @@
 import type { RouteId, VehicleId, PriceRange } from '@/types'
 
 /**
- * Official Beninfy route pricing in Nigerian Naira (₦).
+ * Official Beninfy one-way drop-off route pricing in Nigerian Naira (₦).
+ * Round trips multiply this drop-off fare by two before fees.
  * Saloon prices shown as ranges (min/max); all other vehicles are fixed.
  */
 export const routePricing: Record<RouteId, Partial<Record<VehicleId, number | PriceRange>>> = {
   'lagos-cotonou': {
+    saloon:  { min: 160_000, max: 170_000 },
+    suv:     260_000,
+    sienna:  250_000,
+    prado:   260_000,
+    sprinter: 700_000,
+    hiace:   750_000,
+    coastal: 900_000,
+  },
+  'lagos-porto-novo': {
     saloon:  { min: 160_000, max: 170_000 },
     suv:     260_000,
     sienna:  250_000,
@@ -92,6 +102,17 @@ export const packageRates: Partial<Record<VehicleId, number>> = {
 /** Returns the price for a given route + vehicle combination */
 export function getRoutePrice(routeId: RouteId, vehicleId: VehicleId): number | PriceRange | null {
   return routePricing[routeId]?.[vehicleId] ?? null
+}
+
+/**
+ * Returns the one-way drop-off fare for a route + vehicle.
+ * If a fare is a range, the lower end is used for system calculations.
+ */
+export function getRouteDropoffPrice(routeId: RouteId, vehicleId: VehicleId): number | null {
+  const price = getRoutePrice(routeId, vehicleId)
+  if (!price) return null
+  if (typeof price === 'object') return price.min
+  return price
 }
 
 /**

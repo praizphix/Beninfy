@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { motion } from 'framer-motion'
 import { routes } from '@/data/routes'
-import { getRouteBasePrice } from '@/data/pricing'
+import { getRouteDropoffPrice } from '@/data/pricing'
 import { useVehicles } from '@/hooks/useVehicles'
 import JourneyTracker from '@/components/booking/JourneyTracker'
 import RouteMapSVG from '@/components/shared/RouteMapSVG'
@@ -34,7 +34,7 @@ function PassengerDetailsContent() {
 
   const vehicle = vehicles.find((v) => v.id === vehicleId)
   const matchedRoute = routes.find((r) => r.from === from && r.to === to)
-  const basePrice = matchedRoute ? getRouteBasePrice(matchedRoute.id as RouteId) : null
+  const dropoffFare = matchedRoute ? getRouteDropoffPrice(matchedRoute.id as RouteId, vehicleId) : null
 
   const [form, setForm] = useState({
     fullName: '', email: '', phone: '', passportId: '',
@@ -72,7 +72,7 @@ function PassengerDetailsContent() {
   }
 
   const legCount = tripType === 'round-trip' ? 2 : 1
-  const rideFare = (basePrice ?? 0) * legCount
+  const rideFare = (dropoffFare ?? 0) * legCount
   const borderProtocolFee = 5000 * legCount
   const serviceFee = rideFare ? Math.round(rideFare * 0.05) : 0
   const total = rideFare + borderProtocolFee + serviceFee
@@ -309,12 +309,17 @@ function PassengerDetailsContent() {
                     )}
 
                     {/* Price breakdown */}
-                    {basePrice && (
+                    {dropoffFare && (
                       <>
                         <div className="border-t border-gray-100" />
+                        <p className="text-xs text-gray-500">
+                          {tripType === 'round-trip'
+                            ? 'Ride fare is calculated as drop-off fare x 2.'
+                            : 'Ride fare is the selected one-way drop-off fare.'}
+                        </p>
                         <div className="space-y-2.5">
                           {[
-                            { label: t('rideFare'), value: rideFare },
+                            { label: tripType === 'round-trip' ? `${t('rideFare')} (drop-off x 2)` : `${t('rideFare')} (drop-off)`, value: rideFare },
                             { label: t('borderFee'), value: borderProtocolFee },
                             { label: t('serviceFee'), value: serviceFee },
                           ].map(({ label, value }) => (

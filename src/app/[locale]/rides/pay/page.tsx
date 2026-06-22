@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { routes } from '@/data/routes'
-import { getRouteBasePrice } from '@/data/pricing'
+import { getRouteDropoffPrice } from '@/data/pricing'
 import { formatNGN } from '@/lib/utils'
 import { useVehicles } from '@/hooks/useVehicles'
 import JourneyTracker from '@/components/booking/JourneyTracker'
@@ -36,10 +36,10 @@ function PaymentContent() {
 
   const vehicle = vehicles.find((v) => v.id === vehicleId)
   const matchedRoute = routes.find((r) => r.from === from && r.to === to)
-  const basePrice = matchedRoute ? getRouteBasePrice(matchedRoute.id as RouteId) : (vehicle?.basePriceNGN ?? 120000)
+  const dropoffFare = matchedRoute ? getRouteDropoffPrice(matchedRoute.id as RouteId, vehicleId) : (vehicle?.basePriceNGN ?? 120000)
 
   const legCount = tripType === 'round-trip' ? 2 : 1
-  const rideFare = (basePrice ?? 0) * legCount
+  const rideFare = (dropoffFare ?? 0) * legCount
   const borderFee = 5000 * legCount
   const serviceFee = Math.round(rideFare * 0.05)
   const total = rideFare + borderFee + serviceFee
@@ -274,8 +274,13 @@ function PaymentContent() {
 
                   {/* Price breakdown */}
                   <div className="space-y-2.5 py-4 border-y border-gray-100">
+                    <p className="text-xs text-gray-500">
+                      {tripType === 'round-trip'
+                        ? 'Ride fare is calculated as drop-off fare x 2.'
+                        : 'Ride fare is the selected one-way drop-off fare.'}
+                    </p>
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">{t('rideFare')}</span>
+                      <span className="text-gray-500">{tripType === 'round-trip' ? `${t('rideFare')} (drop-off x 2)` : `${t('rideFare')} (drop-off)`}</span>
                       <span className="font-medium text-gray-900">₦<CountUp end={rideFare} separator="," duration={1.2} /></span>
                     </div>
                     <div className="flex justify-between text-sm">

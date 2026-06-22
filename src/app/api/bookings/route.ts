@@ -2,8 +2,11 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { routes } from '@/data/routes'
+import { getRouteDropoffPrice } from '@/data/pricing'
 import { vehicles as catalogVehicles } from '@/data/vehicles'
 import { assertVehicleTypeAvailable } from '@/lib/availability'
+import type { RouteId, VehicleId } from '@/types'
 
 const createSchema = z.object({
   from: z.string().min(1),
@@ -47,6 +50,15 @@ export async function POST(req: Request) {
     }
   }
 
+  const matchedRoute = routes.find((route) => route.from === data.from && route.to === data.to)
+  const dropoffFare = matchedRoute ? getRouteDropoffPrice(matchedRoute.id as RouteId, data.vehicleId as VehicleId) : null
+  const fallbackVehicle = catalogVehicles.find((v) => v.id === data.vehicleId)
+  const legCount = data.tripType === 'round-trip' ? 2 : 1
+  const rideFare = (dropoffFare ?? fallbackVehicle?.basePriceNGN ?? data.priceNGN) * legCount
+  const borderFee = 5000 * legCount
+  const serviceFee = Math.round(rideFare * 0.05)
+  const priceNGN = rideFare + borderFee + serviceFee
+
   let vehicle = await prisma.vehicle.findUnique({ where: { id: data.vehicleId } })
   if (!vehicle) {
     const fromCatalog = catalogVehicles.find((v) => v.id === data.vehicleId)
@@ -87,7 +99,7 @@ export async function POST(req: Request) {
       specialRequirements: data.specialRequirements || null,
       vehicleId: vehicle.id,
       passengers: data.passengers,
-      priceNGN: data.priceNGN,
+      priceNGN,
       legs: {
         create: [
           {

@@ -282,7 +282,10 @@ function RidesContent() {
                       <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-start mb-2">
                         <h2 className="text-headline-sm text-primary">{vehicle.name}</h2>
                         {price ? (
-                          <span className="text-headline-sm text-secondary">{price}</span>
+                          <div className="sm:text-right">
+                            <span className="text-headline-sm text-secondary">{price}</span>
+                            <span className="block text-label-sm text-on-surface-variant">Drop-off fare</span>
+                          </div>
                         ) : (
                           <span className="text-label-sm text-on-surface-variant">{t('priceSelect')}</span>
                         )}
