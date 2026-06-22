@@ -14,6 +14,11 @@ export const routePricing: Record<RouteId, Partial<Record<VehicleId, number | Pr
     hiace:   750_000,
     coastal: 900_000,
   },
+  'lagos-ouidah': {
+    saloon:  220_000,
+    sienna:  300_000,
+    suv:     300_000,
+  },
   'cotonou-togo': {
     saloon:  { min: 150_000, max: 160_000 },
     suv:     250_000,
@@ -40,6 +45,16 @@ export const routePricing: Record<RouteId, Partial<Record<VehicleId, number | Pr
     sprinter: 1_350_000,
     hiace:   1_450_000,
     coastal: 1_750_000,
+  },
+  'lagos-aneho': {
+    saloon:  420_000,
+    sienna:  400_000,
+    suv:     400_000,
+  },
+  'lagos-kpalime': {
+    saloon:  420_000,
+    sienna:  400_000,
+    suv:     400_000,
   },
   'lagos-ghana': {
     saloon:  { min: 470_000, max: 480_000 },

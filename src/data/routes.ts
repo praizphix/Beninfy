@@ -36,6 +36,23 @@ export const routes: Route[] = [
     borderCrossings: ['Hillacondji–Sanvee Condji'],
   },
   {
+    id: 'lagos-ouidah',
+    from: 'Lagos',
+    fromCode: 'LOS',
+    fromCountry: 'Nigeria',
+    to: 'Ouidah',
+    toCode: 'OUI',
+    toCountry: 'Benin Republic',
+    durationHours: 4.5,
+    popular: false,
+    image: '/images/routes/lagos-cotonou.jpg',
+    description:
+      'Private cross-border service from Lagos to Ouidah via Cotonou, ideal for heritage visits, tourism, and onward Benin Republic travel.',
+    descriptionFr:
+      'Service transfrontalier privé de Lagos à Ouidah via Cotonou, idéal pour les visites patrimoniales, le tourisme et les déplacements au Bénin.',
+    borderCrossings: ['Seme–Kraké'],
+  },
+  {
     id: 'togo-ghana',
     from: 'Lomé',
     fromCode: 'LFW',
@@ -70,6 +87,40 @@ export const routes: Route[] = [
     borderCrossings: ['Seme–Kraké', 'Hillacondji–Sanvee Condji'],
   },
   {
+    id: 'lagos-aneho',
+    from: 'Lagos',
+    fromCode: 'LOS',
+    fromCountry: 'Nigeria',
+    to: 'Aneho',
+    toCode: 'ANE',
+    toCountry: 'Togo',
+    durationHours: 6,
+    popular: false,
+    image: '/images/routes/cotonou-lome.jpg',
+    description:
+      'Direct private ride from Lagos through Benin Republic to Aneho on the Togolese coast.',
+    descriptionFr:
+      'Trajet privé direct de Lagos à Aného sur la côte togolaise, en traversant le Bénin.',
+    borderCrossings: ['Seme–Kraké', 'Hillacondji–Sanvee Condji'],
+  },
+  {
+    id: 'lagos-kpalime',
+    from: 'Lagos',
+    fromCode: 'LOS',
+    fromCountry: 'Nigeria',
+    to: 'Kpalime',
+    toCode: 'KPA',
+    toCountry: 'Togo',
+    durationHours: 8,
+    popular: false,
+    image: '/images/routes/cotonou-lome.jpg',
+    description:
+      'Private inland Togo service from Lagos to Kpalime, travelling through Benin Republic and onward from the coast.',
+    descriptionFr:
+      'Service privé vers l’intérieur du Togo de Lagos à Kpalimé, en passant par le Bénin puis depuis la côte.',
+    borderCrossings: ['Seme–Kraké', 'Hillacondji–Sanvee Condji'],
+  },
+  {
     id: 'lagos-ghana',
     from: 'Lagos',
     fromCode: 'LOS',
@@ -92,6 +143,9 @@ export const routes: Route[] = [
 export const bookingCities = [
   { city: 'Lagos', country: 'Nigeria', code: 'LOS' },
   { city: 'Cotonou', country: 'Benin Republic', code: 'COT' },
+  { city: 'Ouidah', country: 'Benin Republic', code: 'OUI' },
   { city: 'Lomé', country: 'Togo', code: 'LFW' },
+  { city: 'Aneho', country: 'Togo', code: 'ANE' },
+  { city: 'Kpalime', country: 'Togo', code: 'KPA' },
   { city: 'Accra', country: 'Ghana', code: 'ACC' },
 ]

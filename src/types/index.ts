@@ -6,9 +6,12 @@ export type VehicleId = string
 
 export type RouteId =
   | 'lagos-cotonou'
+  | 'lagos-ouidah'
   | 'cotonou-togo'
   | 'togo-ghana'
   | 'lagos-togo'
+  | 'lagos-aneho'
+  | 'lagos-kpalime'
   | 'lagos-ghana'
 
 export type ServiceType = 'ride' | 'airport' | 'tour' | 'vip' | 'fleet'
