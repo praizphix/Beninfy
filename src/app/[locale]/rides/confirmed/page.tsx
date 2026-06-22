@@ -74,7 +74,7 @@ export default async function BookingConfirmedPage({ params, searchParams }: Pro
   const vehicle = vehicles.find((v) => v.id === vehicleId)
   const matchedRoute = routes.find((r) => r.from === from && r.to === to)
   const legCount = tripType === 'round-trip' ? 2 : 1
-  const fallbackDropoff = matchedRoute ? getRouteDropoffPrice(matchedRoute.id as RouteId, vehicleId) : 120000
+  const fallbackDropoff = matchedRoute ? getRouteDropoffPrice(matchedRoute.id as RouteId, vehicleId, vehicle?.name) : 120000
   const fallbackRideFare = (fallbackDropoff ?? 0) * legCount
   const borderFee = 5000 * legCount
   const serviceFee = Math.round(fallbackRideFare * 0.05)

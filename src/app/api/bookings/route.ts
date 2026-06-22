@@ -50,15 +50,6 @@ export async function POST(req: Request) {
     }
   }
 
-  const matchedRoute = routes.find((route) => route.from === data.from && route.to === data.to)
-  const dropoffFare = matchedRoute ? getRouteDropoffPrice(matchedRoute.id as RouteId, data.vehicleId as VehicleId) : null
-  const fallbackVehicle = catalogVehicles.find((v) => v.id === data.vehicleId)
-  const legCount = data.tripType === 'round-trip' ? 2 : 1
-  const rideFare = (dropoffFare ?? fallbackVehicle?.basePriceNGN ?? data.priceNGN) * legCount
-  const borderFee = 5000 * legCount
-  const serviceFee = Math.round(rideFare * 0.05)
-  const priceNGN = rideFare + borderFee + serviceFee
-
   let vehicle = await prisma.vehicle.findUnique({ where: { id: data.vehicleId } })
   if (!vehicle) {
     const fromCatalog = catalogVehicles.find((v) => v.id === data.vehicleId)
@@ -74,6 +65,14 @@ export async function POST(req: Request) {
       },
     })
   }
+
+  const matchedRoute = routes.find((route) => route.from === data.from && route.to === data.to)
+  const dropoffFare = matchedRoute ? getRouteDropoffPrice(matchedRoute.id as RouteId, vehicle.id as VehicleId, vehicle.name) : null
+  const legCount = data.tripType === 'round-trip' ? 2 : 1
+  const rideFare = (dropoffFare ?? vehicle.basePriceNGN ?? data.priceNGN) * legCount
+  const borderFee = 5000 * legCount
+  const serviceFee = Math.round(rideFare * 0.05)
+  const priceNGN = rideFare + borderFee + serviceFee
 
   const datesToCheck = data.tripType === 'round-trip' && returnDate ? [departureDate, returnDate] : [departureDate]
   const availability = await assertVehicleTypeAvailable(vehicle.id, datesToCheck)

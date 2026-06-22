@@ -122,19 +122,53 @@ export const packageRates: Partial<Record<VehicleId, number>> = {
 }
 
 /** Returns the price for a given route + vehicle combination */
-export function getRoutePrice(routeId: RouteId, vehicleId: VehicleId): number | PriceRange | null {
-  return routePricing[routeId]?.[vehicleId] ?? null
+export function getRoutePrice(routeId: RouteId, vehicleId: VehicleId, vehicleName?: string): number | PriceRange | null {
+  const pricing = routePricing[routeId]
+  if (!pricing) return null
+
+  const directPrice = pricing[vehicleId]
+  if (directPrice) return directPrice
+
+  const alias = resolveVehiclePricingAlias(vehicleId, vehicleName)
+  if (alias && pricing[alias]) return pricing[alias] ?? null
+
+  return null
 }
 
 /**
  * Returns the one-way drop-off fare for a route + vehicle.
  * If a fare is a range, the lower end is used for system calculations.
  */
-export function getRouteDropoffPrice(routeId: RouteId, vehicleId: VehicleId): number | null {
-  const price = getRoutePrice(routeId, vehicleId)
+export function getRouteDropoffPrice(routeId: RouteId, vehicleId: VehicleId, vehicleName?: string): number | null {
+  const price = getRoutePrice(routeId, vehicleId, vehicleName)
   if (!price) return null
   if (typeof price === 'object') return price.min
   return price
+}
+
+function normalizeVehicleText(value: string | undefined) {
+  return (value ?? '').toLowerCase().replace(/[^a-z0-9]/g, '')
+}
+
+function resolveVehiclePricingAlias(vehicleId: VehicleId, vehicleName?: string): VehicleId | null {
+  const text = `${normalizeVehicleText(vehicleId)} ${normalizeVehicleText(vehicleName)}`
+
+  if (text.includes('gx460') || text.includes('lexusgx') || text.includes('lexus460')) {
+    return 'prado'
+  }
+
+  if (text.includes('camry') || text.includes('sedan') || text.includes('saloon')) {
+    return 'saloon'
+  }
+
+  if (text.includes('sienna')) return 'sienna'
+  if (text.includes('prado')) return 'prado'
+  if (text.includes('rav4') || text.includes('suv')) return 'suv'
+  if (text.includes('sprinter')) return 'sprinter'
+  if (text.includes('hiace')) return 'hiace'
+  if (text.includes('coastal') || text.includes('coaster')) return 'coastal'
+
+  return null
 }
 
 /**

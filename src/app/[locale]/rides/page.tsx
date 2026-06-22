@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
 import { useSearchParams } from 'next/navigation'
 import { routes, bookingCities } from '@/data/routes'
-import { routePricing } from '@/data/pricing'
+import { formatPriceRange, getRoutePrice } from '@/data/pricing'
 import { formatNGN } from '@/lib/utils'
 import { useVehicles } from '@/hooks/useVehicles'
 import type { VehicleId, RouteId } from '@/types'
@@ -64,13 +64,10 @@ function RidesContent() {
 
   const getPriceForVehicle = (vehicleId: VehicleId) => {
     if (!matchedRoute) return null
-    const pricing = routePricing[matchedRoute.id as RouteId]
-    if (!pricing) return null
-    const price = pricing[vehicleId]
     const vehicle = vehicles.find((v) => v.id === vehicleId)
+    const price = getRoutePrice(matchedRoute.id as RouteId, vehicleId, vehicle?.name)
     if (!price) return vehicle?.basePriceNGN ? formatNGN(vehicle.basePriceNGN) : null
-    if (typeof price === 'number') return formatNGN(price)
-    return `${formatNGN(price.min)} – ${formatNGN(price.max)}`
+    return formatPriceRange(price)
   }
 
   return (
