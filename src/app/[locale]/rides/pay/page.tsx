@@ -14,6 +14,67 @@ import CountUp from 'react-countup'
 import type { VehicleId, RouteId } from '@/types'
 
 type PaymentMethod = 'card' | 'mobile-money' | 'bank-transfer'
+type PaymentCurrency = 'NGN' | 'XOF'
+
+type PayazaCheckoutResponse = {
+  type?: string
+  data?: {
+    transaction_reference?: string
+  }
+}
+
+type PayazaCheckoutConfig = {
+  merchant_key: string
+  connection_mode: 'Live' | 'Test'
+  checkout_amount: number
+  currency_code: PaymentCurrency
+  email_address: string
+  first_name: string
+  last_name: string
+  phone_number: string
+  transaction_reference: string
+  country_code?: 'BEN'
+  biller_name?: string
+  virtual_account_configuration?: { expires_in_minutes: number }
+  additional_details?: Record<string, string>
+}
+
+declare global {
+  interface Window {
+    PayazaCheckout?: {
+      setup: (config: PayazaCheckoutConfig) => {
+        setCallback: (callback: (response: PayazaCheckoutResponse) => void) => void
+        setOnClose: (callback: () => void) => void
+        showPopup: () => void
+      }
+    }
+  }
+}
+
+function loadPayazaCheckoutScript() {
+  return new Promise<void>((resolve, reject) => {
+    if (window.PayazaCheckout) {
+      resolve()
+      return
+    }
+
+    const existing = document.querySelector<HTMLScriptElement>('script[data-payaza-checkout]')
+    if (existing) {
+      existing.addEventListener('load', () => resolve(), { once: true })
+      existing.addEventListener('error', () => reject(new Error('Could not load Payaza checkout')), { once: true })
+      return
+    }
+
+    const script = document.createElement('script')
+    script.src = 'https://checkout-v2.payaza.africa/js/v1/bundle.js'
+    script.async = true
+    script.defer = true
+    script.dataset.payazaCheckout = 'true'
+    script.onload = () => resolve()
+    script.onerror = () => reject(new Error('Could not load Payaza checkout'))
+    document.head.appendChild(script)
+  })
+}
 
 function PaymentContent() {
   const locale = useLocale()
@@ -43,14 +104,15 @@ function PaymentContent() {
   const borderFee = 5000 * legCount
   const serviceFee = Math.round(rideFare * 0.05)
   const total = rideFare + borderFee + serviceFee
+  const xofRate = Number(process.env.NEXT_PUBLIC_NGN_TO_XOF_RATE || 0)
+  const xofTotal = Number.isFinite(xofRate) && xofRate > 0 ? Math.round(total * xofRate) : null
 
   const [method, setMethod] = useState<PaymentMethod>('card')
-  const [card, setCard] = useState({ number: '', expiry: '', cvv: '' })
+  const [paymentCurrency, setPaymentCurrency] = useState<PaymentCurrency>('NGN')
   const [processing, setProcessing] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
-  const setCardField = (f: keyof typeof card) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    setCard((p) => ({ ...p, [f]: e.target.value }))
+  const displayTotal = paymentCurrency === 'XOF' && xofTotal ? `CFA ${xofTotal.toLocaleString('en-US')}` : formatNGN(total)
 
   const handlePay = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -76,6 +138,7 @@ function PaymentContent() {
         }),
       })
       if (bookingRes.status === 401) {
+        setProcessing(false)
         router.replace(`/${locale}/login`)
         return
       }
@@ -88,13 +151,57 @@ function PaymentContent() {
       const payRes = await fetch('/api/payments/initiate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bookingId: booking.id, locale, passengerName }),
+        body: JSON.stringify({
+          bookingId: booking.id,
+          locale,
+          passengerName,
+          passengerPhone,
+          currencyCode: paymentCurrency,
+        }),
       })
       const payData = await payRes.json().catch(() => ({}))
       if (!payRes.ok) throw new Error(payData.error ?? 'Payment init failed')
 
-      if (payData.mode === 'paystack' && payData.authorization_url) {
-        window.location.assign(payData.authorization_url as string)
+      if (payData.mode === 'payaza_checkout' && payData.checkout) {
+        await loadPayazaCheckoutScript()
+        if (!window.PayazaCheckout) throw new Error('Payaza checkout is unavailable')
+
+        const checkout = window.PayazaCheckout.setup(payData.checkout as PayazaCheckoutConfig)
+        checkout.setCallback(async (response) => {
+          try {
+            if (response.type !== 'success') {
+              setErrorMsg(response.data?.transaction_reference ? 'Payment is pending. Please confirm from your dashboard.' : 'Payment was not completed.')
+              return
+            }
+
+            const reference = response.data?.transaction_reference || payData.reference
+            const verifyRes = await fetch('/api/payments/verify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ reference, currencyCode: paymentCurrency }),
+            })
+            const verifyData = await verifyRes.json().catch(() => ({}))
+            if (!verifyRes.ok || verifyData.payment?.status !== 'paid') {
+              throw new Error(verifyData.error || verifyData.payment?.message || 'Payment verification is pending')
+            }
+
+            const search = new URLSearchParams({
+              id: booking.id,
+              ref: reference,
+              name: passengerName,
+              currencyCode: paymentCurrency,
+            })
+            router.push(`/${locale}/rides/confirmed?${search.toString()}`)
+          } catch (err) {
+            setErrorMsg(err instanceof Error ? err.message : 'Payment verification failed')
+          } finally {
+            setProcessing(false)
+          }
+        })
+        checkout.setOnClose(() => {
+          setProcessing(false)
+        })
+        checkout.showPopup()
         return
       }
 
@@ -106,7 +213,6 @@ function PaymentContent() {
       router.push(`/${locale}/rides/confirmed?${search.toString()}`)
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : 'Something went wrong')
-    } finally {
       setProcessing(false)
     }
   }
@@ -146,6 +252,29 @@ function PaymentContent() {
                 <h1 className="text-lg md:text-xl font-bold mb-5 md:mb-6" style={{ color: '#3e004c' }}>{t('paymentMethod')}</h1>
 
                 <div className="space-y-4">
+                  <div className="rounded-xl border border-gray-200 bg-gray-50 p-3.5 md:p-4">
+                    <p className="text-xs font-semibold text-gray-900 mb-3">Payment currency</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {(['NGN', 'XOF'] as const).map((currency) => (
+                        <button
+                          key={currency}
+                          type="button"
+                          onClick={() => setPaymentCurrency(currency)}
+                          className={`rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
+                            paymentCurrency === currency
+                              ? 'bg-primary text-white'
+                              : 'bg-white text-gray-700 border border-gray-200 hover:border-primary/40'
+                          }`}
+                        >
+                          {currency === 'NGN' ? 'Naira (NGN)' : 'CFA (XOF)'}
+                        </button>
+                      ))}
+                    </div>
+                    {paymentCurrency === 'XOF' && !xofTotal && (
+                      <p className="text-xs text-red-500 mt-2">CFA payments need NEXT_PUBLIC_NGN_TO_XOF_RATE and PAYAZA_NGN_TO_XOF_RATE configured.</p>
+                    )}
+                  </div>
+
                   {methods.map((m) => (
                     <div
                       key={m.id}
@@ -164,43 +293,8 @@ function PaymentContent() {
                             <p className="text-xs text-gray-500">{m.desc}</p>
                           {/* Card form */}
                           {m.id === 'card' && method === 'card' && (
-                            <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div className="md:col-span-2">
-                                <label className="block text-xs font-medium text-gray-600 mb-1.5">{t('cardNumber')}</label>
-                                <div className="relative">
-                                  <input
-                                    type="text"
-                                    value={card.number}
-                                    onChange={setCardField('number')}
-                                    placeholder="**** **** **** ****"
-                                    maxLength={19}
-                                    className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary pr-10 transition-all"
-                                  />
-                                  <span className="absolute right-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-400 text-[20px]">lock</span>
-                                </div>
-                              </div>
-                              <div>
-                                <label className="block text-xs font-medium text-gray-600 mb-1.5">{t('cardExpiry')}</label>
-                                <input
-                                  type="text"
-                                  value={card.expiry}
-                                  onChange={setCardField('expiry')}
-                                  placeholder="MM/YY"
-                                  maxLength={5}
-                                  className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-xs font-medium text-gray-600 mb-1.5">{t('cardCVC')}</label>
-                                <input
-                                  type="password"
-                                  value={card.cvv}
-                                  onChange={setCardField('cvv')}
-                                  placeholder="***"
-                                  maxLength={4}
-                                  className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                                />
-                              </div>
+                            <div className="mt-4 p-4 bg-gray-50 rounded-xl">
+                              <p className="text-xs text-gray-500">Card details are entered inside Payaza's secure hosted checkout.</p>
                             </div>
                           )}
 
@@ -213,15 +307,11 @@ function PaymentContent() {
 
                           {/* Bank transfer info */}
                           {m.id === 'bank-transfer' && method === 'bank-transfer' && (
-                            <div className="mt-4 p-4 bg-gray-50 rounded-xl space-y-2">
+                            <div className="mt-4 p-4 bg-gray-50 rounded-xl">
                               <p className="text-xs font-semibold text-gray-900">{t('bankTitle')}</p>
-                              {[[t('bankLabel'), 'Zenith Bank Nigeria'], [t('accountLabel'), '2089471234'], [t('sortLabel'), '057']].map(([label, val]) => (
-                                <div key={label} className="flex justify-between text-xs">
-                                  <span className="text-gray-400">{label}</span>
-                                  <span className="font-mono text-gray-900">{val}</span>
-                                </div>
-                              ))}
-                              <p className="text-xs mt-2" style={{ color: '#735c00' }}>{t('bankRef')}</p>
+                              <p className="text-xs mt-2 text-gray-500">
+                                Payaza will generate the secure bank transfer instructions inside checkout.
+                              </p>
                             </div>
                           )}
                         </div>
@@ -295,12 +385,18 @@ function PaymentContent() {
 
                   <div className="flex justify-between items-center">
                     <span className="font-bold text-gray-900">{t('totalAmount')}</span>
-                    <span className="font-bold text-base" style={{ color: '#735c00' }}>₦<CountUp end={total} separator="," duration={1.5} /></span>
+                    <span className="font-bold text-base" style={{ color: '#735c00' }}>
+                      {paymentCurrency === 'XOF' && xofTotal ? (
+                        <>CFA <CountUp end={xofTotal} separator="," duration={1.5} /></>
+                      ) : (
+                        <>₦<CountUp end={total} separator="," duration={1.5} /></>
+                      )}
+                    </span>
                   </div>
 
                   <button
                     type="submit"
-                    disabled={processing}
+                    disabled={processing || (paymentCurrency === 'XOF' && !xofTotal)}
                     className="w-full py-4 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all shadow-md disabled:opacity-60 disabled:cursor-wait"
                     style={{ background: '#3e004c' }}
                   >
@@ -312,7 +408,7 @@ function PaymentContent() {
                     ) : (
                       <>
                         <span className="material-symbols-outlined text-[20px]">lock</span>
-                        {t('payButton')} {formatNGN(total)}
+                        {t('payButton')} {displayTotal}
                       </>
                     )}
                   </button>

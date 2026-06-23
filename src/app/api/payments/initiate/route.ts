@@ -3,12 +3,21 @@ import { z } from 'zod'
 import { randomBytes } from 'crypto'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { getPaystackSecret, initializePaystackTransaction } from '@/lib/paystack'
+import {
+  convertBookingAmount,
+  getPayazaConnectionMode,
+  getPayazaPublicKey,
+  normalizePayazaPhone,
+  splitCustomerName,
+  type PayazaCurrency,
+} from '@/lib/payaza'
 
 const initSchema = z.object({
   bookingId: z.string().min(1),
   locale: z.enum(['en', 'fr']).default('en'),
   passengerName: z.string().trim().max(100).optional(),
+  passengerPhone: z.string().trim().max(40).optional(),
+  currencyCode: z.enum(['NGN', 'XOF']).default('NGN'),
 })
 
 export async function POST(req: Request) {
@@ -28,10 +37,11 @@ export async function POST(req: Request) {
   }
 
   const reference = `BFY-${booking.id.slice(-6).toUpperCase()}-${randomBytes(3).toString('hex').toUpperCase()}`
-  const secret = getPaystackSecret()
+  const publicKey = getPayazaPublicKey()
   const email = session.user.email ?? `user-${session.user.id}@beninfy.com`
+  const currencyCode = parsed.data.currencyCode as PayazaCurrency
 
-  if (!secret) {
+  if (!publicKey) {
     // Dev/stub mode: mark as paid immediately and let the UI move forward.
     const payment = await prisma.payment.create({
       data: {
@@ -53,33 +63,20 @@ export async function POST(req: Request) {
     })
   }
 
-  const origin = new URL(req.url).origin
-  const callbackUrl = new URL(`/${parsed.data.locale}/rides/confirmed`, origin)
-  callbackUrl.searchParams.set('id', booking.id)
-  if (parsed.data.passengerName) callbackUrl.searchParams.set('name', parsed.data.passengerName)
-
-  let initialized: Awaited<ReturnType<typeof initializePaystackTransaction>>
+  let checkoutAmount: number
   try {
-    initialized = await initializePaystackTransaction({
-      secret,
-      email,
-      amountNGN: booking.priceNGN,
-      reference,
-      callbackUrl: callbackUrl.toString(),
-      metadata: {
-        bookingId: booking.id,
-        userId: session.user.id,
-      },
-    })
+    checkoutAmount = convertBookingAmount(booking.priceNGN, currencyCode)
   } catch (err) {
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Payment init failed' },
-      { status: 502 }
+      { error: err instanceof Error ? err.message : 'Payment currency is not configured' },
+      { status: 503 }
     )
   }
 
+  const { firstName, lastName } = splitCustomerName(parsed.data.passengerName || session.user.name || 'Beninfy Customer')
+
   await prisma.payment.upsert({
-    where: { reference: initialized.reference },
+    where: { reference },
     update: {
       bookingId: booking.id,
       amountNGN: booking.priceNGN,
@@ -89,15 +86,34 @@ export async function POST(req: Request) {
       bookingId: booking.id,
       amountNGN: booking.priceNGN,
       status: 'pending',
-      reference: initialized.reference,
+      reference,
     },
   })
 
   return NextResponse.json({
-    mode: 'paystack',
-    authorization_url: initialized.authorizationUrl,
-    access_code: initialized.accessCode,
-    reference: initialized.reference,
+    mode: 'payaza_checkout',
+    provider: 'payaza',
+    reference,
     bookingId: booking.id,
+    checkout: {
+      merchant_key: publicKey,
+      connection_mode: getPayazaConnectionMode(),
+      checkout_amount: checkoutAmount,
+      currency_code: currencyCode,
+      email_address: email,
+      first_name: firstName,
+      last_name: lastName,
+      phone_number: normalizePayazaPhone(parsed.data.passengerPhone || booking.passengerPhone || '', currencyCode),
+      transaction_reference: reference,
+      ...(currencyCode === 'XOF' ? { country_code: 'BEN' } : {}),
+      biller_name: 'Beninfy',
+      virtual_account_configuration: { expires_in_minutes: 30 },
+      additional_details: {
+        bookingId: booking.id,
+        userId: session.user.id,
+        currencyCode,
+        amountNGN: String(booking.priceNGN),
+      },
+    },
   })
 }

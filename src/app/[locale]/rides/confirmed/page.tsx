@@ -8,7 +8,7 @@ import PulseStatus from '@/components/shared/PulseStatus'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { getPaystackSecret, settlePaymentFromPaystack, verifyPaystackTransaction } from '@/lib/paystack'
+import { getPayazaApiKey, settlePaymentFromPayaza, verifyPayazaTransaction, type PayazaCurrency } from '@/lib/payaza'
 import type { VehicleId, RouteId } from '@/types'
 
 interface Props {
@@ -21,6 +21,7 @@ interface Props {
     date?: string
     ref?: string
     reference?: string
+    currencyCode?: string
     name?: string
     tripType?: string
   }>
@@ -32,21 +33,22 @@ export default async function BookingConfirmedPage({ params, searchParams }: Pro
   const sp = await searchParams
   const t = await getTranslations('confirmedPage')
   const session = await auth()
-  const paystackReference = sp.reference ?? sp.ref
+  const paymentReference = sp.reference ?? sp.ref
+  const currencyCode = sp.currencyCode === 'XOF' ? 'XOF' : 'NGN'
 
   let dbBooking: Awaited<ReturnType<typeof prisma.booking.findUnique>> = null
 
-  if (paystackReference && session?.user?.id) {
+  if (paymentReference && session?.user?.id) {
     const payment = await prisma.payment.findUnique({
-      where: { reference: paystackReference },
+      where: { reference: paymentReference },
       include: { booking: true },
     })
     if (payment?.booking.userId === session.user.id) {
-      const secret = getPaystackSecret()
-      if (secret && payment.status !== 'paid') {
+      const apiKey = getPayazaApiKey()
+      if (apiKey && payment.status !== 'paid') {
         try {
-          const verified = await verifyPaystackTransaction(secret, paystackReference)
-          await settlePaymentFromPaystack(paystackReference, verified)
+          const verified = await verifyPayazaTransaction(paymentReference)
+          await settlePaymentFromPayaza(paymentReference, verified, currencyCode as PayazaCurrency)
         } catch {
           // Keep the page renderable; dashboard/webhook can still reflect final status.
         }
@@ -67,7 +69,7 @@ export default async function BookingConfirmedPage({ params, searchParams }: Pro
   const to = dbBooking?.to ?? sp.to ?? 'Cotonou'
   const date = dbBooking ? dbBooking.date.toISOString() : (sp.date ?? '')
   const tripType = dbBooking?.tripType === 'round_trip' || sp.tripType === 'round-trip' ? 'round-trip' : 'one-way'
-  const bookingRef = paystackReference ?? (dbBooking ? `BFY-${dbBooking.id.slice(-8).toUpperCase()}` : 'BFY-PENDING')
+  const bookingRef = paymentReference ?? (dbBooking ? `BFY-${dbBooking.id.slice(-8).toUpperCase()}` : 'BFY-PENDING')
   const passengerName = sp.name ?? 'Passenger'
 
   const vehicles = await getPublicVehicles({ availableOnly: false })

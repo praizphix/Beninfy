@@ -2,13 +2,14 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { getPaystackSecret, settlePaymentFromPaystack, verifyPaystackTransaction } from '@/lib/paystack'
+import { getPayazaApiKey, settlePaymentFromPayaza, verifyPayazaTransaction, type PayazaCurrency } from '@/lib/payaza'
 
 const verifySchema = z.object({
   reference: z.string().min(1),
+  currencyCode: z.enum(['NGN', 'XOF']).optional(),
 })
 
-async function verify(reference: string) {
+async function verify(reference: string, currencyCode?: PayazaCurrency) {
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -22,14 +23,14 @@ async function verify(reference: string) {
     return NextResponse.json({ error: 'Payment not found' }, { status: 404 })
   }
 
-  const secret = getPaystackSecret()
-  if (!secret) {
-    return NextResponse.json({ error: 'Paystack is not configured' }, { status: 503 })
+  const apiKey = getPayazaApiKey()
+  if (!apiKey) {
+    return NextResponse.json({ error: 'Payaza is not configured' }, { status: 503 })
   }
 
   try {
-    const verified = await verifyPaystackTransaction(secret, reference)
-    const settlement = await settlePaymentFromPaystack(reference, verified)
+    const verified = await verifyPayazaTransaction(reference)
+    const settlement = await settlePaymentFromPayaza(reference, verified, currencyCode)
     return NextResponse.json({ payment: settlement, transaction: verified.data })
   } catch (err) {
     return NextResponse.json(
@@ -41,11 +42,14 @@ async function verify(reference: string) {
 
 export async function GET(req: Request) {
   const url = new URL(req.url)
-  const parsed = verifySchema.safeParse({ reference: url.searchParams.get('reference') })
+  const parsed = verifySchema.safeParse({
+    reference: url.searchParams.get('reference'),
+    currencyCode: url.searchParams.get('currencyCode') || undefined,
+  })
   if (!parsed.success) {
     return NextResponse.json({ error: 'Invalid reference' }, { status: 400 })
   }
-  return verify(parsed.data.reference)
+  return verify(parsed.data.reference, parsed.data.currencyCode as PayazaCurrency | undefined)
 }
 
 export async function POST(req: Request) {
@@ -54,5 +58,5 @@ export async function POST(req: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: 'Invalid reference' }, { status: 400 })
   }
-  return verify(parsed.data.reference)
+  return verify(parsed.data.reference, parsed.data.currencyCode as PayazaCurrency | undefined)
 }
