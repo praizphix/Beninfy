@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { routes } from '@/data/routes'
-import { getRouteDropoffPrice } from '@/data/pricing'
+import { getRouteDropoffPrice, requiresLagosPickupArea } from '@/data/pricing'
 import { vehicles as catalogVehicles } from '@/data/vehicles'
 import { assertVehicleTypeAvailable } from '@/lib/availability'
 import type { RouteId, VehicleId } from '@/types'
@@ -25,6 +25,7 @@ const createSchema = z.object({
   pickupAddress: z.string().trim().max(240).optional(),
   dropoffAddress: z.string().trim().max(240).optional(),
   specialRequirements: z.string().trim().max(1000).optional(),
+  pickupArea: z.enum(['mainland', 'island']).optional(),
 })
 
 export async function POST(req: Request) {
@@ -67,7 +68,16 @@ export async function POST(req: Request) {
   }
 
   const matchedRoute = routes.find((route) => route.from === data.from && route.to === data.to)
-  const dropoffFare = matchedRoute ? getRouteDropoffPrice(matchedRoute.id as RouteId, vehicle.id as VehicleId, vehicle.name) : null
+  if (
+    matchedRoute &&
+    requiresLagosPickupArea(matchedRoute.id as RouteId, vehicle.id as VehicleId, vehicle.name) &&
+    !data.pickupArea
+  ) {
+    return NextResponse.json({ error: 'Pickup area is required for Lagos saloon pricing' }, { status: 400 })
+  }
+  const dropoffFare = matchedRoute
+    ? getRouteDropoffPrice(matchedRoute.id as RouteId, vehicle.id as VehicleId, vehicle.name, data.pickupArea)
+    : null
   const legCount = data.tripType === 'round-trip' ? 2 : 1
   const rideFare = (dropoffFare ?? vehicle.basePriceNGN ?? data.priceNGN) * legCount
   const borderFee = 5000 * legCount

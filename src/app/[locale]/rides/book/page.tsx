@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { motion } from 'framer-motion'
 import { routes } from '@/data/routes'
-import { getRouteDropoffPrice } from '@/data/pricing'
+import { getRouteDropoffPrice, requiresLagosPickupArea, type LagosPickupArea } from '@/data/pricing'
 import { useVehicles } from '@/hooks/useVehicles'
 import JourneyTracker from '@/components/booking/JourneyTracker'
 import RouteMapSVG from '@/components/shared/RouteMapSVG'
@@ -31,16 +31,33 @@ function PassengerDetailsContent() {
   const date = params.get('date') ?? ''
   const returnDate = params.get('returnDate') ?? ''
   const tripType = params.get('tripType') === 'round-trip' ? 'round-trip' : 'one-way'
+  const initialPickupArea = params.get('pickupArea')
 
   const vehicle = vehicles.find((v) => v.id === vehicleId)
   const matchedRoute = routes.find((r) => r.from === from && r.to === to)
-  const dropoffFare = matchedRoute ? getRouteDropoffPrice(matchedRoute.id as RouteId, vehicleId, vehicle?.name) : null
 
   const [form, setForm] = useState({
-    fullName: '', email: '', phone: '', passportId: '',
-    nationality: '', specialRequirements: '', pickupAddress: '', dropoffAddress: '',
+    fullName: params.get('name') ?? '',
+    email: params.get('email') ?? '',
+    phone: params.get('phone') ?? '',
+    passportId: params.get('passportId') ?? '',
+    nationality: params.get('nationality') ?? '',
+    specialRequirements: params.get('specialRequirements') ?? '',
+    pickupAddress: params.get('pickupAddress') ?? '',
+    dropoffAddress: params.get('dropoffAddress') ?? '',
   })
   const [errors, setErrors] = useState<Partial<typeof form>>({})
+  const [pickupArea, setPickupArea] = useState<LagosPickupArea | ''>(
+    initialPickupArea === 'mainland' || initialPickupArea === 'island' ? initialPickupArea : ''
+  )
+  const [pickupAreaError, setPickupAreaError] = useState(false)
+
+  const needsPickupArea = matchedRoute
+    ? requiresLagosPickupArea(matchedRoute.id as RouteId, vehicleId, vehicle?.name)
+    : false
+  const dropoffFare = matchedRoute
+    ? getRouteDropoffPrice(matchedRoute.id as RouteId, vehicleId, vehicle?.name, pickupArea || undefined)
+    : null
 
   const set =
     (field: keyof typeof form) =>
@@ -53,8 +70,9 @@ function PassengerDetailsContent() {
     if (!form.email.includes('@')) e.email = 'Valid email required'
     if (!form.phone.trim()) e.phone = 'Phone number is required'
     if (!form.passportId.trim()) e.passportId = 'Required for border crossing'
+    setPickupAreaError(needsPickupArea && !pickupArea)
     setErrors(e)
-    return Object.keys(e).length === 0
+    return Object.keys(e).length === 0 && (!needsPickupArea || !!pickupArea)
   }
 
   const handleContinue = (e: React.FormEvent) => {
@@ -67,7 +85,12 @@ function PassengerDetailsContent() {
       price: String(total),
       name: form.fullName, email: form.email, phone: form.phone,
       passportId: form.passportId,
+      nationality: form.nationality,
+      pickupAddress: form.pickupAddress,
+      dropoffAddress: form.dropoffAddress,
+      specialRequirements: form.specialRequirements,
     })
+    if (pickupArea) search.set('pickupArea', pickupArea)
     router.push(`/${locale}/rides/pay?${search.toString()}`)
   }
 
@@ -213,6 +236,38 @@ function PassengerDetailsContent() {
                     </div>
                   </div>
 
+                  {needsPickupArea && (
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 p-3.5">
+                      <p className="mb-2 text-xs font-semibold text-amber-900">Lagos pickup zone for saloon pricing</p>
+                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        {([
+                          { id: 'mainland', label: 'Mainland pickup', price: '₦160,000' },
+                          { id: 'island', label: 'Island pickup', price: '₦180,000' },
+                        ] as const).map((option) => (
+                          <button
+                            key={option.id}
+                            type="button"
+                            onClick={() => {
+                              setPickupArea(option.id)
+                              setPickupAreaError(false)
+                            }}
+                            className={`rounded-lg border px-3 py-2 text-left transition-colors ${
+                              pickupArea === option.id
+                                ? 'border-primary bg-white text-primary'
+                                : 'border-amber-200 bg-white/70 text-gray-700 hover:border-primary/40'
+                            }`}
+                          >
+                            <span className="block text-sm font-semibold">{option.label}</span>
+                            <span className="block text-xs text-gray-500">{option.price} one-way drop-off fare</span>
+                          </button>
+                        ))}
+                      </div>
+                      {pickupAreaError && (
+                        <p className="mt-2 text-xs text-red-500">Choose Mainland or Island pickup to calculate the correct saloon fare.</p>
+                      )}
+                    </div>
+                  )}
+
                   {/* Visual connector */}
                   <div className="ml-4 h-5 w-px bg-gray-200" />
 
@@ -244,6 +299,22 @@ function PassengerDetailsContent() {
                   <p className="text-sm text-gray-600 leading-relaxed">
                     {t('borderNoticeDesc')}
                   </p>
+                </div>
+              </div>
+
+              {/* Cancellation and refund notice */}
+              <div className="rounded-2xl p-4 md:p-5 border flex gap-3 md:gap-4 items-start" style={{ background: '#fffdf0', borderColor: '#f0e6b0' }}>
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: '#fff4bf' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: 20, color: '#735c00' }}>policy</span>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold mb-1" style={{ color: '#735c00' }}>Cancellation and refund policy</p>
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    Cancellations made less than 24 hours before departure attract a fee equal to the full one-way trip cost. Refund requests are reviewed against the cancellation time, payment status, and operational commitments already made.
+                  </p>
+                  <Link href={`/${locale}/terms`} className="mt-2 inline-flex text-xs font-semibold text-primary hover:underline">
+                    Read full terms
+                  </Link>
                 </div>
               </div>
 

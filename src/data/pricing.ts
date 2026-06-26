@@ -1,5 +1,7 @@
 import type { RouteId, VehicleId, PriceRange } from '@/types'
 
+export type LagosPickupArea = 'mainland' | 'island'
+
 /**
  * Official Beninfy one-way drop-off route pricing in Nigerian Naira (₦).
  * Round trips multiply this drop-off fare by two before fees.
@@ -7,10 +9,10 @@ import type { RouteId, VehicleId, PriceRange } from '@/types'
  */
 export const routePricing: Record<RouteId, Partial<Record<VehicleId, number | PriceRange>>> = {
   'lagos-cotonou': {
-    saloon:  180_000,
-    camry:   180_000,
-    'toyota-camry': 180_000,
-    'toyota-camry-sedan': 180_000,
+    saloon:  { min: 160_000, max: 180_000 },
+    camry:   { min: 160_000, max: 180_000 },
+    'toyota-camry': { min: 160_000, max: 180_000 },
+    'toyota-camry-sedan': { min: 160_000, max: 180_000 },
     suv:     260_000,
     sienna:  250_000,
     prado:   450_000,
@@ -21,10 +23,10 @@ export const routePricing: Record<RouteId, Partial<Record<VehicleId, number | Pr
     coastal: 900_000,
   },
   'lagos-porto-novo': {
-    saloon:  180_000,
-    camry:   180_000,
-    'toyota-camry': 180_000,
-    'toyota-camry-sedan': 180_000,
+    saloon:  { min: 160_000, max: 180_000 },
+    camry:   { min: 160_000, max: 180_000 },
+    'toyota-camry': { min: 160_000, max: 180_000 },
+    'toyota-camry-sedan': { min: 160_000, max: 180_000 },
     suv:     260_000,
     sienna:  250_000,
     prado:   450_000,
@@ -49,19 +51,41 @@ export const routePricing: Record<RouteId, Partial<Record<VehicleId, number | Pr
     saloon:  { min: 150_000, max: 160_000 },
     suv:     250_000,
     sienna:  240_000,
-    prado:   250_000,
+    prado:   300_000,
+    gx460:   300_000,
+    'lexus-gx460': 300_000,
     sprinter: 650_000,
     hiace:   700_000,
     coastal: 850_000,
+  },
+  'cotonou-accra': {
+    suv:     510_000,
+    sienna:  510_000,
   },
   'togo-ghana': {
     saloon:  { min: 160_000, max: 170_000 },
     suv:     260_000,
     sienna:  250_000,
-    prado:   260_000,
+    prado:   450_000,
+    gx460:   450_000,
+    'lexus-gx460': 450_000,
     sprinter: 700_000,
     hiace:   750_000,
     coastal: 900_000,
+  },
+  'lome-cotonou': {
+    saloon:  160_000,
+  },
+  'accra-lome': {
+    saloon:  180_000,
+    suv:     250_000,
+    sienna:  250_000,
+  },
+  'accra-cotonou': {
+    saloon:  340_000,
+    prado:   750_000,
+    gx460:   750_000,
+    'lexus-gx460': 750_000,
   },
   'lagos-togo': {
     saloon:  { min: 320_000, max: 330_000 },
@@ -143,11 +167,26 @@ export function getRoutePrice(routeId: RouteId, vehicleId: VehicleId, vehicleNam
  * Returns the one-way drop-off fare for a route + vehicle.
  * If a fare is a range, the lower end is used for system calculations.
  */
-export function getRouteDropoffPrice(routeId: RouteId, vehicleId: VehicleId, vehicleName?: string): number | null {
+export function getRouteDropoffPrice(routeId: RouteId, vehicleId: VehicleId, vehicleName?: string, pickupArea?: LagosPickupArea): number | null {
+  const lagosPickupPrice = getLagosSaloonPickupPrice(routeId, vehicleId, vehicleName, pickupArea)
+  if (lagosPickupPrice) return lagosPickupPrice
+
   const price = getRoutePrice(routeId, vehicleId, vehicleName)
   if (!price) return null
   if (typeof price === 'object') return price.min
   return price
+}
+
+export function requiresLagosPickupArea(routeId: RouteId, vehicleId: VehicleId, vehicleName?: string): boolean {
+  return (
+    (routeId === 'lagos-cotonou' || routeId === 'lagos-porto-novo') &&
+    resolveVehiclePricingAlias(vehicleId, vehicleName) === 'saloon'
+  )
+}
+
+function getLagosSaloonPickupPrice(routeId: RouteId, vehicleId: VehicleId, vehicleName?: string, pickupArea?: LagosPickupArea) {
+  if (!pickupArea || !requiresLagosPickupArea(routeId, vehicleId, vehicleName)) return null
+  return pickupArea === 'mainland' ? 160_000 : 180_000
 }
 
 function normalizeVehicleText(value: string | undefined) {

@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { routes } from '@/data/routes'
-import { getRouteDropoffPrice } from '@/data/pricing'
+import { getRouteDropoffPrice, type LagosPickupArea } from '@/data/pricing'
 import { formatNGN } from '@/lib/utils'
 import { useVehicles } from '@/hooks/useVehicles'
 import JourneyTracker from '@/components/booking/JourneyTracker'
@@ -93,11 +93,17 @@ function PaymentContent() {
   const passengerEmail = params.get('email') ?? ''
   const passengerPhone = params.get('phone') ?? ''
   const passportId = params.get('passportId') ?? ''
+  const nationality = params.get('nationality') ?? ''
+  const pickupAddress = params.get('pickupAddress') ?? ''
+  const dropoffAddress = params.get('dropoffAddress') ?? ''
+  const specialRequirements = params.get('specialRequirements') ?? ''
+  const pickupAreaParam = params.get('pickupArea')
+  const pickupArea = (pickupAreaParam === 'mainland' || pickupAreaParam === 'island' ? pickupAreaParam : undefined) as LagosPickupArea | undefined
   const passengers = Math.max(1, parseInt(params.get('passengers') ?? '1', 10) || 1)
 
   const vehicle = vehicles.find((v) => v.id === vehicleId)
   const matchedRoute = routes.find((r) => r.from === from && r.to === to)
-  const dropoffFare = matchedRoute ? getRouteDropoffPrice(matchedRoute.id as RouteId, vehicleId, vehicle?.name) : (vehicle?.basePriceNGN ?? 120000)
+  const dropoffFare = matchedRoute ? getRouteDropoffPrice(matchedRoute.id as RouteId, vehicleId, vehicle?.name, pickupArea) : (vehicle?.basePriceNGN ?? 120000)
 
   const legCount = tripType === 'round-trip' ? 2 : 1
   const rideFare = (dropoffFare ?? 0) * legCount
@@ -135,6 +141,11 @@ function PaymentContent() {
           passengerEmail,
           passengerPhone,
           passportId,
+          nationality,
+          pickupAddress,
+          dropoffAddress,
+          specialRequirements,
+          pickupArea,
         }),
       })
       if (bookingRes.status === 401) {
@@ -229,7 +240,24 @@ function PaymentContent() {
 
         {/* Back link */}
         <Link
-          href={`/${locale}/rides/book?vehicle=${vehicleId}&from=${from}&to=${to}&date=${date}`}
+          href={`/${locale}/rides/book?${new URLSearchParams({
+            vehicle: vehicleId,
+            from,
+            to,
+            date,
+            returnDate,
+            tripType,
+            passengers: String(passengers),
+            name: passengerName,
+            email: passengerEmail,
+            phone: passengerPhone,
+            passportId,
+            nationality,
+            pickupAddress,
+            dropoffAddress,
+            specialRequirements,
+            ...(pickupArea ? { pickupArea } : {}),
+          }).toString()}`}
           className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-primary mb-4 md:mb-6 group transition-colors"
         >
           <span className="material-symbols-outlined text-[18px] group-hover:-translate-x-0.5 transition-transform">arrow_back</span>
@@ -359,6 +387,9 @@ function PaymentContent() {
                       {tripType === 'round-trip' && returnDate && (
                         <p className="text-xs text-gray-400 mt-0.5">Return: {new Date(returnDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                       )}
+                      {pickupArea && (
+                        <p className="text-xs text-gray-400 mt-0.5">Pickup zone: {pickupArea === 'mainland' ? 'Mainland' : 'Island'}</p>
+                      )}
                     </div>
                   </div>
 
@@ -392,6 +423,23 @@ function PaymentContent() {
                         <>₦<CountUp end={total} separator="," duration={1.5} /></>
                       )}
                     </span>
+                  </div>
+
+                  <div className="rounded-xl border p-4" style={{ background: '#fffdf0', borderColor: '#f0e6b0' }}>
+                    <div className="flex items-start gap-3">
+                      <span className="material-symbols-outlined shrink-0 text-[20px]" style={{ color: '#735c00' }}>policy</span>
+                      <div>
+                        <p className="text-xs font-semibold mb-1" style={{ color: '#735c00' }}>Before you pay</p>
+                        <ul className="space-y-1.5 text-xs leading-relaxed text-gray-600">
+                          <li>One-way trips require full payment before confirmation and departure.</li>
+                          <li>Late cancellations, under 24 hours before the trip, attract the full one-way trip cost as cancellation fee.</li>
+                          <li>Refunds are reviewed by support and may be reduced by cancellation fees, payment provider charges, and logistics already committed.</li>
+                        </ul>
+                        <Link href={`/${locale}/terms`} className="mt-2 inline-flex text-xs font-semibold text-primary hover:underline">
+                          Read full terms
+                        </Link>
+                      </div>
+                    </div>
                   </div>
 
                   <button

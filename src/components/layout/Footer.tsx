@@ -105,7 +105,7 @@ export default function Footer() {
               { labelKey: 'aboutUs', href: '/about' },
               { labelKey: 'contactSupport', href: '/about#contact' },
               { labelKey: 'privacyPolicy', href: '/#' },
-              { labelKey: 'termsOfService', href: '/#' },
+              { labelKey: 'termsOfService', href: '/terms' },
             ].map(({ labelKey, href }) => (
               <li key={labelKey}>
                 <Link href={`/${locale}${href}`} className="block py-3 hover:text-primary transition-colors sm:py-0">
