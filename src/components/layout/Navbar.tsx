@@ -56,9 +56,9 @@ export default function Navbar() {
           <Image
             src="/logo.png"
             alt="Beninfy"
-            width={170}
-            height={74}
-            className="h-16 w-auto object-contain md:h-14"
+            width={220}
+            height={96}
+            className="h-20 w-auto object-contain md:h-16"
             priority
           />
         </Link>

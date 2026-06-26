@@ -28,9 +28,9 @@ export default function Footer() {
             <Image
               src="/logo.png"
               alt="Beninfy"
-              width={140}
-              height={61}
-              className="h-14 w-auto object-contain"
+              width={180}
+              height={78}
+              className="h-16 w-auto object-contain"
             />
           </Link>
           <p className="max-w-sm text-body-sm text-on-surface-variant md:pr-8 leading-relaxed">
