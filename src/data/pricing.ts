@@ -149,16 +149,32 @@ export const packageRates: Partial<Record<VehicleId, number>> = {
   coastal: 2_000_000,
 }
 
+const corridorPricingIds: Partial<Record<RouteId, RouteId[]>> = {
+  'cotonou-togo': ['cotonou-togo', 'lome-cotonou'],
+  'lome-cotonou': ['cotonou-togo', 'lome-cotonou'],
+  'togo-ghana': ['togo-ghana', 'accra-lome'],
+  'accra-lome': ['togo-ghana', 'accra-lome'],
+  'cotonou-accra': ['accra-cotonou', 'cotonou-accra'],
+  'accra-cotonou': ['accra-cotonou', 'cotonou-accra'],
+}
+
+function getCorridorPricingIds(routeId: RouteId) {
+  return corridorPricingIds[routeId] ?? [routeId]
+}
+
 /** Returns the price for a given route + vehicle combination */
 export function getRoutePrice(routeId: RouteId, vehicleId: VehicleId, vehicleName?: string): number | PriceRange | null {
-  const pricing = routePricing[routeId]
-  if (!pricing) return null
-
-  const directPrice = pricing[vehicleId]
-  if (directPrice) return directPrice
-
   const alias = resolveVehiclePricingAlias(vehicleId, vehicleName)
-  if (alias && pricing[alias]) return pricing[alias] ?? null
+
+  for (const pricingId of getCorridorPricingIds(routeId)) {
+    const pricing = routePricing[pricingId]
+    if (!pricing) continue
+
+    const directPrice = pricing[vehicleId]
+    if (directPrice) return directPrice
+
+    if (alias && pricing[alias]) return pricing[alias] ?? null
+  }
 
   return null
 }
@@ -219,7 +235,7 @@ function resolveVehiclePricingAlias(vehicleId: VehicleId, vehicleName?: string):
  * Defaults to saloon car base price.
  */
 export function getRouteBasePrice(routeId: RouteId): number {
-  const price = routePricing[routeId]?.saloon
+  const price = getRoutePrice(routeId, 'saloon')
   if (!price) return 0
   if (typeof price === 'object') return price.min
   return price

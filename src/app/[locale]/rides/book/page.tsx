@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { motion } from 'framer-motion'
-import { routes } from '@/data/routes'
+import { findRoute } from '@/data/routes'
 import { getRouteDropoffPrice, requiresLagosPickupArea, type LagosPickupArea } from '@/data/pricing'
 import { useVehicles } from '@/hooks/useVehicles'
 import JourneyTracker from '@/components/booking/JourneyTracker'
@@ -34,7 +34,7 @@ function PassengerDetailsContent() {
   const initialPickupArea = params.get('pickupArea')
 
   const vehicle = vehicles.find((v) => v.id === vehicleId)
-  const matchedRoute = routes.find((r) => r.from === from && r.to === to)
+  const matchedRoute = findRoute(from, to)
 
   const [form, setForm] = useState({
     fullName: params.get('name') ?? '',

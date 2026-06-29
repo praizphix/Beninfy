@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { routes } from '@/data/routes'
+import { findRoute } from '@/data/routes'
 import { getRouteDropoffPrice, requiresLagosPickupArea } from '@/data/pricing'
 import { vehicles as catalogVehicles } from '@/data/vehicles'
 import { assertVehicleTypeAvailable } from '@/lib/availability'
@@ -67,7 +67,7 @@ export async function POST(req: Request) {
     })
   }
 
-  const matchedRoute = routes.find((route) => route.from === data.from && route.to === data.to)
+  const matchedRoute = findRoute(data.from, data.to)
   if (
     matchedRoute &&
     requiresLagosPickupArea(matchedRoute.id as RouteId, vehicle.id as VehicleId, vehicle.name) &&

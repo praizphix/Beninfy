@@ -4,7 +4,7 @@ import { useState, Suspense } from 'react'
 import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
 import { useSearchParams } from 'next/navigation'
-import { routes, bookingCities } from '@/data/routes'
+import { bookingCities, findRoute } from '@/data/routes'
 import { formatPriceRange, getRoutePrice } from '@/data/pricing'
 import { formatNGN } from '@/lib/utils'
 import { useVehicles } from '@/hooks/useVehicles'
@@ -48,9 +48,7 @@ function RidesContent() {
 
   const today = new Date().toISOString().split('T')[0]
 
-  const matchedRoute = routes.find(
-    (r) => r.from === from && r.to === to
-  )
+  const matchedRoute = findRoute(from, to)
 
   const toggleVehicle = (id: VehicleId) =>
     setSelectedVehicles((prev) =>
@@ -87,7 +85,7 @@ function RidesContent() {
             )}
           </div>
           <h1 className="text-headline-lg md:text-display-lg text-primary">
-            {matchedRoute ? `${matchedRoute.from} to ${matchedRoute.to}` : t('pageTitle')}
+            {matchedRoute ? `${from} to ${to}` : t('pageTitle')}
           </h1>
           {matchedRoute && (
             <p className="text-on-surface-variant text-body-md mt-1">

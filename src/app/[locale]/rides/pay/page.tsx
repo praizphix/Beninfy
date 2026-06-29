@@ -5,7 +5,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
-import { routes } from '@/data/routes'
+import { findRoute } from '@/data/routes'
 import { getRouteDropoffPrice, type LagosPickupArea } from '@/data/pricing'
 import { formatNGN } from '@/lib/utils'
 import { useVehicles } from '@/hooks/useVehicles'
@@ -102,7 +102,7 @@ function PaymentContent() {
   const passengers = Math.max(1, parseInt(params.get('passengers') ?? '1', 10) || 1)
 
   const vehicle = vehicles.find((v) => v.id === vehicleId)
-  const matchedRoute = routes.find((r) => r.from === from && r.to === to)
+  const matchedRoute = findRoute(from, to)
   const dropoffFare = matchedRoute ? getRouteDropoffPrice(matchedRoute.id as RouteId, vehicleId, vehicle?.name, pickupArea) : (vehicle?.basePriceNGN ?? 120000)
 
   const legCount = tripType === 'round-trip' ? 2 : 1
@@ -322,7 +322,7 @@ function PaymentContent() {
                           {/* Card form */}
                           {m.id === 'card' && method === 'card' && (
                             <div className="mt-4 p-4 bg-gray-50 rounded-xl">
-                              <p className="text-xs text-gray-500">Card details are entered inside Payaza's secure hosted checkout.</p>
+                              <p className="text-xs text-gray-500">Card details are entered inside Payaza&apos;s secure hosted checkout.</p>
                             </div>
                           )}
 

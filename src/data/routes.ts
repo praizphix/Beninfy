@@ -224,6 +224,18 @@ export const routes: Route[] = [
   },
 ]
 
+/**
+ * Finds a route corridor in either direction.
+ * Pricing and journey metadata are shared by both directions of the same trip.
+ */
+export function findRoute(from: string, to: string) {
+  return routes.find(
+    (route) =>
+      (route.from === from && route.to === to) ||
+      (route.from === to && route.to === from)
+  )
+}
+
 /** Official origin/destination cities for booking search */
 export const bookingCities = [
   { city: 'Lagos', country: 'Nigeria', code: 'LOS' },

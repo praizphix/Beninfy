@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { routes } from '@/data/routes'
+import { findRoute } from '@/data/routes'
 import { getRouteDropoffPrice } from '@/data/pricing'
 import { formatNGN } from '@/lib/utils'
 import { getPublicVehicles } from '@/lib/vehicleCatalog'
@@ -74,7 +74,7 @@ export default async function BookingConfirmedPage({ params, searchParams }: Pro
 
   const vehicles = await getPublicVehicles({ availableOnly: false })
   const vehicle = vehicles.find((v) => v.id === vehicleId)
-  const matchedRoute = routes.find((r) => r.from === from && r.to === to)
+  const matchedRoute = findRoute(from, to)
   const legCount = tripType === 'round-trip' ? 2 : 1
   const fallbackDropoff = matchedRoute ? getRouteDropoffPrice(matchedRoute.id as RouteId, vehicleId, vehicle?.name) : 120000
   const fallbackRideFare = (fallbackDropoff ?? 0) * legCount
