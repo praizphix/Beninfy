@@ -1,18 +1,27 @@
 import { NextResponse } from 'next/server'
+import { checkRateLimit, requestIp } from '@/lib/rateLimit'
 
 export const runtime = 'nodejs'
 
-function describeError(error: unknown) {
-  if (!(error instanceof Error)) return 'Unknown non-error exception'
-
-  return `${error.name}: ${error.message
-    .replace(/postgres(?:ql)?:\/\/[^\s'")]+/gi, 'postgresql://[redacted]')
-    .replace(/password=[^&\s'")]+/gi, 'password=[redacted]')
-    .slice(0, 220)}`
-}
-
 export async function POST(req: Request) {
   try {
+    if (process.env.ALLOW_ADMIN_BOOTSTRAP !== 'true') {
+      return NextResponse.json({ ok: false, error: 'Not found' }, { status: 404 })
+    }
+
+    const rateLimit = await checkRateLimit({
+      scope: 'admin-health',
+      identifier: requestIp(req),
+      limit: 5,
+      windowMs: 15 * 60 * 1000,
+    })
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { ok: false, error: 'Too many attempts' },
+        { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfter) } }
+      )
+    }
+
     const signupCode = process.env.ADMIN_SIGNUP_CODE
     if (!signupCode) {
       return NextResponse.json({ ok: false, error: 'ADMIN_SIGNUP_CODE is missing' }, { status: 503 })
@@ -46,6 +55,6 @@ export async function POST(req: Request) {
     })
   } catch (error) {
     console.error('Admin health check failed', error)
-    return NextResponse.json({ ok: false, error: describeError(error) }, { status: 500 })
+    return NextResponse.json({ ok: false, error: 'Health check failed' }, { status: 500 })
   }
 }

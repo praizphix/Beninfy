@@ -52,7 +52,8 @@ export async function POST(req: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: 'Invalid input', issues: parsed.error.flatten() }, { status: 400 })
   }
-  const { name, email, password, phone, role } = parsed.data
+  const { name, password, phone, role } = parsed.data
+  const email = parsed.data.email.trim().toLowerCase()
   const existing = await prisma.user.findUnique({ where: { email } })
   if (existing) return NextResponse.json({ error: 'Email already registered' }, { status: 409 })
   const hashedPassword = await bcrypt.hash(password, 12)

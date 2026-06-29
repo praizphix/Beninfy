@@ -2,17 +2,41 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { getPayazaApiKey, settlePaymentFromPayaza, verifyPayazaTransaction, type PayazaCurrency } from '@/lib/payaza'
+import {
+  getPaymentConfigurationError,
+  getPayazaApiKey,
+  settlePaymentFromPayaza,
+  verifyPayazaTransaction,
+  type PayazaCurrency,
+} from '@/lib/payaza'
+import { checkRateLimit, requestIp } from '@/lib/rateLimit'
 
 const verifySchema = z.object({
-  reference: z.string().min(1),
+  reference: z.string().trim().min(1).max(100),
   currencyCode: z.enum(['NGN', 'XOF']).optional(),
 })
 
-async function verify(reference: string, currencyCode?: PayazaCurrency) {
+async function verify(req: Request, reference: string, currencyCode?: PayazaCurrency) {
+  const configurationError = getPaymentConfigurationError()
+  if (configurationError) {
+    return NextResponse.json({ error: configurationError }, { status: 503 })
+  }
+
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  const rateLimit = await checkRateLimit({
+    scope: 'payment-verify',
+    identifier: `${session.user.id}:${requestIp(req)}`,
+    limit: 30,
+    windowMs: 15 * 60 * 1000,
+  })
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: 'Too many verification attempts' },
+      { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfter) } }
+    )
   }
 
   const payment = await prisma.payment.findUnique({
@@ -49,7 +73,7 @@ export async function GET(req: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: 'Invalid reference' }, { status: 400 })
   }
-  return verify(parsed.data.reference, parsed.data.currencyCode as PayazaCurrency | undefined)
+  return verify(req, parsed.data.reference, parsed.data.currencyCode as PayazaCurrency | undefined)
 }
 
 export async function POST(req: Request) {
@@ -58,5 +82,5 @@ export async function POST(req: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: 'Invalid reference' }, { status: 400 })
   }
-  return verify(parsed.data.reference, parsed.data.currencyCode as PayazaCurrency | undefined)
+  return verify(req, parsed.data.reference, parsed.data.currencyCode as PayazaCurrency | undefined)
 }

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
+import { checkRateLimit, requestIp } from '@/lib/rateLimit'
 
 const schema = z.object({
   name: z.string().min(1).max(100),
@@ -12,12 +13,26 @@ const schema = z.object({
 
 export async function POST(req: Request) {
   try {
+    const rateLimit = await checkRateLimit({
+      scope: 'public-register',
+      identifier: requestIp(req),
+      limit: 5,
+      windowMs: 60 * 60 * 1000,
+    })
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: 'Too many registration attempts' },
+        { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfter) } }
+      )
+    }
+
     const body = await req.json()
     const parsed = schema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json({ error: 'Invalid input', issues: parsed.error.flatten() }, { status: 400 })
     }
-    const { name, email, password, phone } = parsed.data
+    const { name, password, phone } = parsed.data
+    const email = parsed.data.email.trim().toLowerCase()
 
     const existing = await prisma.user.findUnique({ where: { email } })
     if (existing) {
@@ -25,10 +40,8 @@ export async function POST(req: Request) {
     }
 
     const hashedPassword = await bcrypt.hash(password, 12)
-    const superAdminEmail = process.env.ADMIN_EMAIL?.toLowerCase()
-    const role = superAdminEmail && email.toLowerCase() === superAdminEmail ? 'super_admin' : 'user'
     const user = await prisma.user.create({
-      data: { name, email, hashedPassword, phone, role },
+      data: { name, email, hashedPassword, phone, role: 'user' },
       select: { id: true, name: true, email: true },
     })
     return NextResponse.json({ user }, { status: 201 })

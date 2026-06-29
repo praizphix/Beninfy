@@ -1,7 +1,7 @@
-import { Prisma } from '@prisma/client'
 import { NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { z } from 'zod'
+import { checkRateLimit, requestIp } from '@/lib/rateLimit'
 
 const schema = z.object({
   name: z.string().trim().min(1).max(100),
@@ -27,19 +27,25 @@ function getDatabaseConfigError() {
   return null
 }
 
-function describeError(error: unknown) {
-  if (!(error instanceof Error)) return 'Unknown non-error exception'
-
-  const safeMessage = error.message
-    .replace(/postgres(?:ql)?:\/\/[^\s'")]+/gi, 'postgresql://[redacted]')
-    .replace(/password=[^&\s'")]+/gi, 'password=[redacted]')
-    .slice(0, 220)
-
-  return `${error.name}: ${safeMessage || 'No message'}`
-}
-
 export async function POST(req: Request) {
   try {
+    if (process.env.ALLOW_ADMIN_BOOTSTRAP !== 'true') {
+      return NextResponse.json({ error: 'Admin bootstrap is disabled' }, { status: 403 })
+    }
+
+    const rateLimit = await checkRateLimit({
+      scope: 'admin-bootstrap',
+      identifier: requestIp(req),
+      limit: 5,
+      windowMs: 60 * 60 * 1000,
+    })
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: 'Too many attempts' },
+        { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfter) } }
+      )
+    }
+
     const signupCode = process.env.ADMIN_SIGNUP_CODE
     if (!signupCode) {
       return NextResponse.json({ error: 'Admin signup is not configured' }, { status: 503 })
@@ -47,7 +53,7 @@ export async function POST(req: Request) {
 
     const databaseConfigError = getDatabaseConfigError()
     if (databaseConfigError) {
-      return NextResponse.json({ error: databaseConfigError }, { status: 503 })
+      return NextResponse.json({ error: 'Admin bootstrap is unavailable' }, { status: 503 })
     }
 
     const body = await req.json()
@@ -63,35 +69,33 @@ export async function POST(req: Request) {
     }
 
     const { prisma } = await import('@/lib/prisma')
+    const configuredAdminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase()
+    if (!configuredAdminEmail || email !== configuredAdminEmail) {
+      return NextResponse.json({ error: 'Invalid bootstrap account' }, { status: 403 })
+    }
+
+    const adminCount = await prisma.user.count({
+      where: { role: { in: ['admin', 'super_admin'] } },
+    })
+    if (adminCount > 0) {
+      return NextResponse.json({ error: 'Admin bootstrap is no longer available' }, { status: 403 })
+    }
+
     const existing = await prisma.user.findUnique({ where: { email } })
     if (existing) {
       return NextResponse.json({ error: 'Email already registered' }, { status: 409 })
     }
 
     const hashedPassword = await bcrypt.hash(password, 12)
-    const superAdminEmail = process.env.ADMIN_EMAIL?.toLowerCase()
-    const role = superAdminEmail && email.toLowerCase() === superAdminEmail ? 'super_admin' : 'admin'
 
     const user = await prisma.user.create({
-      data: { name, email, hashedPassword, phone, role },
+      data: { name, email, hashedPassword, phone, role: 'super_admin' },
       select: { id: true, name: true, email: true, role: true },
     })
 
     return NextResponse.json({ user }, { status: 201 })
   } catch (error) {
     console.error('Admin signup failed', error)
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      return NextResponse.json({ error: `Database error: ${error.code}` }, { status: 500 })
-    }
-    if (error instanceof Prisma.PrismaClientInitializationError) {
-      return NextResponse.json({ error: 'Database connection failed. Check DATABASE_URL in Vercel.' }, { status: 500 })
-    }
-    if (error instanceof Prisma.PrismaClientValidationError) {
-      return NextResponse.json({ error: 'Database schema mismatch. Run Prisma migrations on the deployed database.' }, { status: 500 })
-    }
-    if (error instanceof Error && /connection string|database url|invalid url|postgres/i.test(error.message)) {
-      return NextResponse.json({ error: 'Database connection string is invalid in deployment settings' }, { status: 500 })
-    }
-    return NextResponse.json({ error: `Server error: ${describeError(error)}` }, { status: 500 })
+    return NextResponse.json({ error: 'Admin bootstrap failed' }, { status: 500 })
   }
 }

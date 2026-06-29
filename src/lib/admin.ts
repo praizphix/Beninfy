@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { Session } from 'next-auth'
 import { auth } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
 
 export type Role = 'user' | 'admin' | 'super_admin'
 
@@ -10,24 +11,46 @@ export function getRole(session: Session | null): Role | undefined {
 
 export async function requireAdmin() {
   const session = (await auth()) as Session | null
-  const role = getRole(session)
-  if (!session?.user?.id || (role !== 'admin' && role !== 'super_admin')) {
+  if (!session?.user?.id) {
     return {
       ok: false as const,
       response: NextResponse.json({ error: 'Forbidden' }, { status: 403 }),
     }
   }
-  return { ok: true as const, session, role: role as Role }
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { role: true },
+  })
+  if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
+    return {
+      ok: false as const,
+      response: NextResponse.json({ error: 'Forbidden' }, { status: 403 }),
+    }
+  }
+
+  return { ok: true as const, session, role: user.role as Role }
 }
 
 export async function requireSuperAdmin() {
   const session = (await auth()) as Session | null
-  const role = getRole(session)
-  if (!session?.user?.id || role !== 'super_admin') {
+  if (!session?.user?.id) {
     return {
       ok: false as const,
       response: NextResponse.json({ error: 'Super admin required' }, { status: 403 }),
     }
   }
-  return { ok: true as const, session, role: role as Role }
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { role: true },
+  })
+  if (!user || user.role !== 'super_admin') {
+    return {
+      ok: false as const,
+      response: NextResponse.json({ error: 'Super admin required' }, { status: 403 }),
+    }
+  }
+
+  return { ok: true as const, session, role: 'super_admin' as const }
 }

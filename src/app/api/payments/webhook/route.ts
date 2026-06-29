@@ -1,20 +1,49 @@
 import { NextResponse } from 'next/server'
 import { createHmac, timingSafeEqual } from 'crypto'
 import { prisma } from '@/lib/prisma'
-import { getPayazaWebhookSecret, settlePaymentFromPayazaWebhook } from '@/lib/payaza'
+import { getPayazaWebhookSecret, paymentsEnabled, settlePaymentFromPayazaWebhook } from '@/lib/payaza'
+import { checkRateLimit, requestIp } from '@/lib/rateLimit'
 
 export async function POST(req: Request) {
-  const raw = await req.text()
-  const secret = getPayazaWebhookSecret()
-  if (secret) {
-    const signature = req.headers.get('x-payaza-signature') ?? ''
-    const expected = createHmac('sha512', secret).update(raw, 'utf8').digest('base64')
+  if (!paymentsEnabled()) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  }
 
-    const a = Buffer.from(expected, 'utf8')
-    const b = Buffer.from(signature, 'utf8')
-    if (a.length !== b.length || !timingSafeEqual(a, b)) {
-      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
-    }
+  const rateLimit = await checkRateLimit({
+    scope: 'payment-webhook',
+    identifier: requestIp(req),
+    limit: 60,
+    windowMs: 60 * 1000,
+  })
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfter) } }
+    )
+  }
+
+  const contentLength = Number(req.headers.get('content-length') ?? 0)
+  if (contentLength > 64 * 1024) {
+    return NextResponse.json({ error: 'Payload too large' }, { status: 413 })
+  }
+
+  const raw = await req.text()
+  if (raw.length > 64 * 1024) {
+    return NextResponse.json({ error: 'Payload too large' }, { status: 413 })
+  }
+
+  const secret = getPayazaWebhookSecret()
+  if (!secret) {
+    return NextResponse.json({ error: 'Webhook is not configured' }, { status: 503 })
+  }
+
+  const signature = req.headers.get('x-payaza-signature') ?? ''
+  const expected = createHmac('sha512', secret).update(raw, 'utf8').digest('base64')
+
+  const a = Buffer.from(expected, 'utf8')
+  const b = Buffer.from(signature, 'utf8')
+  if (a.length !== b.length || !timingSafeEqual(a, b)) {
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
   }
 
   let event: {

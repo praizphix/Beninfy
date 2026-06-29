@@ -5,6 +5,7 @@ import { PrismaAdapter } from '@auth/prisma-adapter'
 import bcrypt from 'bcryptjs'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
+import { checkRateLimit, requestIp } from '@/lib/rateLimit'
 
 const credentialsSchema = z.object({
   email: z.string().email(),
@@ -26,10 +27,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         email: { label: 'Email', type: 'email' },
         password: { label: 'Password', type: 'password' },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
+        const rateLimit = await checkRateLimit({
+          scope: 'credentials-login',
+          identifier: requestIp(request),
+          limit: 10,
+          windowMs: 15 * 60 * 1000,
+        })
+        if (!rateLimit.allowed) return null
+
         const parsed = credentialsSchema.safeParse(credentials)
         if (!parsed.success) return null
-        const { email, password } = parsed.data
+        const email = parsed.data.email.trim().toLowerCase()
+        const { password } = parsed.data
         const user = await prisma.user.findUnique({ where: { email } })
         if (!user || !user.hashedPassword) return null
         const ok = await bcrypt.compare(password, user.hashedPassword)
@@ -42,19 +52,34 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id
-        // role is set on credentials sign in; for OAuth, fetch from DB
-        if ('role' in user && user.role) {
-          token.role = user.role as string
-        } else if (user.email) {
-          const dbUser = await prisma.user.findUnique({ where: { email: user.email }, select: { role: true } })
-          if (dbUser) token.role = dbUser.role
+      }
+
+      if (token.id) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { role: true, sessionVersion: true },
+        })
+        const tokenVersion = typeof token.sessionVersion === 'number' ? token.sessionVersion : null
+
+        if (!dbUser || (tokenVersion !== null && tokenVersion !== dbUser.sessionVersion)) {
+          delete token.id
+          delete token.role
+          delete token.sessionVersion
+        } else {
+          token.role = dbUser.role
+          token.sessionVersion = dbUser.sessionVersion
         }
       }
       return token
     },
     async session({ session, token }) {
-      if (token?.id && session.user) session.user.id = token.id as string
-      if (token?.role && session.user) (session.user as { role?: string }).role = token.role as string
+      if (session.user) {
+        const user = session.user as { id?: string; role?: string }
+        if (token?.id) user.id = token.id as string
+        else delete user.id
+        if (token?.role) user.role = token.role as string
+        else delete user.role
+      }
       return session
     },
   },

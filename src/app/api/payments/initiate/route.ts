@@ -5,12 +5,14 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import {
   convertBookingAmount,
+  getPaymentConfigurationError,
   getPayazaConnectionMode,
   getPayazaPublicKey,
   normalizePayazaPhone,
   splitCustomerName,
   type PayazaCurrency,
 } from '@/lib/payaza'
+import { checkRateLimit, requestIp } from '@/lib/rateLimit'
 
 const initSchema = z.object({
   bookingId: z.string().min(1),
@@ -21,9 +23,26 @@ const initSchema = z.object({
 })
 
 export async function POST(req: Request) {
+  const configurationError = getPaymentConfigurationError()
+  if (configurationError) {
+    return NextResponse.json({ error: configurationError }, { status: 503 })
+  }
+
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  const rateLimit = await checkRateLimit({
+    scope: 'payment-initiate',
+    identifier: `${session.user.id}:${requestIp(req)}`,
+    limit: 10,
+    windowMs: 15 * 60 * 1000,
+  })
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: 'Too many payment attempts' },
+      { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfter) } }
+    )
   }
   const body = await req.json().catch(() => null)
   const parsed = initSchema.safeParse(body)
@@ -41,27 +60,7 @@ export async function POST(req: Request) {
   const email = session.user.email ?? `user-${session.user.id}@beninfy.com`
   const currencyCode = parsed.data.currencyCode as PayazaCurrency
 
-  if (!publicKey) {
-    // Dev/stub mode: mark as paid immediately and let the UI move forward.
-    const payment = await prisma.payment.create({
-      data: {
-        bookingId: booking.id,
-        amountNGN: booking.priceNGN,
-        status: 'paid',
-        reference,
-      },
-    })
-    await prisma.booking.update({
-      where: { id: booking.id },
-      data: { status: 'confirmed', paymentId: payment.id },
-    })
-    return NextResponse.json({
-      mode: 'stub',
-      reference,
-      bookingId: booking.id,
-      status: 'paid',
-    })
-  }
+  if (!publicKey) return NextResponse.json({ error: 'Payments are not fully configured' }, { status: 503 })
 
   let checkoutAmount: number
   try {

@@ -12,11 +12,11 @@ npm run db:seed            # seed vehicles, routes, tours, border fees
 npm run dev
 ```
 
-Register `info@beninfy.com` from `/register` (or the email matching `ADMIN_EMAIL`) and you will be auto-promoted to **super admin**.
+Public registration always creates a regular user. Administrators are created by an authenticated super admin.
 
 ## Roles
 
-- `super_admin` — Beninfy owner. Sole role allowed to change roles or create/delete users. Created automatically when the email matching `ADMIN_EMAIL` registers (or via the seed script).
+- `super_admin` — Beninfy owner. Sole role allowed to change roles or create/delete users. Created through the one-time bootstrap or promoted by the seed script.
 - `admin` — Backoffice operator. Created from the super-admin Users page. Full access to bookings, payments, catalogs.
 - `user` — Customer. Default for all public registrations.
 
@@ -30,9 +30,11 @@ Backoffice lives at `/[locale]/admin`.
 | `DIRECT_URL` | recommended | Direct Postgres connection string for Prisma migrations. |
 | `PRISMA_MIGRATE_URL` | optional | Migration-only override. Takes precedence over `DIRECT_URL`. |
 | `AUTH_SECRET` | yes | `openssl rand -base64 32` |
-| `ADMIN_EMAIL` | yes | Email that gets auto-promoted to `super_admin`. |
+| `ADMIN_EMAIL` | yes | Email allowed during the one-time admin bootstrap. |
+| `ADMIN_SIGNUP_CODE` | bootstrap only | Secret used only for the initial super-admin bootstrap. |
+| `ALLOW_ADMIN_BOOTSTRAP` | no | Set to `true` only while creating the first super admin, then disable it. |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | optional | Google OAuth. |
-| `PAYSTACK_SECRET_KEY` / `PAYSTACK_PUBLIC_KEY` | optional | Live Paystack integration. Stubbed when unset. |
+| `PAYMENTS_ENABLED` | yes | Payments remain unavailable unless explicitly set to `true`. |
 
 ## Deploy to Vercel
 
@@ -41,7 +43,7 @@ Backoffice lives at `/[locale]/admin`.
 3. Add the env vars from `.env.example` in the Vercel project settings.
 4. The included `vercel.json` runs `npm run build` on deploy. Run `npm run db:migrate` separately when a deployment includes new Prisma migrations.
 5. After the first deploy:
-   - Visit `https://beninfy.com/en/register` and create the super-admin account with `ADMIN_EMAIL`.
+   - Temporarily set `ALLOW_ADMIN_BOOTSTRAP=true`, create the first account from `/en/admin-signup` using `ADMIN_EMAIL`, then immediately set it back to `false`.
    - Sign in, open `/en/admin`, and create additional admins from the Users page.
 
 ### Notes

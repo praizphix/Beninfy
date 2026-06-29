@@ -41,11 +41,23 @@ export function getPayazaPublicKey() {
 }
 
 export function getPayazaApiKey() {
-  return process.env.PAYAZA_API_KEY?.trim() || getPayazaPublicKey()
+  return process.env.PAYAZA_API_KEY?.trim()
 }
 
 export function getPayazaWebhookSecret() {
   return process.env.PAYAZA_WEBHOOK_SECRET?.trim()
+}
+
+export function paymentsEnabled() {
+  return process.env.PAYMENTS_ENABLED === 'true'
+}
+
+export function getPaymentConfigurationError() {
+  if (!paymentsEnabled()) return 'Payments are temporarily unavailable'
+  if (!getPayazaPublicKey() || !getPayazaApiKey() || !getPayazaWebhookSecret()) {
+    return 'Payments are not fully configured'
+  }
+  return null
 }
 
 export function getPayazaConnectionMode(): 'Live' | 'Test' {
@@ -96,6 +108,8 @@ export function payazaAuthorizationHeader(apiKey: string) {
 }
 
 export async function verifyPayazaTransaction(reference: string) {
+  if (!paymentsEnabled()) throw new Error('Payments are temporarily unavailable')
+
   const apiKey = getPayazaApiKey()
   if (!apiKey) throw new Error('Payaza API key is not configured')
 
