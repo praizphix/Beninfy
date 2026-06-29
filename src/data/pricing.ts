@@ -2,10 +2,47 @@ import type { RouteId, VehicleId, PriceRange } from '@/types'
 
 export type LagosPickupArea = 'mainland' | 'island'
 
+const cotonouLomePricing: Partial<Record<VehicleId, number | PriceRange>> = {
+  saloon: { min: 150_000, max: 160_000 },
+  suv: 250_000,
+  sienna: 240_000,
+  prado: 300_000,
+  gx460: 300_000,
+  'lexus-gx460': 300_000,
+  sprinter: 650_000,
+  hiace: 700_000,
+  coastal: 850_000,
+}
+
+const lomeAccraPricing: Partial<Record<VehicleId, number | PriceRange>> = {
+  saloon: { min: 160_000, max: 170_000 },
+  suv: 260_000,
+  sienna: 250_000,
+  prado: 450_000,
+  gx460: 450_000,
+  'lexus-gx460': 450_000,
+  sprinter: 700_000,
+  hiace: 750_000,
+  coastal: 900_000,
+}
+
+const cotonouAccraPricing: Partial<Record<VehicleId, number | PriceRange>> = {
+  saloon: 340_000,
+  camry: 340_000,
+  'toyota-camry': 340_000,
+  'toyota-camry-sedan': 340_000,
+  suv: 510_000,
+  sienna: 510_000,
+  prado: 750_000,
+  gx460: 750_000,
+  'lexus-gx460': 750_000,
+}
+
 /**
  * Official Beninfy one-way drop-off route pricing in Nigerian Naira (₦).
  * Round trips multiply this drop-off fare by two before fees.
  * Saloon prices shown as ranges (min/max); all other vehicles are fixed.
+ * Opposite directions reference the same pricing object.
  */
 export const routePricing: Record<RouteId, Partial<Record<VehicleId, number | PriceRange>>> = {
   'lagos-cotonou': {
@@ -47,46 +84,12 @@ export const routePricing: Record<RouteId, Partial<Record<VehicleId, number | Pr
     gx460:   450_000,
     'lexus-gx460': 450_000,
   },
-  'cotonou-togo': {
-    saloon:  { min: 150_000, max: 160_000 },
-    suv:     250_000,
-    sienna:  240_000,
-    prado:   300_000,
-    gx460:   300_000,
-    'lexus-gx460': 300_000,
-    sprinter: 650_000,
-    hiace:   700_000,
-    coastal: 850_000,
-  },
-  'cotonou-accra': {
-    suv:     510_000,
-    sienna:  510_000,
-  },
-  'togo-ghana': {
-    saloon:  { min: 160_000, max: 170_000 },
-    suv:     260_000,
-    sienna:  250_000,
-    prado:   450_000,
-    gx460:   450_000,
-    'lexus-gx460': 450_000,
-    sprinter: 700_000,
-    hiace:   750_000,
-    coastal: 900_000,
-  },
-  'lome-cotonou': {
-    saloon:  160_000,
-  },
-  'accra-lome': {
-    saloon:  180_000,
-    suv:     250_000,
-    sienna:  250_000,
-  },
-  'accra-cotonou': {
-    saloon:  340_000,
-    prado:   750_000,
-    gx460:   750_000,
-    'lexus-gx460': 750_000,
-  },
+  'cotonou-togo': cotonouLomePricing,
+  'lome-cotonou': cotonouLomePricing,
+  'togo-ghana': lomeAccraPricing,
+  'accra-lome': lomeAccraPricing,
+  'cotonou-accra': cotonouAccraPricing,
+  'accra-cotonou': cotonouAccraPricing,
   'lagos-togo': {
     saloon:  { min: 320_000, max: 330_000 },
     suv:     520_000,
@@ -149,32 +152,16 @@ export const packageRates: Partial<Record<VehicleId, number>> = {
   coastal: 2_000_000,
 }
 
-const corridorPricingIds: Partial<Record<RouteId, RouteId[]>> = {
-  'cotonou-togo': ['cotonou-togo', 'lome-cotonou'],
-  'lome-cotonou': ['cotonou-togo', 'lome-cotonou'],
-  'togo-ghana': ['togo-ghana', 'accra-lome'],
-  'accra-lome': ['togo-ghana', 'accra-lome'],
-  'cotonou-accra': ['accra-cotonou', 'cotonou-accra'],
-  'accra-cotonou': ['accra-cotonou', 'cotonou-accra'],
-}
-
-function getCorridorPricingIds(routeId: RouteId) {
-  return corridorPricingIds[routeId] ?? [routeId]
-}
-
 /** Returns the price for a given route + vehicle combination */
 export function getRoutePrice(routeId: RouteId, vehicleId: VehicleId, vehicleName?: string): number | PriceRange | null {
+  const pricing = routePricing[routeId]
+  if (!pricing) return null
+
+  const directPrice = pricing[vehicleId]
+  if (directPrice) return directPrice
+
   const alias = resolveVehiclePricingAlias(vehicleId, vehicleName)
-
-  for (const pricingId of getCorridorPricingIds(routeId)) {
-    const pricing = routePricing[pricingId]
-    if (!pricing) continue
-
-    const directPrice = pricing[vehicleId]
-    if (directPrice) return directPrice
-
-    if (alias && pricing[alias]) return pricing[alias] ?? null
-  }
+  if (alias && pricing[alias]) return pricing[alias] ?? null
 
   return null
 }

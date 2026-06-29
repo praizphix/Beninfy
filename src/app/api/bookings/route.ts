@@ -78,8 +78,14 @@ export async function POST(req: Request) {
   const dropoffFare = matchedRoute
     ? getRouteDropoffPrice(matchedRoute.id as RouteId, vehicle.id as VehicleId, vehicle.name, data.pickupArea)
     : null
+  if (!matchedRoute) {
+    return NextResponse.json({ error: 'This route is not available for booking' }, { status: 400 })
+  }
+  if (dropoffFare === null) {
+    return NextResponse.json({ error: 'This vehicle is not priced for the selected route' }, { status: 400 })
+  }
   const legCount = data.tripType === 'round-trip' ? 2 : 1
-  const rideFare = (dropoffFare ?? vehicle.basePriceNGN ?? data.priceNGN) * legCount
+  const rideFare = dropoffFare * legCount
   const borderFee = 5000 * legCount
   const serviceFee = Math.round(rideFare * 0.05)
   const priceNGN = rideFare + borderFee + serviceFee

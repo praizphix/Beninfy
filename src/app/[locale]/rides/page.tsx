@@ -6,7 +6,6 @@ import { useLocale, useTranslations } from 'next-intl'
 import { useSearchParams } from 'next/navigation'
 import { bookingCities, findRoute } from '@/data/routes'
 import { formatPriceRange, getRoutePrice } from '@/data/pricing'
-import { formatNGN } from '@/lib/utils'
 import { useVehicles } from '@/hooks/useVehicles'
 import type { VehicleId, RouteId } from '@/types'
 import CatalogImage from '@/components/shared/CatalogImage'
@@ -64,7 +63,7 @@ function RidesContent() {
     if (!matchedRoute) return null
     const vehicle = vehicles.find((v) => v.id === vehicleId)
     const price = getRoutePrice(matchedRoute.id as RouteId, vehicleId, vehicle?.name)
-    if (!price) return vehicle?.basePriceNGN ? formatNGN(vehicle.basePriceNGN) : null
+    if (!price) return null
     return formatPriceRange(price)
   }
 
