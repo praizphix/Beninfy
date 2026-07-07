@@ -36,6 +36,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       if (error.code === 'P2003') {
         return NextResponse.json({ error: 'Selected vehicle type does not exist' }, { status: 400 })
       }
+      if (error.code === 'P2025') {
+        return NextResponse.json({ error: 'Fleet unit not found. Please refresh and try again.' }, { status: 404 })
+      }
     }
     throw error
   }
@@ -49,6 +52,13 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   if (assignedLegs > 0) {
     return NextResponse.json({ error: 'Cannot delete: this fleet vehicle has assigned booking legs.' }, { status: 409 })
   }
-  await prisma.fleetVehicle.delete({ where: { id } })
-  return NextResponse.json({ ok: true })
+  try {
+    await prisma.fleetVehicle.delete({ where: { id } })
+    return NextResponse.json({ ok: true })
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+      return NextResponse.json({ error: 'Fleet unit not found. Please refresh and try again.' }, { status: 404 })
+    }
+    throw error
+  }
 }

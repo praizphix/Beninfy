@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server'
+import { Prisma } from '@prisma/client'
 import { z } from 'zod'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { findRoute } from '@/data/routes'
 import { getRouteDropoffPrice, requiresLagosPickupArea } from '@/data/pricing'
 import { vehicles as catalogVehicles } from '@/data/vehicles'
-import { assertVehicleTypeAvailable } from '@/lib/availability'
+import { assertVehicleTypeAvailable, findAvailableFleetVehicle } from '@/lib/availability'
 import type { RouteId, VehicleId } from '@/types'
 
 const createSchema = z.object({
@@ -28,11 +29,27 @@ const createSchema = z.object({
   pickupArea: z.enum(['mainland', 'island']).optional(),
 })
 
+class BookingAvailabilityError extends Error {
+  status: number
+
+  constructor(message: string, status = 409) {
+    super(message)
+    this.status = status
+  }
+}
+
+function dateKey(date: Date) {
+  return date.toISOString().slice(0, 10)
+}
+
 export async function POST(req: Request) {
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+  const userId = session.user.id
+  const userName = session.user.name ?? null
+  const userEmail = session.user.email ?? null
   const body = await req.json().catch(() => null)
   const parsed = createSchema.safeParse(body)
   if (!parsed.success) {
@@ -90,55 +107,89 @@ export async function POST(req: Request) {
   const serviceFee = Math.round(rideFare * 0.05)
   const priceNGN = rideFare + borderFee + serviceFee
 
-  const datesToCheck = data.tripType === 'round-trip' && returnDate ? [departureDate, returnDate] : [departureDate]
-  const availability = await assertVehicleTypeAvailable(vehicle.id, datesToCheck)
-  if (!availability.ok) {
-    return NextResponse.json({ error: availability.error }, { status: availability.status })
-  }
+  try {
+    const booking = await prisma.$transaction(async (tx) => {
+      const datesToCheck = data.tripType === 'round-trip' && returnDate ? [departureDate, returnDate] : [departureDate]
+      const availability = await assertVehicleTypeAvailable(vehicle.id, datesToCheck, tx)
+      if (!availability.ok) {
+        throw new BookingAvailabilityError(availability.error, availability.status)
+      }
 
-  const booking = await prisma.booking.create({
-    data: {
-      userId: session.user.id,
-      from: data.from,
-      to: data.to,
-      date: departureDate,
-      returnDate,
-      tripType: data.tripType === 'round-trip' ? 'round_trip' : 'one_way',
-      passengerName: data.passengerName || session.user.name || null,
-      passengerEmail: data.passengerEmail || session.user.email || null,
-      passengerPhone: data.passengerPhone || null,
-      passportId: data.passportId || null,
-      nationality: data.nationality || null,
-      pickupAddress: data.pickupAddress || null,
-      dropoffAddress: data.dropoffAddress || null,
-      specialRequirements: data.specialRequirements || null,
-      vehicleId: vehicle.id,
-      passengers: data.passengers,
-      priceNGN,
-      legs: {
-        create: [
-          {
-            direction: 'outbound',
-            from: data.from,
-            to: data.to,
-            departureDate,
-            vehicleId: vehicle.id,
-          },
-          ...(data.tripType === 'round-trip' && returnDate
-            ? [{
-                direction: 'return',
-                from: data.to,
-                to: data.from,
-                departureDate: returnDate,
+      const reservedFleetVehicles = new Map<string, { id: string; label: string }>()
+      for (const date of datesToCheck) {
+        const key = dateKey(date)
+        if (reservedFleetVehicles.has(key)) continue
+
+        const fleetVehicle = await findAvailableFleetVehicle(vehicle.id, date, tx)
+        if (!fleetVehicle) {
+          throw new BookingAvailabilityError(
+            `All ${vehicle.name} units are booked on ${key}. Please choose another vehicle or date.`
+          )
+        }
+        reservedFleetVehicles.set(key, fleetVehicle)
+      }
+
+      return tx.booking.create({
+        data: {
+          userId,
+          from: data.from,
+          to: data.to,
+          date: departureDate,
+          returnDate,
+          tripType: data.tripType === 'round-trip' ? 'round_trip' : 'one_way',
+          passengerName: data.passengerName || userName,
+          passengerEmail: data.passengerEmail || userEmail,
+          passengerPhone: data.passengerPhone || null,
+          passportId: data.passportId || null,
+          nationality: data.nationality || null,
+          pickupAddress: data.pickupAddress || null,
+          dropoffAddress: data.dropoffAddress || null,
+          specialRequirements: data.specialRequirements || null,
+          vehicleId: vehicle.id,
+          passengers: data.passengers,
+          priceNGN,
+          legs: {
+            create: [
+              {
+                direction: 'outbound',
+                from: data.from,
+                to: data.to,
+                departureDate,
                 vehicleId: vehicle.id,
-              }]
-            : []),
-        ],
-      },
-    },
-    include: { legs: true },
-  })
-  return NextResponse.json({ booking }, { status: 201 })
+                fleetVehicleId: reservedFleetVehicles.get(dateKey(departureDate))?.id,
+                status: 'reserved',
+              },
+              ...(data.tripType === 'round-trip' && returnDate
+                ? [{
+                    direction: 'return',
+                    from: data.to,
+                    to: data.from,
+                    departureDate: returnDate,
+                    vehicleId: vehicle.id,
+                    fleetVehicleId: reservedFleetVehicles.get(dateKey(returnDate))?.id,
+                    status: 'reserved',
+                  }]
+                : []),
+            ],
+          },
+        },
+        include: { legs: true },
+      })
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable })
+
+    return NextResponse.json({ booking }, { status: 201 })
+  } catch (error) {
+    if (error instanceof BookingAvailabilityError) {
+      return NextResponse.json({ error: error.message }, { status: error.status })
+    }
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2034') {
+      return NextResponse.json(
+        { error: 'Fleet availability changed while booking. Please try again.' },
+        { status: 409 }
+      )
+    }
+    throw error
+  }
 }
 
 export async function GET() {

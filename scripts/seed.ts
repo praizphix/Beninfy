@@ -6,6 +6,7 @@ import { vehicles } from '../src/data/vehicles'
 import { routes } from '../src/data/routes'
 import { tours } from '../src/data/tours'
 import { borderFees } from '../src/data/borderFees'
+import { fleetInventory } from '../src/data/fleetInventory'
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
 const prisma = new PrismaClient({ adapter })
@@ -43,6 +44,28 @@ async function main() {
         badgeFr: v.badgeFr ?? null,
         features: v.features ?? [],
         featuresFr: v.featuresFr ?? [],
+      },
+    })
+  }
+
+  console.log('Seeding fleet units…')
+  for (const unit of fleetInventory) {
+    await prisma.fleetVehicle.upsert({
+      where: { id: unit.id },
+      update: {
+        vehicleId: unit.vehicleId,
+        label: unit.label,
+        currentCity: unit.currentCity,
+        notes: unit.notes,
+      },
+      create: {
+        id: unit.id,
+        vehicleId: unit.vehicleId,
+        label: unit.label,
+        plateNumber: unit.plateNumber,
+        status: 'available',
+        currentCity: unit.currentCity,
+        notes: unit.notes,
       },
     })
   }

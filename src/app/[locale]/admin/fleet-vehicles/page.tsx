@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { CrudTable } from '@/components/admin/CrudTable'
 import { vehicles } from '@/data/vehicles'
 
@@ -15,7 +16,38 @@ interface FleetVehicle {
   [key: string]: unknown
 }
 
+interface VehicleOption {
+  id: string
+  name: string
+}
+
+const FALLBACK_VEHICLE_OPTIONS = vehicles.map((vehicle) => ({ label: vehicle.name, value: vehicle.id }))
+
 export default function AdminFleetVehiclesPage() {
+  const [vehicleOptions, setVehicleOptions] = useState(FALLBACK_VEHICLE_OPTIONS)
+
+  useEffect(() => {
+    let cancelled = false
+
+    fetch('/api/admin/vehicles')
+      .then((res) => (res.ok ? res.json() : { vehicles: [] }))
+      .then((data: { vehicles?: VehicleOption[] }) => {
+        if (cancelled) return
+        const options = (data.vehicles ?? [])
+          .filter((vehicle) => vehicle.id && vehicle.name)
+          .map((vehicle) => ({ label: vehicle.name, value: vehicle.id }))
+
+        if (options.length > 0) setVehicleOptions(options)
+      })
+      .catch(() => {
+        if (!cancelled) setVehicleOptions(FALLBACK_VEHICLE_OPTIONS)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   return (
     <CrudTable<FleetVehicle>
       title="Fleet units"
@@ -39,7 +71,7 @@ export default function AdminFleetVehiclesPage() {
           label: 'Vehicle type',
           type: 'select',
           required: true,
-          options: vehicles.map((vehicle) => ({ label: vehicle.name, value: vehicle.id })),
+          options: vehicleOptions,
         },
         { name: 'label', label: 'Unit label', type: 'text', required: true, placeholder: 'e.g. Sienna 01' },
         { name: 'plateNumber', label: 'Plate number', type: 'text', required: true },
