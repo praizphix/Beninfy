@@ -87,7 +87,7 @@ export default function AdminVehiclesPage() {
     <CrudTable<Vehicle>
       key={reloadKey}
       title="Vehicles"
-      description="Manage the fleet catalog. Use the Image column to upload vehicle photos."
+      description="Manage booking categories and pricing buckets. Slugs are unique: use “suv” once for the SUV category, then add Highlander/RAV4 cars in Fleet units under SUV."
       fetchUrl="/api/admin/vehicles"
       collectionKey="vehicles"
       itemKey="id"
@@ -104,7 +104,7 @@ export default function AdminVehiclesPage() {
         { header: 'Badge', render: (v) => v.badge ?? '—' },
       ]}
       fields={[
-        { name: 'id', label: 'ID (slug)', type: 'text', required: true, createOnly: true, placeholder: 'e.g. saloon' },
+        { name: 'id', label: 'Unique category slug', type: 'text', required: true, createOnly: true, placeholder: 'e.g. highlander, not an existing slug like suv' },
         { name: 'name', label: 'Name', type: 'text', required: true },
         { name: 'nameFr', label: 'Name (FR)', type: 'text' },
         { name: 'capacity', label: 'Capacity', type: 'number', required: true },

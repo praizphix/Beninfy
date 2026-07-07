@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { Prisma } from '@prisma/client'
 import { z } from 'zod'
 import { requireAdmin } from '@/lib/admin'
 import { prisma } from '@/lib/prisma'
@@ -35,6 +36,18 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => null)
   const parsed = schema.safeParse(body)
   if (!parsed.success) return NextResponse.json({ error: 'Invalid input', issues: parsed.error.flatten() }, { status: 400 })
-  const vehicle = await prisma.vehicle.create({ data: parsed.data })
-  return NextResponse.json({ vehicle }, { status: 201 })
+  try {
+    const vehicle = await prisma.vehicle.create({ data: parsed.data })
+    return NextResponse.json({ vehicle }, { status: 201 })
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      return NextResponse.json(
+        {
+          error: `Vehicle slug "${parsed.data.id}" already exists. Edit that vehicle category instead, or add Highlander as a Fleet unit under vehicle type SUV.`,
+        },
+        { status: 409 }
+      )
+    }
+    throw error
+  }
 }
