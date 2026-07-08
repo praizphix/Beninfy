@@ -60,6 +60,29 @@ export function CrudTable<T extends { id: string } & Record<string, unknown>>({
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState<string | null>(null)
 
+  useEffect(() => {
+    if (!open || typeof document === 'undefined') return
+
+    const scrollY = window.scrollY
+    const previousBodyPosition = document.body.style.position
+    const previousBodyTop = document.body.style.top
+    const previousBodyWidth = document.body.style.width
+    const previousHtmlOverscroll = document.documentElement.style.overscrollBehavior
+
+    document.body.style.position = 'fixed'
+    document.body.style.top = `-${scrollY}px`
+    document.body.style.width = '100%'
+    document.documentElement.style.overscrollBehavior = 'none'
+
+    return () => {
+      document.body.style.position = previousBodyPosition
+      document.body.style.top = previousBodyTop
+      document.body.style.width = previousBodyWidth
+      document.documentElement.style.overscrollBehavior = previousHtmlOverscroll
+      window.scrollTo(0, scrollY)
+    }
+  }, [open])
+
   const load = useCallback(async () => {
     setLoading(true)
     try {

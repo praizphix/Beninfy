@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { Prisma } from '@prisma/client'
 import { z } from 'zod'
 import { requireAdmin } from '@/lib/admin'
 import { prisma } from '@/lib/prisma'
@@ -23,23 +24,54 @@ export async function GET(req: Request) {
     ]
   }
 
-  const bookings = await prisma.booking.findMany({
-    where,
-    take: limit,
-    orderBy: { createdAt: 'desc' },
-    include: {
-      user: { select: { id: true, name: true, email: true, phone: true } },
-      vehicle: { select: { id: true, name: true } },
-      payments: { select: { id: true, status: true, amountNGN: true, reference: true, createdAt: true } },
-      legs: {
-        orderBy: { departureDate: 'asc' },
-        include: {
-          fleetVehicle: { select: { id: true, label: true, plateNumber: true, color: true } },
-          driver: { select: { id: true, name: true, phone: true } },
+  let bookings
+  try {
+    bookings = await prisma.booking.findMany({
+      where,
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        user: { select: { id: true, name: true, email: true, phone: true } },
+        vehicle: { select: { id: true, name: true } },
+        payments: { select: { id: true, status: true, amountNGN: true, reference: true, createdAt: true } },
+        legs: {
+          orderBy: { departureDate: 'asc' },
+          include: {
+            fleetVehicle: { select: { id: true, label: true, plateNumber: true, color: true } },
+            driver: { select: { id: true, name: true, phone: true } },
+          },
         },
       },
-    },
-  })
+    })
+  } catch (error) {
+    if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2022') {
+      throw error
+    }
+    const fallbackBookings = await prisma.booking.findMany({
+      where,
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        user: { select: { id: true, name: true, email: true, phone: true } },
+        vehicle: { select: { id: true, name: true } },
+        payments: { select: { id: true, status: true, amountNGN: true, reference: true, createdAt: true } },
+        legs: {
+          orderBy: { departureDate: 'asc' },
+          include: {
+            fleetVehicle: { select: { id: true, label: true, plateNumber: true } },
+            driver: { select: { id: true, name: true, phone: true } },
+          },
+        },
+      },
+    })
+    bookings = fallbackBookings.map((booking) => ({
+      ...booking,
+      legs: booking.legs.map((leg) => ({
+        ...leg,
+        fleetVehicle: leg.fleetVehicle ? { ...leg.fleetVehicle, color: null } : null,
+      })),
+    }))
+  }
 
   return NextResponse.json({ bookings })
 }

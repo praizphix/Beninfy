@@ -22,11 +22,31 @@ const schema = z.object({
 export async function GET() {
   const guard = await requireAdmin()
   if (!guard.ok) return guard.response
-  const fleetVehicles = await prisma.fleetVehicle.findMany({
-    orderBy: [{ status: 'asc' }, { label: 'asc' }],
-    include: { vehicle: { select: { id: true, name: true } } },
-  })
-  return NextResponse.json({ fleetVehicles })
+  try {
+    const fleetVehicles = await prisma.fleetVehicle.findMany({
+      orderBy: [{ status: 'asc' }, { label: 'asc' }],
+      include: { vehicle: { select: { id: true, name: true } } },
+    })
+    return NextResponse.json({ fleetVehicles })
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2022') {
+      const fleetVehicles = await prisma.fleetVehicle.findMany({
+        orderBy: [{ status: 'asc' }, { label: 'asc' }],
+        select: {
+          id: true,
+          vehicleId: true,
+          label: true,
+          plateNumber: true,
+          status: true,
+          currentCity: true,
+          notes: true,
+          vehicle: { select: { id: true, name: true } },
+        },
+      })
+      return NextResponse.json({ fleetVehicles: fleetVehicles.map((unit) => ({ ...unit, color: null })) })
+    }
+    throw error
+  }
 }
 
 export async function POST(req: Request) {
