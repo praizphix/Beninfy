@@ -86,8 +86,8 @@ export default function AdminVehiclesPage() {
   return (
     <CrudTable<Vehicle>
       key={reloadKey}
-      title="Vehicles"
-      description="Manage customer-facing booking categories and pricing buckets. Put physical models such as RAV4, Highlander, or GX460 under Fleet units."
+      title="Vehicle categories"
+      description="These are customer-facing booking categories and pricing buckets, such as SUV, Saloon, Sienna, Prado, and Sprinter. Add actual cars with plate numbers under Fleet units."
       fetchUrl="/api/admin/vehicles"
       collectionKey="vehicles"
       itemKey="id"
@@ -95,8 +95,8 @@ export default function AdminVehiclesPage() {
       itemUrl={(id) => `/api/admin/vehicles/${id}`}
       columns={[
         { header: 'Image', render: (v) => <VehicleImageUploader vehicle={v} onUploaded={() => setReloadKey((key) => key + 1)} /> },
-        { header: 'ID', render: (v) => <code className="text-xs text-gray-500">{v.id}</code> },
-        { header: 'Name', render: (v) => <p className="font-medium text-gray-800">{v.name}</p> },
+        { header: 'Category slug', render: (v) => <code className="text-xs text-gray-500">{v.id}</code> },
+        { header: 'Category name', render: (v) => <p className="font-medium text-gray-800">{v.name}</p> },
         { header: 'Capacity', render: (v) => `${v.capacity} pax` },
         { header: 'Luggage', render: (v) => `${v.luggageCapacity}` },
         { header: 'Base price', render: (v) => v.basePriceNGN ? formatNGN(v.basePriceNGN) : '—' },
@@ -104,9 +104,9 @@ export default function AdminVehiclesPage() {
         { header: 'Badge', render: (v) => v.badge ?? '—' },
       ]}
       fields={[
-        { name: 'id', label: 'Unique category slug', type: 'text', required: true, createOnly: true, placeholder: 'e.g. suv, saloon, executive-suv, minibus' },
-        { name: 'name', label: 'Name', type: 'text', required: true },
-        { name: 'nameFr', label: 'Name (FR)', type: 'text' },
+        { name: 'id', label: 'Category slug', type: 'text', required: true, createOnly: true, placeholder: 'e.g. suv, saloon, executive-suv, minibus' },
+        { name: 'name', label: 'Category name', type: 'text', required: true },
+        { name: 'nameFr', label: 'Category name (FR)', type: 'text' },
         { name: 'capacity', label: 'Capacity', type: 'number', required: true },
         { name: 'luggageCapacity', label: 'Luggage capacity', type: 'number' },
         { name: 'available', label: 'Available for booking', type: 'boolean' },

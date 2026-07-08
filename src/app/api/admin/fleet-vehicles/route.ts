@@ -13,6 +13,7 @@ const schema = z.object({
   vehicleId: z.string().trim().min(1),
   label: z.string().trim().min(1).max(120),
   plateNumber: z.string().trim().min(1).max(40),
+  color: optionalText,
   status: z.enum(['available', 'maintenance', 'inactive']).default('available'),
   currentCity: optionalText,
   notes: optionalText,

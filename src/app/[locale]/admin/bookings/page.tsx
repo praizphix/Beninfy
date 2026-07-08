@@ -33,7 +33,7 @@ interface BookingLegRow {
   status: string
   fleetVehicleId: string | null
   driverId: string | null
-  fleetVehicle: { id: string; label: string; plateNumber: string } | null
+  fleetVehicle: { id: string; label: string; plateNumber: string; color: string | null } | null
   driver: { id: string; name: string; phone: string } | null
 }
 
@@ -42,6 +42,7 @@ interface FleetVehicleOption {
   vehicleId: string
   label: string
   plateNumber: string
+  color: string | null
   status: string
 }
 
@@ -206,7 +207,9 @@ export default function AdminBookingsPage() {
                             {fleetVehicles
                               .filter((v) => v.vehicleId === leg.vehicleId)
                               .map((v) => (
-                                <option key={v.id} value={v.id}>{v.label} · {v.plateNumber} · {v.status}</option>
+                                <option key={v.id} value={v.id}>
+                                  {[v.label, v.plateNumber, v.color, v.status].filter(Boolean).join(' · ')}
+                                </option>
                               ))}
                           </select>
                           <select

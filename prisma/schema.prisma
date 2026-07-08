@@ -118,6 +118,7 @@ model FleetVehicle {
   vehicle         Vehicle  @relation(fields: [vehicleId], references: [id])
   label           String
   plateNumber     String   @unique
+  color           String?
   status          String   @default("available")
   currentCity     String?
   notes           String?

@@ -13,6 +13,7 @@ const patchSchema = z.object({
   vehicleId: z.string().trim().min(1).optional(),
   label: z.string().trim().min(1).max(120).optional(),
   plateNumber: z.string().trim().min(1).max(40).optional(),
+  color: optionalText,
   status: z.enum(['available', 'maintenance', 'inactive']).optional(),
   currentCity: optionalText,
   notes: optionalText,

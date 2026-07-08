@@ -34,7 +34,7 @@ export async function GET(req: Request) {
       legs: {
         orderBy: { departureDate: 'asc' },
         include: {
-          fleetVehicle: { select: { id: true, label: true, plateNumber: true } },
+          fleetVehicle: { select: { id: true, label: true, plateNumber: true, color: true } },
           driver: { select: { id: true, name: true, phone: true } },
         },
       },

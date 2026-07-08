@@ -232,88 +232,93 @@ export function CrudTable<T extends { id: string } & Record<string, unknown>>({
       </div>
 
       {open && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={close}>
-          <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-hidden bg-black/40 p-3 sm:items-center sm:p-4" onClick={close}>
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="flex h-[calc(100dvh-1.5rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl sm:h-[calc(100dvh-2rem)]"
+          >
+            <div className="shrink-0 px-6 py-4 border-b border-gray-100 flex items-center justify-between">
               <h2 className="font-semibold" style={{ color: '#3e004c' }}>{open.mode === 'create' ? `New ${title.slice(0, -1)}` : `Edit ${title.slice(0, -1)}`}</h2>
               <button onClick={close} className="text-gray-400 hover:text-gray-600"><span className="material-symbols-outlined">close</span></button>
             </div>
-            <form onSubmit={handleSave} className="p-6 space-y-4">
-              {fields.map((f) => {
-                if (open.mode === 'edit' && f.createOnly) return null
-                const value = form[f.name] ?? ''
-                if (f.type === 'textarea') {
+            <form onSubmit={handleSave} className="flex min-h-0 flex-1 flex-col overflow-hidden">
+              <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain p-6 pb-8">
+                {fields.map((f) => {
+                  if (open.mode === 'edit' && f.createOnly) return null
+                  const value = form[f.name] ?? ''
+                  if (f.type === 'textarea') {
+                    return (
+                      <div key={f.name}>
+                        <label className="block text-xs font-medium text-gray-600 mb-1.5">{f.label}{f.required && ' *'}</label>
+                        <textarea
+                          value={String(value)}
+                          onChange={(e) => setForm({ ...form, [f.name]: e.target.value })}
+                          rows={3}
+                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                          placeholder={f.placeholder}
+                        />
+                      </div>
+                    )
+                  }
+                  if (f.type === 'array') {
+                    return (
+                      <div key={f.name}>
+                        <label className="block text-xs font-medium text-gray-600 mb-1.5">{f.label} <span className="text-gray-400 font-normal">(one per line)</span></label>
+                        <textarea
+                          value={String(value)}
+                          onChange={(e) => setForm({ ...form, [f.name]: e.target.value })}
+                          rows={3}
+                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                          placeholder={f.placeholder}
+                        />
+                      </div>
+                    )
+                  }
+                  if (f.type === 'boolean') {
+                    return (
+                      <label key={f.name} className="flex items-center gap-2 text-sm text-gray-700">
+                        <input
+                          type="checkbox"
+                          checked={!!value}
+                          onChange={(e) => setForm({ ...form, [f.name]: e.target.checked })}
+                        />
+                        {f.label}
+                      </label>
+                    )
+                  }
+                  if (f.type === 'select') {
+                    return (
+                      <div key={f.name}>
+                        <label className="block text-xs font-medium text-gray-600 mb-1.5">{f.label}{f.required && ' *'}</label>
+                        <select
+                          value={String(value)}
+                          onChange={(e) => setForm({ ...form, [f.name]: e.target.value })}
+                          required={f.required && open.mode === 'create'}
+                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white"
+                        >
+                          {f.options?.map((option) => (
+                            <option key={option.value} value={option.value}>{option.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )
+                  }
                   return (
                     <div key={f.name}>
                       <label className="block text-xs font-medium text-gray-600 mb-1.5">{f.label}{f.required && ' *'}</label>
-                      <textarea
-                        value={String(value)}
-                        onChange={(e) => setForm({ ...form, [f.name]: e.target.value })}
-                        rows={3}
-                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                        placeholder={f.placeholder}
-                      />
-                    </div>
-                  )
-                }
-                if (f.type === 'array') {
-                  return (
-                    <div key={f.name}>
-                      <label className="block text-xs font-medium text-gray-600 mb-1.5">{f.label} <span className="text-gray-400 font-normal">(one per line)</span></label>
-                      <textarea
-                        value={String(value)}
-                        onChange={(e) => setForm({ ...form, [f.name]: e.target.value })}
-                        rows={3}
-                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                        placeholder={f.placeholder}
-                      />
-                    </div>
-                  )
-                }
-                if (f.type === 'boolean') {
-                  return (
-                    <label key={f.name} className="flex items-center gap-2 text-sm text-gray-700">
                       <input
-                        type="checkbox"
-                        checked={!!value}
-                        onChange={(e) => setForm({ ...form, [f.name]: e.target.checked })}
-                      />
-                      {f.label}
-                    </label>
-                  )
-                }
-                if (f.type === 'select') {
-                  return (
-                    <div key={f.name}>
-                      <label className="block text-xs font-medium text-gray-600 mb-1.5">{f.label}{f.required && ' *'}</label>
-                      <select
+                        type={f.type === 'number' ? 'number' : 'text'}
                         value={String(value)}
                         onChange={(e) => setForm({ ...form, [f.name]: e.target.value })}
                         required={f.required && open.mode === 'create'}
-                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white"
-                      >
-                        {f.options?.map((option) => (
-                          <option key={option.value} value={option.value}>{option.label}</option>
-                        ))}
-                      </select>
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                        placeholder={f.placeholder}
+                      />
                     </div>
                   )
-                }
-                return (
-                  <div key={f.name}>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">{f.label}{f.required && ' *'}</label>
-                    <input
-                      type={f.type === 'number' ? 'number' : 'text'}
-                      value={String(value)}
-                      onChange={(e) => setForm({ ...form, [f.name]: e.target.value })}
-                      required={f.required && open.mode === 'create'}
-                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                      placeholder={f.placeholder}
-                    />
-                  </div>
-                )
-              })}
-              <div className="flex justify-end gap-2 pt-2">
+                })}
+              </div>
+              <div className="flex shrink-0 justify-end gap-2 border-t border-gray-100 bg-white px-6 py-4">
                 <button type="button" onClick={close} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg">Cancel</button>
                 <button type="submit" disabled={saving} className="px-5 py-2 text-sm font-medium text-white rounded-lg hover:opacity-90 disabled:opacity-50" style={{ background: '#3e004c' }}>
                   {saving ? 'Saving…' : 'Save'}

@@ -9,6 +9,7 @@ interface FleetVehicle {
   vehicleId: string
   label: string
   plateNumber: string
+  color: string | null
   status: string
   currentCity: string | null
   notes: string | null
@@ -51,7 +52,7 @@ export default function AdminFleetVehiclesPage() {
   return (
     <CrudTable<FleetVehicle>
       title="Fleet units"
-      description="Manage physical cars and buses. Attach each unit to a customer-facing booking category such as SUV, Saloon, Sienna, Prado, or Sprinter."
+      description="Manage actual cars and buses. Choose the booking category first, then enter the real model/unit name and plate number."
       fetchUrl="/api/admin/fleet-vehicles"
       collectionKey="fleetVehicles"
       itemKey="id"
@@ -60,6 +61,7 @@ export default function AdminFleetVehiclesPage() {
       columns={[
         { header: 'Unit', render: (v) => <p className="font-medium text-gray-800">{v.label}</p> },
         { header: 'Plate', render: (v) => <code className="text-xs text-gray-500">{v.plateNumber}</code> },
+        { header: 'Color', render: (v) => v.color ?? '—' },
         { header: 'Category', render: (v) => v.vehicle?.name ?? v.vehicleId },
         { header: 'Status', render: (v) => <span className={v.status === 'available' ? 'text-green-700 text-xs' : 'text-amber-700 text-xs'}>{v.status}</span> },
         { header: 'City', render: (v) => v.currentCity ?? '—' },
@@ -75,6 +77,7 @@ export default function AdminFleetVehiclesPage() {
         },
         { name: 'label', label: 'Unit label', type: 'text', required: true, placeholder: 'e.g. RAV4 2015 01, Highlander 2013 01, Sienna 01' },
         { name: 'plateNumber', label: 'Plate number', type: 'text', required: true },
+        { name: 'color', label: 'Color', type: 'text', placeholder: 'e.g. Black, White, Silver' },
         {
           name: 'status',
           label: 'Status',
