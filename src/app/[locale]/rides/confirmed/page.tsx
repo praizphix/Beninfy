@@ -8,7 +8,7 @@ import PulseStatus from '@/components/shared/PulseStatus'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { getPayazaApiKey, settlePaymentFromPayaza, verifyPayazaTransaction, type PayazaCurrency } from '@/lib/payaza'
+import { getPaymentConfigurationError, settlePaymentFromPayOnUs, verifyPayOnUsPayment } from '@/lib/payonus'
 import type { VehicleId, RouteId } from '@/types'
 
 interface Props {
@@ -21,6 +21,7 @@ interface Props {
     date?: string
     ref?: string
     reference?: string
+    providerRef?: string
     currencyCode?: string
     name?: string
     tripType?: string
@@ -34,7 +35,7 @@ export default async function BookingConfirmedPage({ params, searchParams }: Pro
   const t = await getTranslations('confirmedPage')
   const session = await auth()
   const paymentReference = sp.reference ?? sp.ref
-  const currencyCode = sp.currencyCode === 'XOF' ? 'XOF' : 'NGN'
+  const providerReference = sp.providerRef
 
   let dbBooking: Awaited<ReturnType<typeof prisma.booking.findUnique>> = null
 
@@ -44,11 +45,11 @@ export default async function BookingConfirmedPage({ params, searchParams }: Pro
       include: { booking: true },
     })
     if (payment?.booking.userId === session.user.id) {
-      const apiKey = getPayazaApiKey()
-      if (apiKey && payment.status !== 'paid') {
+      const onusReference = providerReference || payment.providerReference
+      if (!getPaymentConfigurationError() && onusReference && payment.status !== 'paid') {
         try {
-          const verified = await verifyPayazaTransaction(paymentReference)
-          await settlePaymentFromPayaza(paymentReference, verified, currencyCode as PayazaCurrency)
+          const verified = await verifyPayOnUsPayment(onusReference)
+          await settlePaymentFromPayOnUs(paymentReference, onusReference, verified)
         } catch {
           // Keep the page renderable; dashboard/webhook can still reflect final status.
         }

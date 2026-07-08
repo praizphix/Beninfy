@@ -236,12 +236,16 @@ model BorderFee {
 }
 
 model Payment {
-  id          String   @id @default(cuid())
-  bookingId   String
-  amountNGN   Int
-  status      String
-  reference   String   @unique
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  booking     Booking  @relation(fields: [bookingId], references: [id])
+  id                String   @id @default(cuid())
+  bookingId         String
+  amountNGN         Int
+  status            String
+  reference         String   @unique
+  provider          String   @default("payonus")
+  providerReference String?  @unique
+  currencyCode      String   @default("NGN")
+  checkoutAmount    Int?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  booking           Booking  @relation(fields: [bookingId], references: [id])
 }

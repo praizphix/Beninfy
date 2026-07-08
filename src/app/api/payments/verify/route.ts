@@ -4,19 +4,17 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import {
   getPaymentConfigurationError,
-  getPayazaApiKey,
-  settlePaymentFromPayaza,
-  verifyPayazaTransaction,
-  type PayazaCurrency,
-} from '@/lib/payaza'
+  settlePaymentFromPayOnUs,
+  verifyPayOnUsPayment,
+} from '@/lib/payonus'
 import { checkRateLimit, requestIp } from '@/lib/rateLimit'
 
 const verifySchema = z.object({
   reference: z.string().trim().min(1).max(100),
-  currencyCode: z.enum(['NGN', 'XOF']).optional(),
+  providerReference: z.string().trim().min(1).max(160).optional(),
 })
 
-async function verify(req: Request, reference: string, currencyCode?: PayazaCurrency) {
+async function verify(req: Request, reference: string, providerReference?: string) {
   const configurationError = getPaymentConfigurationError()
   if (configurationError) {
     return NextResponse.json({ error: configurationError }, { status: 503 })
@@ -47,14 +45,14 @@ async function verify(req: Request, reference: string, currencyCode?: PayazaCurr
     return NextResponse.json({ error: 'Payment not found' }, { status: 404 })
   }
 
-  const apiKey = getPayazaApiKey()
-  if (!apiKey) {
-    return NextResponse.json({ error: 'Payaza is not configured' }, { status: 503 })
+  const onusReference = providerReference || payment.providerReference
+  if (!onusReference) {
+    return NextResponse.json({ error: 'PayOnUs reference is required' }, { status: 400 })
   }
 
   try {
-    const verified = await verifyPayazaTransaction(reference)
-    const settlement = await settlePaymentFromPayaza(reference, verified, currencyCode)
+    const verified = await verifyPayOnUsPayment(onusReference)
+    const settlement = await settlePaymentFromPayOnUs(reference, onusReference, verified)
     return NextResponse.json({ payment: settlement, transaction: verified.data })
   } catch (err) {
     return NextResponse.json(
@@ -68,12 +66,12 @@ export async function GET(req: Request) {
   const url = new URL(req.url)
   const parsed = verifySchema.safeParse({
     reference: url.searchParams.get('reference'),
-    currencyCode: url.searchParams.get('currencyCode') || undefined,
+    providerReference: url.searchParams.get('providerReference') || undefined,
   })
   if (!parsed.success) {
     return NextResponse.json({ error: 'Invalid reference' }, { status: 400 })
   }
-  return verify(req, parsed.data.reference, parsed.data.currencyCode as PayazaCurrency | undefined)
+  return verify(req, parsed.data.reference, parsed.data.providerReference)
 }
 
 export async function POST(req: Request) {
@@ -82,5 +80,5 @@ export async function POST(req: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: 'Invalid reference' }, { status: 400 })
   }
-  return verify(req, parsed.data.reference, parsed.data.currencyCode as PayazaCurrency | undefined)
+  return verify(req, parsed.data.reference, parsed.data.providerReference)
 }

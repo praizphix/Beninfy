@@ -35,6 +35,10 @@ Backoffice lives at `/[locale]/admin`.
 | `ALLOW_ADMIN_BOOTSTRAP` | no | Set to `true` only while creating the first super admin, then disable it. |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | optional | Google OAuth. |
 | `PAYMENTS_ENABLED` | yes | Payments remain unavailable unless explicitly set to `true`. |
+| `PAYONUS_ENVIRONMENT` | yes | `test` for sandbox, `production` for live PayOnUs collection. |
+| `PAYONUS_CLIENT_ID` / `PAYONUS_CLIENT_SECRET` | yes | PayOnUs OAuth credentials from Merchant Portal settings. |
+| `PAYONUS_BUSINESS_ID` | yes | PayOnUs business ID used by Checkout and verification. |
+| `PAYONUS_WEBHOOK_KEY` | yes | PayOnUs webhook verification key used to validate incoming payment events. |
 
 ## Deploy to Vercel
 

@@ -14,64 +14,70 @@ import CountUp from 'react-countup'
 import type { VehicleId, RouteId } from '@/types'
 
 type PaymentMethod = 'card' | 'mobile-money' | 'bank-transfer'
-type PaymentCurrency = 'NGN' | 'XOF'
 
-type PayazaCheckoutResponse = {
-  type?: string
-  data?: {
-    transaction_reference?: string
-  }
+type PayOnUsPaymentMethod = 'card' | 'bank' | 'palmpay' | 'opay'
+
+type PayOnUsCheckoutResult = {
+  reference?: string
+  onusReference?: string
+  amount?: number
+  method?: string
+  status?: string
 }
 
-type PayazaCheckoutConfig = {
-  merchant_key: string
-  connection_mode: 'Live' | 'Test'
-  checkout_amount: number
-  currency_code: PaymentCurrency
-  email_address: string
-  first_name: string
-  last_name: string
-  phone_number: string
-  transaction_reference: string
-  country_code?: 'BEN'
-  biller_name?: string
-  virtual_account_configuration?: { expires_in_minutes: number }
-  additional_details?: Record<string, string>
+type PayOnUsCheckoutError = {
+  error?: string
+  code?: string
+}
+
+type PayOnUsCheckoutConfig = {
+  businessId: string
+  amount: number
+  currency: 'NGN'
+  customerEmail: string
+  customerName: string
+  customerPhone: string
+  merchantCheckoutReference: string
+  countryCode: 'NG'
+  notificationUrl: string
+  redirectUrl: string
+  environment: 'test' | 'production'
+  paymentMethods: PayOnUsPaymentMethod[]
+  onSuccess: (result: PayOnUsCheckoutResult) => void
+  onError: (error: PayOnUsCheckoutError) => void
+  onClose: () => void
 }
 
 declare global {
   interface Window {
-    PayazaCheckout?: {
-      setup: (config: PayazaCheckoutConfig) => {
-        setCallback: (callback: (response: PayazaCheckoutResponse) => void) => void
-        setOnClose: (callback: () => void) => void
-        showPopup: () => void
-      }
+    OnUsCheckout?: {
+      init: () => void
+      checkout: (config: PayOnUsCheckoutConfig) => void
     }
   }
 }
 
-function loadPayazaCheckoutScript() {
+function loadPayOnUsCheckoutScript() {
   return new Promise<void>((resolve, reject) => {
-    if (window.PayazaCheckout) {
+    if (window.OnUsCheckout) {
       resolve()
       return
     }
 
-    const existing = document.querySelector<HTMLScriptElement>('script[data-payaza-checkout]')
+    const existing = document.querySelector<HTMLScriptElement>('script[data-payonus-checkout]')
     if (existing) {
       existing.addEventListener('load', () => resolve(), { once: true })
-      existing.addEventListener('error', () => reject(new Error('Could not load Payaza checkout')), { once: true })
+      existing.addEventListener('error', () => reject(new Error('Could not load PayOnUs checkout')), { once: true })
       return
     }
 
     const script = document.createElement('script')
-    script.src = 'https://checkout-v2.payaza.africa/js/v1/bundle.js'
+    script.src = 'https://payonus.com/checkout-v2.min.js'
     script.async = true
     script.defer = true
-    script.dataset.payazaCheckout = 'true'
+    script.dataset.payonusCheckout = 'true'
     script.onload = () => resolve()
-    script.onerror = () => reject(new Error('Could not load Payaza checkout'))
+    script.onerror = () => reject(new Error('Could not load PayOnUs checkout'))
     document.head.appendChild(script)
   })
 }
@@ -110,15 +116,12 @@ function PaymentContent() {
   const borderFee = 5000 * legCount
   const serviceFee = Math.round(rideFare * 0.05)
   const total = rideFare + borderFee + serviceFee
-  const xofRate = Number(process.env.NEXT_PUBLIC_NGN_TO_XOF_RATE || 0)
-  const xofTotal = Number.isFinite(xofRate) && xofRate > 0 ? Math.round(total * xofRate) : null
 
   const [method, setMethod] = useState<PaymentMethod>('card')
-  const [paymentCurrency, setPaymentCurrency] = useState<PaymentCurrency>('NGN')
   const [processing, setProcessing] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
-  const displayTotal = paymentCurrency === 'XOF' && xofTotal ? `CFA ${xofTotal.toLocaleString('en-US')}` : formatNGN(total)
+  const displayTotal = formatNGN(total)
 
   const handlePay = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -167,52 +170,61 @@ function PaymentContent() {
           locale,
           passengerName,
           passengerPhone,
-          currencyCode: paymentCurrency,
+          currencyCode: 'NGN',
         }),
       })
       const payData = await payRes.json().catch(() => ({}))
       if (!payRes.ok) throw new Error(payData.error ?? 'Payment init failed')
 
-      if (payData.mode === 'payaza_checkout' && payData.checkout) {
-        await loadPayazaCheckoutScript()
-        if (!window.PayazaCheckout) throw new Error('Payaza checkout is unavailable')
+      if (payData.mode === 'payonus_checkout' && payData.checkout) {
+        await loadPayOnUsCheckoutScript()
+        if (!window.OnUsCheckout) throw new Error('PayOnUs checkout is unavailable')
 
-        const checkout = window.PayazaCheckout.setup(payData.checkout as PayazaCheckoutConfig)
-        checkout.setCallback(async (response) => {
-          try {
-            if (response.type !== 'success') {
-              setErrorMsg(response.data?.transaction_reference ? 'Payment is pending. Please confirm from your dashboard.' : 'Payment was not completed.')
-              return
+        window.OnUsCheckout.init()
+        window.OnUsCheckout.checkout({
+          ...(payData.checkout as Omit<PayOnUsCheckoutConfig, 'onSuccess' | 'onError' | 'onClose'>),
+          paymentMethods:
+            method === 'card' ? ['card'] :
+            method === 'bank-transfer' ? ['bank', 'palmpay', 'opay'] :
+            ['palmpay', 'opay'],
+          onSuccess: async (response) => {
+            try {
+              const reference = response.reference || payData.reference
+              const providerReference = response.onusReference
+              if (!providerReference) throw new Error('PayOnUs did not return a payment reference')
+
+              const verifyRes = await fetch('/api/payments/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reference, providerReference }),
+              })
+              const verifyData = await verifyRes.json().catch(() => ({}))
+              if (!verifyRes.ok || verifyData.payment?.status !== 'paid') {
+                throw new Error(verifyData.error || verifyData.payment?.message || 'Payment verification is pending')
+              }
+
+              const search = new URLSearchParams({
+                id: booking.id,
+                ref: reference,
+                providerRef: providerReference,
+                name: passengerName,
+                currencyCode: 'NGN',
+              })
+              router.push(`/${locale}/rides/confirmed?${search.toString()}`)
+            } catch (err) {
+              setErrorMsg(err instanceof Error ? err.message : 'Payment verification failed')
+            } finally {
+              setProcessing(false)
             }
-
-            const reference = response.data?.transaction_reference || payData.reference
-            const verifyRes = await fetch('/api/payments/verify', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ reference, currencyCode: paymentCurrency }),
-            })
-            const verifyData = await verifyRes.json().catch(() => ({}))
-            if (!verifyRes.ok || verifyData.payment?.status !== 'paid') {
-              throw new Error(verifyData.error || verifyData.payment?.message || 'Payment verification is pending')
-            }
-
-            const search = new URLSearchParams({
-              id: booking.id,
-              ref: reference,
-              name: passengerName,
-              currencyCode: paymentCurrency,
-            })
-            router.push(`/${locale}/rides/confirmed?${search.toString()}`)
-          } catch (err) {
-            setErrorMsg(err instanceof Error ? err.message : 'Payment verification failed')
-          } finally {
+          },
+          onError: (error) => {
+            setErrorMsg(error.error || 'Payment failed')
             setProcessing(false)
-          }
+          },
+          onClose: () => {
+            setProcessing(false)
+          },
         })
-        checkout.setOnClose(() => {
-          setProcessing(false)
-        })
-        checkout.showPopup()
         return
       }
 
@@ -229,9 +241,9 @@ function PaymentContent() {
   }
 
   const methods: { id: PaymentMethod; label: string; desc: string; icon: string }[] = [
-    { id: 'card', label: t('methodCard'), desc: t('methodCardDesc'), icon: 'credit_card' },
-    { id: 'mobile-money', label: t('methodMobile'), desc: t('methodMobileDesc'), icon: 'smartphone' },
-    { id: 'bank-transfer', label: t('methodBank'), desc: t('methodBankDesc'), icon: 'account_balance' },
+    { id: 'card', label: 'Card', desc: 'Pay securely with Visa, Mastercard, or Verve through PayOnUs.', icon: 'credit_card' },
+    { id: 'bank-transfer', label: 'Bank transfer', desc: 'Pay into a generated Naira virtual account.', icon: 'account_balance' },
+    { id: 'mobile-money', label: 'PalmPay / Opay', desc: 'Complete payment through PalmPay or Opay from PayOnUs checkout.', icon: 'smartphone' },
   ]
 
   return (
@@ -281,26 +293,8 @@ function PaymentContent() {
 
                 <div className="space-y-4">
                   <div className="rounded-xl border border-gray-200 bg-gray-50 p-3.5 md:p-4">
-                    <p className="text-xs font-semibold text-gray-900 mb-3">Payment currency</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      {(['NGN', 'XOF'] as const).map((currency) => (
-                        <button
-                          key={currency}
-                          type="button"
-                          onClick={() => setPaymentCurrency(currency)}
-                          className={`rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
-                            paymentCurrency === currency
-                              ? 'bg-primary text-white'
-                              : 'bg-white text-gray-700 border border-gray-200 hover:border-primary/40'
-                          }`}
-                        >
-                          {currency === 'NGN' ? 'Naira (NGN)' : 'CFA (XOF)'}
-                        </button>
-                      ))}
-                    </div>
-                    {paymentCurrency === 'XOF' && !xofTotal && (
-                      <p className="text-xs text-red-500 mt-2">CFA payments need NEXT_PUBLIC_NGN_TO_XOF_RATE and PAYAZA_NGN_TO_XOF_RATE configured.</p>
-                    )}
+                    <p className="text-xs font-semibold text-gray-900">Naira collection via PayOnUs</p>
+                    <p className="mt-1 text-xs text-gray-500">Supports card, bank transfer, PalmPay, and Opay checkout options in NGN.</p>
                   </div>
 
                   {methods.map((m) => (
@@ -322,14 +316,14 @@ function PaymentContent() {
                           {/* Card form */}
                           {m.id === 'card' && method === 'card' && (
                             <div className="mt-4 p-4 bg-gray-50 rounded-xl">
-                              <p className="text-xs text-gray-500">Card details are entered inside Payaza&apos;s secure hosted checkout.</p>
+                              <p className="text-xs text-gray-500">Card details are entered inside PayOnUs&apos; secure hosted checkout.</p>
                             </div>
                           )}
 
                           {/* Mobile money info */}
                           {m.id === 'mobile-money' && method === 'mobile-money' && (
                             <div className="mt-4 p-4 bg-gray-50 rounded-xl">
-                              <p className="text-xs text-gray-500">{t('mobileInfo')}</p>
+                              <p className="text-xs text-gray-500">PayOnUs will open PalmPay and Opay options inside checkout.</p>
                             </div>
                           )}
 
@@ -338,7 +332,7 @@ function PaymentContent() {
                             <div className="mt-4 p-4 bg-gray-50 rounded-xl">
                               <p className="text-xs font-semibold text-gray-900">{t('bankTitle')}</p>
                               <p className="text-xs mt-2 text-gray-500">
-                                Payaza will generate the secure bank transfer instructions inside checkout.
+                                PayOnUs will generate secure bank transfer instructions inside checkout.
                               </p>
                             </div>
                           )}
@@ -417,11 +411,7 @@ function PaymentContent() {
                   <div className="flex justify-between items-center">
                     <span className="font-bold text-gray-900">{t('totalAmount')}</span>
                     <span className="font-bold text-base" style={{ color: '#735c00' }}>
-                      {paymentCurrency === 'XOF' && xofTotal ? (
-                        <>CFA <CountUp end={xofTotal} separator="," duration={1.5} /></>
-                      ) : (
-                        <>₦<CountUp end={total} separator="," duration={1.5} /></>
-                      )}
+                      ₦<CountUp end={total} separator="," duration={1.5} />
                     </span>
                   </div>
 
@@ -444,7 +434,7 @@ function PaymentContent() {
 
                   <button
                     type="submit"
-                    disabled={processing || (paymentCurrency === 'XOF' && !xofTotal)}
+                    disabled={processing}
                     className="w-full py-4 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all shadow-md disabled:opacity-60 disabled:cursor-wait"
                     style={{ background: '#3e004c' }}
                   >
