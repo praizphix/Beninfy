@@ -87,7 +87,7 @@ export default function AdminVehiclesPage() {
     <CrudTable<Vehicle>
       key={reloadKey}
       title="Vehicles"
-      description="Manage booking categories and pricing buckets. Slugs are unique: use “suv” once for the SUV category, then add Highlander/RAV4 cars in Fleet units under SUV."
+      description="Manage booking categories and pricing buckets. Slugs are unique: use separate categories like “rav4-2010” or “highlander” when models need different pricing."
       fetchUrl="/api/admin/vehicles"
       collectionKey="vehicles"
       itemKey="id"

@@ -12,6 +12,8 @@ import CatalogImage from '@/components/shared/CatalogImage'
 
 const VEHICLE_BADGES: Partial<Record<VehicleId, { text: string; cls: string }>> = {
   saloon: { text: 'Popular', cls: 'bg-primary/90 text-white' },
+  'rav4-2010': { text: 'Value SUV', cls: 'bg-secondary-container text-on-secondary-container' },
+  highlander: { text: 'Comfort SUV', cls: 'bg-primary/90 text-white' },
   sienna: { text: 'Best for Families', cls: 'bg-secondary-container text-on-secondary-container' },
   prado: { text: 'VIP Security', cls: 'bg-primary/90 text-white' },
   sprinter: { text: 'Corporate', cls: 'bg-primary/90 text-white' },

@@ -10,7 +10,7 @@ export type FleetInventoryUnit = {
 export const fleetInventory: FleetInventoryUnit[] = [
   {
     id: 'fleet-highlander-2013-01',
-    vehicleId: 'suv',
+    vehicleId: 'highlander',
     label: '2013 Highlander 01',
     plateNumber: 'BENINFY-HIGHLANDER-2013-01',
     currentCity: null,
@@ -18,7 +18,7 @@ export const fleetInventory: FleetInventoryUnit[] = [
   },
   {
     id: 'fleet-highlander-2013-02',
-    vehicleId: 'suv',
+    vehicleId: 'highlander',
     label: '2013 Highlander 02',
     plateNumber: 'BENINFY-HIGHLANDER-2013-02',
     currentCity: null,
@@ -26,7 +26,7 @@ export const fleetInventory: FleetInventoryUnit[] = [
   },
   {
     id: 'fleet-highlander-2013-03',
-    vehicleId: 'suv',
+    vehicleId: 'highlander',
     label: '2013 Highlander 03',
     plateNumber: 'BENINFY-HIGHLANDER-2013-03',
     currentCity: null,
@@ -34,7 +34,7 @@ export const fleetInventory: FleetInventoryUnit[] = [
   },
   {
     id: 'fleet-highlander-2013-04',
-    vehicleId: 'suv',
+    vehicleId: 'highlander',
     label: '2013 Highlander 04',
     plateNumber: 'BENINFY-HIGHLANDER-2013-04',
     currentCity: null,
@@ -50,7 +50,7 @@ export const fleetInventory: FleetInventoryUnit[] = [
   },
   {
     id: 'fleet-rav4-2010-01',
-    vehicleId: 'suv',
+    vehicleId: 'rav4-2010',
     label: 'RAV4 2010 01',
     plateNumber: 'BENINFY-RAV4-2010-01',
     currentCity: null,

@@ -43,7 +43,7 @@ export async function POST(req: Request) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
       return NextResponse.json(
         {
-          error: `Vehicle slug "${parsed.data.id}" already exists. Edit that vehicle category instead, or add Highlander as a Fleet unit under vehicle type SUV.`,
+          error: `Vehicle slug "${parsed.data.id}" already exists. Edit that vehicle category instead, or use a unique model slug such as "rav4-2010" or "highlander" when the model needs separate pricing.`,
         },
         { status: 409 }
       )
