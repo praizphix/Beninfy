@@ -59,6 +59,12 @@ export function CrudTable<T extends { id: string } & Record<string, unknown>>({
   const [form, setForm] = useState<Record<string, unknown>>({})
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState<string | null>(null)
+  const modalFormId = `${collectionKey}-crud-modal-form`
+  const singularTitle = title.endsWith('ies')
+    ? `${title.slice(0, -3)}y`
+    : title.endsWith('s')
+      ? title.slice(0, -1)
+      : title
 
   useEffect(() => {
     if (!open || typeof document === 'undefined') return
@@ -260,12 +266,24 @@ export function CrudTable<T extends { id: string } & Record<string, unknown>>({
             onClick={(e) => e.stopPropagation()}
             className="flex h-[calc(100dvh-1.5rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl sm:h-[calc(100dvh-2rem)]"
           >
-            <div className="shrink-0 px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h2 className="font-semibold" style={{ color: '#3e004c' }}>{open.mode === 'create' ? `New ${title.slice(0, -1)}` : `Edit ${title.slice(0, -1)}`}</h2>
-              <button onClick={close} className="text-gray-400 hover:text-gray-600"><span className="material-symbols-outlined">close</span></button>
+            <div className="shrink-0 px-6 py-4 border-b border-gray-100 flex items-center justify-between gap-3">
+              <h2 className="font-semibold" style={{ color: '#3e004c' }}>{open.mode === 'create' ? `New ${singularTitle}` : `Edit ${singularTitle}`}</h2>
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={close} className="px-3 py-2 text-xs text-gray-600 hover:bg-gray-50 rounded-lg">Cancel</button>
+                <button
+                  type="submit"
+                  form={modalFormId}
+                  disabled={saving}
+                  className="px-4 py-2 text-xs font-medium text-white rounded-lg hover:opacity-90 disabled:opacity-50"
+                  style={{ background: '#3e004c' }}
+                >
+                  {saving ? 'Saving…' : 'Save'}
+                </button>
+                <button type="button" onClick={close} className="text-gray-400 hover:text-gray-600"><span className="material-symbols-outlined">close</span></button>
+              </div>
             </div>
-            <form onSubmit={handleSave} className="flex min-h-0 flex-1 flex-col overflow-hidden">
-              <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain p-6 pb-8">
+            <form id={modalFormId} onSubmit={handleSave} className="flex min-h-0 flex-1 flex-col overflow-hidden">
+              <div className="admin-modal-scroll min-h-0 flex-1 space-y-4 overflow-y-scroll overscroll-contain p-6 pb-8">
                 {fields.map((f) => {
                   if (open.mode === 'edit' && f.createOnly) return null
                   const value = form[f.name] ?? ''
@@ -276,8 +294,8 @@ export function CrudTable<T extends { id: string } & Record<string, unknown>>({
                         <textarea
                           value={String(value)}
                           onChange={(e) => setForm({ ...form, [f.name]: e.target.value })}
-                          rows={3}
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                          rows={4}
+                          className="min-h-24 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                           placeholder={f.placeholder}
                         />
                       </div>
@@ -290,8 +308,8 @@ export function CrudTable<T extends { id: string } & Record<string, unknown>>({
                         <textarea
                           value={String(value)}
                           onChange={(e) => setForm({ ...form, [f.name]: e.target.value })}
-                          rows={3}
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                          rows={4}
+                          className="min-h-24 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                           placeholder={f.placeholder}
                         />
                       </div>
