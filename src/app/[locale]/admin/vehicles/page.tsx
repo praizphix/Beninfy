@@ -87,7 +87,7 @@ export default function AdminVehiclesPage() {
     <CrudTable<Vehicle>
       key={reloadKey}
       title="Vehicles"
-      description="Manage booking categories and pricing buckets. Slugs are unique: use separate categories like “rav4-2010” or “highlander” when models need different pricing."
+      description="Manage customer-facing booking categories and pricing buckets. Put physical models such as RAV4, Highlander, or GX460 under Fleet units."
       fetchUrl="/api/admin/vehicles"
       collectionKey="vehicles"
       itemKey="id"
@@ -104,7 +104,7 @@ export default function AdminVehiclesPage() {
         { header: 'Badge', render: (v) => v.badge ?? '—' },
       ]}
       fields={[
-        { name: 'id', label: 'Unique category slug', type: 'text', required: true, createOnly: true, placeholder: 'e.g. highlander, not an existing slug like suv' },
+        { name: 'id', label: 'Unique category slug', type: 'text', required: true, createOnly: true, placeholder: 'e.g. suv, saloon, executive-suv, minibus' },
         { name: 'name', label: 'Name', type: 'text', required: true },
         { name: 'nameFr', label: 'Name (FR)', type: 'text' },
         { name: 'capacity', label: 'Capacity', type: 'number', required: true },

@@ -18,6 +18,7 @@ const NAV = [
   { href: '/fleet-vehicles', label: 'Fleet units', icon: 'garage' },
   { href: '/drivers', label: 'Drivers', icon: 'badge' },
   { href: '/routes', label: 'Routes', icon: 'route' },
+  { href: '/route-prices', label: 'Prices', icon: 'sell' },
   { href: '/tours', label: 'Tours', icon: 'travel_explore' },
   { href: '/border-fees', label: 'Border fees', icon: 'currency_exchange' },
   { href: '/settings', label: 'Settings', icon: 'settings' },

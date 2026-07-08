@@ -7,13 +7,13 @@ import { useSearchParams } from 'next/navigation'
 import { bookingCities, findRoute } from '@/data/routes'
 import { formatPriceRange, getRoutePrice } from '@/data/pricing'
 import { useVehicles } from '@/hooks/useVehicles'
+import { useRoutePriceOverrides } from '@/hooks/useRoutePriceOverrides'
 import type { VehicleId, RouteId } from '@/types'
 import CatalogImage from '@/components/shared/CatalogImage'
 
 const VEHICLE_BADGES: Partial<Record<VehicleId, { text: string; cls: string }>> = {
   saloon: { text: 'Popular', cls: 'bg-primary/90 text-white' },
-  'rav4-2010': { text: 'Value SUV', cls: 'bg-secondary-container text-on-secondary-container' },
-  highlander: { text: 'Comfort SUV', cls: 'bg-primary/90 text-white' },
+  suv: { text: 'Comfort SUV', cls: 'bg-primary/90 text-white' },
   sienna: { text: 'Best for Families', cls: 'bg-secondary-container text-on-secondary-container' },
   prado: { text: 'VIP Security', cls: 'bg-primary/90 text-white' },
   sprinter: { text: 'Corporate', cls: 'bg-primary/90 text-white' },
@@ -50,6 +50,7 @@ function RidesContent() {
   const today = new Date().toISOString().split('T')[0]
 
   const matchedRoute = findRoute(from, to)
+  const { overrides } = useRoutePriceOverrides(matchedRoute?.id)
 
   const toggleVehicle = (id: VehicleId) =>
     setSelectedVehicles((prev) =>
@@ -64,7 +65,7 @@ function RidesContent() {
   const getPriceForVehicle = (vehicleId: VehicleId) => {
     if (!matchedRoute) return null
     const vehicle = vehicles.find((v) => v.id === vehicleId)
-    const price = getRoutePrice(matchedRoute.id as RouteId, vehicleId, vehicle?.name)
+    const price = getRoutePrice(matchedRoute.id as RouteId, vehicleId, vehicle?.name, overrides)
     if (!price) return null
     return formatPriceRange(price)
   }

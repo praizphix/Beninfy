@@ -1,0 +1,50 @@
+import { NextResponse } from 'next/server'
+import { Prisma } from '@prisma/client'
+import { z } from 'zod'
+import { requireAdmin } from '@/lib/admin'
+import { prisma } from '@/lib/prisma'
+import { ensureDefaultRoutes } from '@/lib/routeCatalog'
+
+const schema = z.object({
+  routeId: z.string().trim().min(1),
+  vehicleId: z.string().trim().min(1),
+  amountNGN: z.number().int().positive(),
+  notes: z.string().trim().nullable().optional(),
+})
+
+export async function GET() {
+  const guard = await requireAdmin()
+  if (!guard.ok) return guard.response
+  await ensureDefaultRoutes()
+  const routePrices = await prisma.routePrice.findMany({
+    orderBy: [{ routeId: 'asc' }, { vehicleId: 'asc' }],
+    include: {
+      route: { select: { id: true, from: true, to: true } },
+    },
+  })
+  return NextResponse.json({ routePrices })
+}
+
+export async function POST(req: Request) {
+  const guard = await requireAdmin()
+  if (!guard.ok) return guard.response
+  await ensureDefaultRoutes()
+  const body = await req.json().catch(() => null)
+  const parsed = schema.safeParse(body)
+  if (!parsed.success) return NextResponse.json({ error: 'Invalid input', issues: parsed.error.flatten() }, { status: 400 })
+
+  try {
+    const routePrice = await prisma.routePrice.create({ data: parsed.data })
+    return NextResponse.json({ routePrice }, { status: 201 })
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        return NextResponse.json({ error: 'This route and vehicle already have a price. Edit the existing price instead.' }, { status: 409 })
+      }
+      if (error.code === 'P2003') {
+        return NextResponse.json({ error: 'Selected route does not exist' }, { status: 400 })
+      }
+    }
+    throw error
+  }
+}

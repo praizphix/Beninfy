@@ -1,12 +1,11 @@
 import type { RouteId, VehicleId, PriceRange } from '@/types'
 
 export type LagosPickupArea = 'mainland' | 'island'
+export type RoutePriceOverrides = Record<string, Record<string, number>>
 
 const cotonouLomePricing: Partial<Record<VehicleId, number | PriceRange>> = {
   saloon: { min: 150_000, max: 160_000 },
-  'rav4-2010': { min: 150_000, max: 160_000 },
   suv: 250_000,
-  highlander: 250_000,
   sienna: 240_000,
   prado: 300_000,
   gx460: 300_000,
@@ -52,9 +51,7 @@ export const routePricing: Record<RouteId, Partial<Record<VehicleId, number | Pr
     camry:   { min: 160_000, max: 180_000 },
     'toyota-camry': { min: 160_000, max: 180_000 },
     'toyota-camry-sedan': { min: 160_000, max: 180_000 },
-    'rav4-2010': { min: 160_000, max: 180_000 },
     suv:     260_000,
-    highlander: 260_000,
     sienna:  250_000,
     prado:   450_000,
     gx460:   450_000,
@@ -68,9 +65,7 @@ export const routePricing: Record<RouteId, Partial<Record<VehicleId, number | Pr
     camry:   { min: 160_000, max: 180_000 },
     'toyota-camry': { min: 160_000, max: 180_000 },
     'toyota-camry-sedan': { min: 160_000, max: 180_000 },
-    'rav4-2010': { min: 160_000, max: 180_000 },
     suv:     260_000,
-    highlander: 260_000,
     sienna:  250_000,
     prado:   450_000,
     gx460:   450_000,
@@ -98,9 +93,7 @@ export const routePricing: Record<RouteId, Partial<Record<VehicleId, number | Pr
   'accra-cotonou': cotonouAccraPricing,
   'lagos-togo': {
     saloon:  { min: 320_000, max: 330_000 },
-    'rav4-2010': { min: 320_000, max: 330_000 },
     suv:     510_000,
-    highlander: 510_000,
     sienna:  490_000,
     prado:   520_000,
     sprinter: 1_350_000,
@@ -129,9 +122,7 @@ export const routePricing: Record<RouteId, Partial<Record<VehicleId, number | Pr
   },
   'lagos-ghana': {
     saloon:  { min: 470_000, max: 480_000 },
-    'rav4-2010': { min: 480_000, max: 490_000 },
     suv:     770_000,
-    highlander: 770_000,
     sienna:  740_000,
     prado:   770_000,
     sprinter: 2_050_000,
@@ -163,7 +154,15 @@ export const packageRates: Partial<Record<VehicleId, number>> = {
 }
 
 /** Returns the price for a given route + vehicle combination */
-export function getRoutePrice(routeId: RouteId, vehicleId: VehicleId, vehicleName?: string): number | PriceRange | null {
+export function getRoutePrice(
+  routeId: RouteId,
+  vehicleId: VehicleId,
+  vehicleName?: string,
+  overrides?: RoutePriceOverrides
+): number | PriceRange | null {
+  const overridePrice = getRoutePriceOverride(routeId, vehicleId, vehicleName, overrides)
+  if (overridePrice !== null) return overridePrice
+
   const pricing = routePricing[routeId]
   if (!pricing) return null
 
@@ -180,7 +179,16 @@ export function getRoutePrice(routeId: RouteId, vehicleId: VehicleId, vehicleNam
  * Returns the one-way drop-off fare for a route + vehicle.
  * If a fare is a range, the lower end is used for system calculations.
  */
-export function getRouteDropoffPrice(routeId: RouteId, vehicleId: VehicleId, vehicleName?: string, pickupArea?: LagosPickupArea): number | null {
+export function getRouteDropoffPrice(
+  routeId: RouteId,
+  vehicleId: VehicleId,
+  vehicleName?: string,
+  pickupArea?: LagosPickupArea,
+  overrides?: RoutePriceOverrides
+): number | null {
+  const overridePrice = getRoutePriceOverride(routeId, vehicleId, vehicleName, overrides)
+  if (overridePrice !== null) return overridePrice
+
   const lagosPickupPrice = getLagosSaloonPickupPrice(routeId, vehicleId, vehicleName, pickupArea)
   if (lagosPickupPrice) return lagosPickupPrice
 
@@ -188,6 +196,22 @@ export function getRouteDropoffPrice(routeId: RouteId, vehicleId: VehicleId, veh
   if (!price) return null
   if (typeof price === 'object') return price.min
   return price
+}
+
+export function getRoutePriceOverride(
+  routeId: RouteId,
+  vehicleId: VehicleId,
+  vehicleName?: string,
+  overrides?: RoutePriceOverrides
+) {
+  const routeOverrides = overrides?.[routeId]
+  if (!routeOverrides) return null
+  if (typeof routeOverrides[vehicleId] === 'number') return routeOverrides[vehicleId]
+
+  const alias = resolveVehiclePricingAlias(vehicleId, vehicleName)
+  if (alias && typeof routeOverrides[alias] === 'number') return routeOverrides[alias]
+
+  return null
 }
 
 export function requiresLagosPickupArea(routeId: RouteId, vehicleId: VehicleId, vehicleName?: string): boolean {
@@ -219,9 +243,7 @@ function resolveVehiclePricingAlias(vehicleId: VehicleId, vehicleName?: string):
 
   if (text.includes('sienna')) return 'sienna'
   if (text.includes('prado')) return 'prado'
-  if (text.includes('rav42010')) return 'rav4-2010'
-  if (text.includes('highlander')) return 'highlander'
-  if (text.includes('rav4') || text.includes('suv')) return 'suv'
+  if (text.includes('rav4') || text.includes('highlander') || text.includes('suv')) return 'suv'
   if (text.includes('sprinter')) return 'sprinter'
   if (text.includes('hiace')) return 'hiace'
   if (text.includes('coastal') || text.includes('coaster')) return 'coastal'

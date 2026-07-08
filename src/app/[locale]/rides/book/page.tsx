@@ -8,6 +8,7 @@ import { motion } from 'framer-motion'
 import { findRoute } from '@/data/routes'
 import { getRouteDropoffPrice, requiresLagosPickupArea, type LagosPickupArea } from '@/data/pricing'
 import { useVehicles } from '@/hooks/useVehicles'
+import { useRoutePriceOverrides } from '@/hooks/useRoutePriceOverrides'
 import JourneyTracker from '@/components/booking/JourneyTracker'
 import RouteMapSVG from '@/components/shared/RouteMapSVG'
 import CountUp from 'react-countup'
@@ -55,8 +56,9 @@ function PassengerDetailsContent() {
   const needsPickupArea = matchedRoute
     ? requiresLagosPickupArea(matchedRoute.id as RouteId, vehicleId, vehicle?.name)
     : false
+  const { overrides } = useRoutePriceOverrides(matchedRoute?.id)
   const dropoffFare = matchedRoute
-    ? getRouteDropoffPrice(matchedRoute.id as RouteId, vehicleId, vehicle?.name, pickupArea || undefined)
+    ? getRouteDropoffPrice(matchedRoute.id as RouteId, vehicleId, vehicle?.name, pickupArea || undefined, overrides)
     : null
 
   const set =

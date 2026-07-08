@@ -7,6 +7,7 @@ import { findRoute } from '@/data/routes'
 import { getRouteDropoffPrice, requiresLagosPickupArea } from '@/data/pricing'
 import { vehicles as catalogVehicles } from '@/data/vehicles'
 import { assertVehicleTypeAvailable, findAvailableFleetVehicle } from '@/lib/availability'
+import { getRoutePriceOverrides } from '@/lib/routePriceOverrides'
 import type { RouteId, VehicleId } from '@/types'
 
 const createSchema = z.object({
@@ -92,12 +93,17 @@ export async function POST(req: Request) {
   ) {
     return NextResponse.json({ error: 'Pickup area is required for Lagos saloon pricing' }, { status: 400 })
   }
-  const dropoffFare = matchedRoute
-    ? getRouteDropoffPrice(matchedRoute.id as RouteId, vehicle.id as VehicleId, vehicle.name, data.pickupArea)
-    : null
   if (!matchedRoute) {
     return NextResponse.json({ error: 'This route is not available for booking' }, { status: 400 })
   }
+  const routePriceOverrides = await getRoutePriceOverrides(matchedRoute.id)
+  const dropoffFare = getRouteDropoffPrice(
+    matchedRoute.id as RouteId,
+    vehicle.id as VehicleId,
+    vehicle.name,
+    data.pickupArea,
+    routePriceOverrides
+  )
   if (dropoffFare === null) {
     return NextResponse.json({ error: 'This vehicle is not priced for the selected route' }, { status: 400 })
   }

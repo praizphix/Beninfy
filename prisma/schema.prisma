@@ -191,8 +191,23 @@ model Route {
   description     String?
   descriptionFr   String?
   borderCrossings String[] @default([])
+  prices          RoutePrice[]
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+}
+
+model RoutePrice {
+  id              String   @id @default(cuid())
+  routeId         String
+  route           Route    @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  vehicleId       String
+  amountNGN       Int
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([routeId, vehicleId])
+  @@index([vehicleId])
 }
 
 model Tour {

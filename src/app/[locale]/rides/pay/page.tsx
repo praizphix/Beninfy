@@ -9,6 +9,7 @@ import { findRoute } from '@/data/routes'
 import { getRouteDropoffPrice, type LagosPickupArea } from '@/data/pricing'
 import { formatNGN } from '@/lib/utils'
 import { useVehicles } from '@/hooks/useVehicles'
+import { useRoutePriceOverrides } from '@/hooks/useRoutePriceOverrides'
 import JourneyTracker from '@/components/booking/JourneyTracker'
 import CountUp from 'react-countup'
 import type { VehicleId, RouteId } from '@/types'
@@ -109,7 +110,8 @@ function PaymentContent() {
 
   const vehicle = vehicles.find((v) => v.id === vehicleId)
   const matchedRoute = findRoute(from, to)
-  const dropoffFare = matchedRoute ? getRouteDropoffPrice(matchedRoute.id as RouteId, vehicleId, vehicle?.name, pickupArea) : (vehicle?.basePriceNGN ?? 120000)
+  const { overrides } = useRoutePriceOverrides(matchedRoute?.id)
+  const dropoffFare = matchedRoute ? getRouteDropoffPrice(matchedRoute.id as RouteId, vehicleId, vehicle?.name, pickupArea, overrides) : (vehicle?.basePriceNGN ?? 120000)
 
   const legCount = tripType === 'round-trip' ? 2 : 1
   const rideFare = (dropoffFare ?? 0) * legCount
