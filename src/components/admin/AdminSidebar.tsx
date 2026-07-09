@@ -1,0 +1,196 @@
+'use client'
+
+import Image from 'next/image'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import type { ReactNode } from 'react'
+
+type AdminSidebarProps = {
+  locale: string
+  user: {
+    name?: string | null
+    email?: string | null
+    role?: string | null
+  }
+  signOutSlot: ReactNode
+}
+
+const NAV_GROUPS = [
+  {
+    label: 'Command',
+    items: [
+      { href: '', label: 'Overview', icon: 'dashboard', hint: 'Daily pulse' },
+      { href: '/bookings', label: 'Bookings', icon: 'event', hint: 'Trips & assignments' },
+      { href: '/payments', label: 'Payments', icon: 'payments', hint: 'Collections' },
+      { href: '/users', label: 'Users', icon: 'group', hint: 'Accounts' },
+    ],
+  },
+  {
+    label: 'Operations',
+    items: [
+      { href: '/vehicles', label: 'Categories', icon: 'category', hint: 'Booking buckets' },
+      { href: '/fleet-vehicles', label: 'Fleet units', icon: 'garage', hint: 'Cars & plates' },
+      { href: '/drivers', label: 'Drivers', icon: 'badge', hint: 'Crew' },
+      { href: '/routes', label: 'Routes', icon: 'route', hint: 'Corridors' },
+      { href: '/route-prices', label: 'Prices', icon: 'sell', hint: 'Route fares' },
+    ],
+  },
+  {
+    label: 'Experience',
+    items: [
+      { href: '/tours', label: 'Tours', icon: 'travel_explore', hint: 'Packages' },
+      { href: '/border-fees', label: 'Border fees', icon: 'currency_exchange', hint: 'Crossings' },
+      { href: '/settings', label: 'Settings', icon: 'settings', hint: 'Security' },
+    ],
+  },
+]
+
+const NAV_ITEMS = NAV_GROUPS.flatMap((group) => group.items)
+
+function roleLabel(role?: string | null) {
+  return role === 'super_admin' ? 'Super admin' : 'Admin'
+}
+
+function initials(name?: string | null, email?: string | null) {
+  const source = name || email || 'Admin'
+  return source
+    .split(/[ @._-]/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('') || 'AD'
+}
+
+export default function AdminSidebar({ locale, user, signOutSlot }: AdminSidebarProps) {
+  const pathname = usePathname()
+  const adminBase = `/${locale}/admin`
+
+  const isActive = (href: string) => {
+    const target = `${adminBase}${href}`
+    if (href === '') return pathname === adminBase
+    return pathname === target || pathname.startsWith(`${target}/`)
+  }
+
+  return (
+    <>
+      <aside className="hidden min-h-screen w-[292px] shrink-0 border-r border-[#eaddec] bg-[#fcf8fd] p-3 lg:flex">
+        <div className="sticky top-3 flex h-[calc(100vh-1.5rem)] w-full flex-col overflow-hidden rounded-2xl border border-white/70 bg-white shadow-[0_18px_50px_rgba(62,0,76,0.09)]">
+          <div className="relative overflow-hidden border-b border-[#f0e5f2] px-4 py-5">
+            <div className="absolute inset-x-0 top-0 h-24 bg-[linear-gradient(135deg,#3e004c_0%,#7b3f89_46%,#e0b94f_100%)] opacity-95" />
+            <div className="relative">
+              <Link href={`/${locale}/admin`} className="flex items-center gap-3">
+                <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-sm">
+                  <Image src="/logo.png" alt="Beninfy" width={86} height={58} className="h-10 w-auto object-contain" />
+                </span>
+                <span>
+                  <span className="block text-sm font-semibold text-white">Beninfy</span>
+                  <span className="block text-[11px] font-medium uppercase tracking-[0.18em] text-white/70">Backoffice</span>
+                </span>
+              </Link>
+
+              <div className="mt-5 rounded-xl border border-white/20 bg-white/12 p-3 text-white backdrop-blur">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-white/65">Control center</p>
+                    <p className="mt-1 text-sm font-semibold">Transport ops</p>
+                  </div>
+                  <span className="material-symbols-outlined text-[22px] text-[#f4d66c]">route</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <nav className="min-h-0 flex-1 space-y-5 overflow-y-auto px-3 py-4">
+            {NAV_GROUPS.map((group) => (
+              <section key={group.label}>
+                <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-400">{group.label}</p>
+                <div className="space-y-1">
+                  {group.items.map((item) => {
+                    const active = isActive(item.href)
+                    return (
+                      <Link
+                        key={item.href}
+                        href={`${adminBase}${item.href}`}
+                        className={[
+                          'group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all',
+                          active
+                            ? 'bg-[#3e004c] text-white shadow-[0_12px_26px_rgba(62,0,76,0.18)]'
+                            : 'text-gray-600 hover:bg-[#f7eff8] hover:text-[#3e004c]',
+                        ].join(' ')}
+                      >
+                        {active && <span className="absolute left-0 top-1/2 h-7 w-1 -translate-y-1/2 rounded-r-full bg-[#e0b94f]" />}
+                        <span
+                          className={[
+                            'material-symbols-outlined flex h-9 w-9 items-center justify-center rounded-lg text-[20px]',
+                            active ? 'bg-white/14 text-[#f4d66c]' : 'bg-white text-[#7b3f89] shadow-sm group-hover:bg-white',
+                          ].join(' ')}
+                        >
+                          {item.icon}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate font-medium">{item.label}</span>
+                          <span className={active ? 'block truncate text-[11px] text-white/58' : 'block truncate text-[11px] text-gray-400'}>
+                            {item.hint}
+                          </span>
+                        </span>
+                      </Link>
+                    )
+                  })}
+                </div>
+              </section>
+            ))}
+          </nav>
+
+          <div className="border-t border-[#f0e5f2] p-3">
+            <div className="mb-3 rounded-2xl border border-[#f0e5f2] bg-[#fbf7fc] p-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#3e004c] text-xs font-semibold text-white">
+                  {initials(user.name, user.email)}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-gray-900">{user.name ?? 'Admin'}</p>
+                  <p className="truncate text-xs text-gray-500">{user.email}</p>
+                </div>
+              </div>
+              <div className="mt-3 flex items-center justify-between rounded-xl bg-white px-3 py-2">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400">{roleLabel(user.role)}</span>
+                <span className="material-symbols-outlined text-[17px] text-green-600">verified_user</span>
+              </div>
+            </div>
+            {signOutSlot}
+          </div>
+        </div>
+      </aside>
+
+      <div className="sticky top-0 z-40 border-b border-[#eaddec] bg-white/95 px-3 py-3 shadow-sm backdrop-blur lg:hidden">
+        <div className="mb-3 flex items-center justify-between">
+          <Link href={`/${locale}/admin`} className="flex items-center gap-2">
+            <Image src="/logo.png" alt="Beninfy" width={84} height={42} className="h-9 w-auto object-contain" />
+            <span className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-400">Backoffice</span>
+          </Link>
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#3e004c] text-xs font-semibold text-white">
+            {initials(user.name, user.email)}
+          </div>
+        </div>
+        <nav className="flex gap-2 overflow-x-auto pb-1">
+          {NAV_ITEMS.map((item) => {
+            const active = isActive(item.href)
+            return (
+              <Link
+                key={item.href}
+                href={`${adminBase}${item.href}`}
+                className={[
+                  'inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium transition-colors',
+                  active ? 'bg-[#3e004c] text-white' : 'bg-[#f7eff8] text-[#3e004c]',
+                ].join(' ')}
+              >
+                <span className="material-symbols-outlined text-[17px]">{item.icon}</span>
+                {item.label}
+              </Link>
+            )
+          })}
+        </nav>
+      </div>
+    </>
+  )
+}
