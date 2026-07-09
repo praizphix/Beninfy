@@ -93,8 +93,8 @@ export function CrudTable<T extends { id: string } & Record<string, unknown>>({
     setLoading(true)
     try {
       const res = await fetch(fetchUrl)
-      if (!res.ok) throw new Error('Failed to load')
-      const data = await res.json()
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(typeof data.error === 'string' ? data.error : 'Failed to load')
       setItems((data[collectionKey] ?? []) as T[])
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error')
