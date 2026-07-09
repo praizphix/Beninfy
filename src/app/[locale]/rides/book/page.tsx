@@ -98,9 +98,8 @@ function PassengerDetailsContent() {
 
   const legCount = tripType === 'round-trip' ? 2 : 1
   const rideFare = (dropoffFare ?? 0) * legCount
-  const borderProtocolFee = 5000 * legCount
   const serviceFee = rideFare ? Math.round(rideFare * 0.05) : 0
-  const total = rideFare + borderProtocolFee + serviceFee
+  const total = rideFare + serviceFee
 
   const formattedDate = date
     ? new Date(date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -393,7 +392,6 @@ function PassengerDetailsContent() {
                         <div className="space-y-2.5">
                           {[
                             { label: tripType === 'round-trip' ? `${t('rideFare')} (drop-off x 2)` : `${t('rideFare')} (drop-off)`, value: rideFare },
-                            { label: t('borderFee'), value: borderProtocolFee },
                             { label: t('serviceFee'), value: serviceFee },
                           ].map(({ label, value }) => (
                             <div key={label} className="flex justify-between text-sm">

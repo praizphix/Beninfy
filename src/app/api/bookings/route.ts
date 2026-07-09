@@ -109,9 +109,8 @@ export async function POST(req: Request) {
   }
   const legCount = data.tripType === 'round-trip' ? 2 : 1
   const rideFare = dropoffFare * legCount
-  const borderFee = 5000 * legCount
   const serviceFee = Math.round(rideFare * 0.05)
-  const priceNGN = rideFare + borderFee + serviceFee
+  const priceNGN = rideFare + serviceFee
 
   try {
     const booking = await prisma.$transaction(async (tx) => {

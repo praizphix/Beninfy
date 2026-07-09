@@ -79,10 +79,9 @@ export default async function BookingConfirmedPage({ params, searchParams }: Pro
   const legCount = tripType === 'round-trip' ? 2 : 1
   const fallbackDropoff = matchedRoute ? getRouteDropoffPrice(matchedRoute.id as RouteId, vehicleId, vehicle?.name) : 120000
   const fallbackRideFare = (fallbackDropoff ?? 0) * legCount
-  const borderFee = 5000 * legCount
   const serviceFee = Math.round(fallbackRideFare * 0.05)
-  const total = dbBooking?.priceNGN ?? (fallbackRideFare + borderFee + serviceFee)
-  const basePrice = dbBooking ? Math.max(0, dbBooking.priceNGN - borderFee - serviceFee) : fallbackRideFare
+  const total = dbBooking?.priceNGN ?? (fallbackRideFare + serviceFee)
+  const basePrice = dbBooking ? Math.max(0, dbBooking.priceNGN - serviceFee) : fallbackRideFare
 
   const formattedDate = date
     ? new Date(date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
@@ -153,10 +152,6 @@ export default async function BookingConfirmedPage({ params, searchParams }: Pro
                 <div className="flex justify-between">
                   <span className="text-gray-500">{tripType === 'round-trip' ? `${t('rideFare')} (drop-off x 2)` : `${t('rideFare')} (drop-off)`}</span>
                   <span className="text-gray-900">{formatNGN(basePrice ?? 0)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">{t('borderFee')}</span>
-                  <span className="text-gray-900">{formatNGN(borderFee)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">{t('serviceFee')}</span>
