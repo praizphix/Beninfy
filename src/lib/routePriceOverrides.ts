@@ -1,23 +1,26 @@
 import { prisma } from '@/lib/prisma'
 import type { RoutePriceOverrideValue, RoutePriceOverrides, RoutePriceScope } from '@/data/pricing'
+import { normalizePricingVehicleId } from '@/lib/routePriceCatalog'
 
 export async function getRoutePriceOverrides(routeId?: string): Promise<RoutePriceOverrides> {
   const rows = await prisma.routePrice.findMany({
     where: routeId ? { routeId } : undefined,
+    orderBy: { updatedAt: 'asc' },
     select: { routeId: true, vehicleId: true, pricingScope: true, amountNGN: true },
   })
 
   return rows.reduce<RoutePriceOverrides>((acc, row) => {
     acc[row.routeId] ??= {}
+    const vehicleId = normalizePricingVehicleId(row.vehicleId)
     const scope = normalizeRoutePriceScope(row.pricingScope)
-    const current = acc[row.routeId][row.vehicleId]
+    const current = acc[row.routeId][vehicleId]
 
     if (scope === 'default' && !isScopedOverride(current)) {
-      acc[row.routeId][row.vehicleId] = row.amountNGN
+      acc[row.routeId][vehicleId] = row.amountNGN
     } else {
       const scoped = isScopedOverride(current) ? current : typeof current === 'number' ? { default: current } : {}
       scoped[scope] = row.amountNGN
-      acc[row.routeId][row.vehicleId] = scoped
+      acc[row.routeId][vehicleId] = scoped
     }
 
     return acc

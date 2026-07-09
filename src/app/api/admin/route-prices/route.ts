@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client'
 import { z } from 'zod'
 import { requireAdmin } from '@/lib/admin'
 import { prisma } from '@/lib/prisma'
-import { ensureDefaultRoutePrices } from '@/lib/routePriceCatalog'
+import { ensureDefaultRoutePrices, normalizePricingVehicleId } from '@/lib/routePriceCatalog'
 
 const schema = z.object({
   routeId: z.string().trim().min(1),
@@ -33,9 +33,13 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => null)
   const parsed = schema.safeParse(body)
   if (!parsed.success) return NextResponse.json({ error: 'Invalid input', issues: parsed.error.flatten() }, { status: 400 })
+  const data = {
+    ...parsed.data,
+    vehicleId: normalizePricingVehicleId(parsed.data.vehicleId),
+  }
 
   try {
-    const routePrice = await prisma.routePrice.create({ data: parsed.data })
+    const routePrice = await prisma.routePrice.create({ data })
     return NextResponse.json({ routePrice }, { status: 201 })
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {

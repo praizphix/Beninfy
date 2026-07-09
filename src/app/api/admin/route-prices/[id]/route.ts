@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client'
 import { z } from 'zod'
 import { requireAdmin } from '@/lib/admin'
 import { prisma } from '@/lib/prisma'
+import { normalizePricingVehicleId } from '@/lib/routePriceCatalog'
 
 const patchSchema = z.object({
   routeId: z.string().trim().min(1).optional(),
@@ -21,7 +22,36 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (!parsed.success) return NextResponse.json({ error: 'Invalid input', issues: parsed.error.flatten() }, { status: 400 })
 
   try {
-    const routePrice = await prisma.routePrice.update({ where: { id }, data: parsed.data })
+    const current = await prisma.routePrice.findUnique({ where: { id } })
+    if (!current) return NextResponse.json({ error: 'Route price not found. Please refresh and try again.' }, { status: 404 })
+
+    const routeId = parsed.data.routeId ?? current.routeId
+    const vehicleId = normalizePricingVehicleId(parsed.data.vehicleId ?? current.vehicleId)
+    const pricingScope = parsed.data.pricingScope ?? current.pricingScope
+    const amountNGN = parsed.data.amountNGN ?? current.amountNGN
+    const notes = Object.hasOwn(parsed.data, 'notes') ? parsed.data.notes : current.notes
+
+    const existingTarget = await prisma.routePrice.findFirst({
+      where: { routeId, vehicleId, pricingScope },
+      select: { id: true },
+    })
+
+    if (existingTarget && existingTarget.id !== id) {
+      const routePrice = await prisma.$transaction(async (tx) => {
+        const updated = await tx.routePrice.update({
+          where: { id: existingTarget.id },
+          data: { amountNGN, notes },
+        })
+        await tx.routePrice.delete({ where: { id } })
+        return updated
+      })
+      return NextResponse.json({ routePrice })
+    }
+
+    const routePrice = await prisma.routePrice.update({
+      where: { id },
+      data: { routeId, vehicleId, pricingScope, amountNGN, notes },
+    })
     return NextResponse.json({ routePrice })
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
