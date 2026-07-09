@@ -1,7 +1,10 @@
 import type { RouteId, VehicleId, PriceRange } from '@/types'
 
 export type LagosPickupArea = 'mainland' | 'island'
-export type RoutePriceOverrides = Record<string, Record<string, number>>
+export type RoutePriceScope = 'default' | LagosPickupArea
+export type ScopedRoutePriceOverride = Partial<Record<RoutePriceScope, number>>
+export type RoutePriceOverrideValue = number | ScopedRoutePriceOverride
+export type RoutePriceOverrides = Record<string, Record<string, RoutePriceOverrideValue>>
 
 const cotonouLomePricing: Partial<Record<VehicleId, number | PriceRange>> = {
   saloon: { min: 150_000, max: 160_000 },
@@ -186,8 +189,9 @@ export function getRouteDropoffPrice(
   pickupArea?: LagosPickupArea,
   overrides?: RoutePriceOverrides
 ): number | null {
-  const overridePrice = getRoutePriceOverride(routeId, vehicleId, vehicleName, overrides)
-  if (overridePrice !== null) return overridePrice
+  const overridePrice = getRoutePriceOverride(routeId, vehicleId, vehicleName, overrides, pickupArea)
+  if (typeof overridePrice === 'number') return overridePrice
+  if (overridePrice) return overridePrice.min
 
   const lagosPickupPrice = getLagosSaloonPickupPrice(routeId, vehicleId, vehicleName, pickupArea)
   if (lagosPickupPrice) return lagosPickupPrice
@@ -202,16 +206,33 @@ export function getRoutePriceOverride(
   routeId: RouteId,
   vehicleId: VehicleId,
   vehicleName?: string,
-  overrides?: RoutePriceOverrides
+  overrides?: RoutePriceOverrides,
+  pickupArea?: LagosPickupArea
 ) {
   const routeOverrides = overrides?.[routeId]
   if (!routeOverrides) return null
-  if (typeof routeOverrides[vehicleId] === 'number') return routeOverrides[vehicleId]
+  const directPrice = resolveScopedOverride(routeOverrides[vehicleId], pickupArea)
+  if (directPrice !== null) return directPrice
 
   const alias = resolveVehiclePricingAlias(vehicleId, vehicleName)
-  if (alias && typeof routeOverrides[alias] === 'number') return routeOverrides[alias]
+  if (alias) {
+    const aliasPrice = resolveScopedOverride(routeOverrides[alias], pickupArea)
+    if (aliasPrice !== null) return aliasPrice
+  }
 
   return null
+}
+
+function resolveScopedOverride(value: RoutePriceOverrideValue | undefined, pickupArea?: LagosPickupArea): number | PriceRange | null {
+  if (typeof value === 'number') return value
+  if (!value) return null
+
+  if (pickupArea && typeof value[pickupArea] === 'number') return value[pickupArea]
+  if (typeof value.default === 'number') return value.default
+
+  const scopedPrices = [value.mainland, value.island].filter((price): price is number => typeof price === 'number')
+  if (scopedPrices.length === 0) return null
+  return { min: Math.min(...scopedPrices), max: Math.max(...scopedPrices) }
 }
 
 export function requiresLagosPickupArea(routeId: RouteId, vehicleId: VehicleId, vehicleName?: string): boolean {

@@ -7,6 +7,7 @@ import { prisma } from '@/lib/prisma'
 const patchSchema = z.object({
   routeId: z.string().trim().min(1).optional(),
   vehicleId: z.string().trim().min(1).optional(),
+  pricingScope: z.enum(['default', 'mainland', 'island']).optional(),
   amountNGN: z.number().int().positive().optional(),
   notes: z.string().trim().nullable().optional(),
 })
@@ -24,7 +25,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ routePrice })
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      return NextResponse.json({ error: 'This route and vehicle already have a price.' }, { status: 409 })
+      return NextResponse.json({ error: 'This route, vehicle, and pricing scope already have a price.' }, { status: 409 })
     }
     throw error
   }

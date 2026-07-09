@@ -202,12 +202,13 @@ model RoutePrice {
   routeId         String
   route           Route    @relation(fields: [routeId], references: [id], onDelete: Cascade)
   vehicleId       String
+  pricingScope    String   @default("default")
   amountNGN       Int
   notes           String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  @@unique([routeId, vehicleId])
+  @@unique([routeId, vehicleId, pricingScope])
   @@index([vehicleId])
 }
 
