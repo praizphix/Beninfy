@@ -25,21 +25,23 @@
 }
 
 .admin-sidebar-scroll {
-  scrollbar-color: #c8a2cf transparent;
+  scrollbar-color: #7b3f89 #f7eff8;
   scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
 }
 
 .admin-sidebar-scroll::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
 }
 
 .admin-sidebar-scroll::-webkit-scrollbar-track {
-  background: transparent;
+  background: #f7eff8;
+  border-radius: 999px;
 }
 
 .admin-sidebar-scroll::-webkit-scrollbar-thumb {
-  background: #c8a2cf;
-  border: 2px solid #fff;
+  background: #7b3f89;
+  border: 2px solid #f7eff8;
   border-radius: 999px;
 }
 

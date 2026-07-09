@@ -74,9 +74,9 @@ export default function AdminSidebar({ locale, user, signOutSlot }: AdminSidebar
   return (
     <>
       <aside className="hidden min-h-screen w-[292px] shrink-0 border-r border-[#eaddec] bg-[#fcf8fd] p-2 lg:flex xl:p-3">
-        <div className="sticky top-2 flex h-[calc(100vh-1rem)] w-full flex-col overflow-hidden rounded-2xl border border-white/70 bg-white shadow-[0_18px_50px_rgba(62,0,76,0.09)] xl:top-3 xl:h-[calc(100vh-1.5rem)]">
-          <div className="relative shrink-0 overflow-hidden border-b border-[#f0e5f2] px-4 py-4">
-            <div className="absolute inset-x-0 top-0 h-24 bg-[linear-gradient(135deg,#3e004c_0%,#7b3f89_46%,#e0b94f_100%)] opacity-95" />
+        <div className="sticky top-2 flex h-[calc(100dvh-1rem)] w-full flex-col overflow-hidden rounded-2xl border border-white/70 bg-white shadow-[0_18px_50px_rgba(62,0,76,0.09)] xl:top-3 xl:h-[calc(100dvh-1.5rem)]">
+          <div className="relative shrink-0 overflow-hidden border-b border-[#f0e5f2] bg-[#3e004c] px-4 py-4">
+            <div className="absolute inset-0 bg-[linear-gradient(135deg,#3e004c_0%,#672875_52%,#e0b94f_140%)]" />
             <div className="relative">
               <Link href={`/${locale}/admin`} className="flex items-center gap-3">
                 <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm">
@@ -88,11 +88,11 @@ export default function AdminSidebar({ locale, user, signOutSlot }: AdminSidebar
                 </span>
               </Link>
 
-              <div className="mt-4 rounded-xl border border-white/20 bg-white/12 p-3 text-white backdrop-blur">
+              <div className="mt-4 rounded-xl border border-[#e0b94f]/35 bg-[#260030] p-3 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-white/65">Control center</p>
-                    <p className="mt-1 text-sm font-semibold">Transport ops</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#f4d66c]">Control center</p>
+                    <p className="mt-1 text-sm font-semibold text-white">Transport ops</p>
                   </div>
                   <span className="material-symbols-outlined text-[22px] text-[#f4d66c]">route</span>
                 </div>
@@ -100,7 +100,7 @@ export default function AdminSidebar({ locale, user, signOutSlot }: AdminSidebar
             </div>
           </div>
 
-          <nav className="admin-sidebar-scroll min-h-0 flex-1 space-y-4 overflow-y-auto px-3 py-3">
+          <nav className="admin-sidebar-scroll min-h-0 flex-1 space-y-4 overflow-y-scroll overscroll-contain px-3 py-3">
             {NAV_GROUPS.map((group) => (
               <section key={group.label}>
                 <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-400">{group.label}</p>
@@ -141,7 +141,7 @@ export default function AdminSidebar({ locale, user, signOutSlot }: AdminSidebar
             ))}
           </nav>
 
-          <div className="border-t border-[#f0e5f2] p-3">
+          <div className="shrink-0 border-t border-[#f0e5f2] p-3">
             <div className="mb-2 rounded-2xl border border-[#f0e5f2] bg-[#fbf7fc] p-3">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#3e004c] text-xs font-semibold text-white">
