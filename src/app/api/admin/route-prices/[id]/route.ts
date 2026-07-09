@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client'
 import { z } from 'zod'
 import { requireAdmin } from '@/lib/admin'
 import { prisma } from '@/lib/prisma'
+import { propagateCategoryRoutePrice } from '@/lib/routePricePropagation'
 
 const patchSchema = z.object({
   routeId: z.string().trim().min(1).optional(),
@@ -42,14 +43,19 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
           data: { amountNGN, notes },
         })
         await tx.routePrice.delete({ where: { id } })
+        await propagateCategoryRoutePrice(tx, updated)
         return updated
       })
       return NextResponse.json({ routePrice })
     }
 
-    const routePrice = await prisma.routePrice.update({
-      where: { id },
-      data: { routeId, vehicleId, pricingScope, amountNGN, notes },
+    const routePrice = await prisma.$transaction(async (tx) => {
+      const updated = await tx.routePrice.update({
+        where: { id },
+        data: { routeId, vehicleId, pricingScope, amountNGN, notes },
+      })
+      await propagateCategoryRoutePrice(tx, updated)
+      return updated
     })
     return NextResponse.json({ routePrice })
   } catch (error) {

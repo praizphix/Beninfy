@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { requireAdmin } from '@/lib/admin'
 import { prisma } from '@/lib/prisma'
 import { ensureDefaultRoutePrices } from '@/lib/routePriceCatalog'
+import { propagateCategoryRoutePrice } from '@/lib/routePricePropagation'
 
 const schema = z.object({
   routeId: z.string().trim().min(1),
@@ -35,7 +36,11 @@ export async function POST(req: Request) {
   if (!parsed.success) return NextResponse.json({ error: 'Invalid input', issues: parsed.error.flatten() }, { status: 400 })
 
   try {
-    const routePrice = await prisma.routePrice.create({ data: parsed.data })
+    const routePrice = await prisma.$transaction(async (tx) => {
+      const created = await tx.routePrice.create({ data: parsed.data })
+      await propagateCategoryRoutePrice(tx, created)
+      return created
+    })
     return NextResponse.json({ routePrice }, { status: 201 })
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
