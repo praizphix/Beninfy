@@ -1,4 +1,5 @@
 import type { BorderFee } from '@/types'
+import type { RouteId, TripType } from '@/types'
 
 export const borderFees: BorderFee[] = [
   {
@@ -103,3 +104,27 @@ export const borderFees: BorderFee[] = [
   },
 ]
 
+const routeBorderFeeIds: Record<RouteId, string[]> = {
+  'lagos-cotonou': ['nigeria-benin'],
+  'lagos-porto-novo': ['nigeria-benin'],
+  'lagos-ouidah': ['nigeria-benin'],
+  'cotonou-togo': ['benin-togo'],
+  'lome-cotonou': ['benin-togo'],
+  'togo-ghana': ['togo-ghana'],
+  'accra-lome': ['togo-ghana'],
+  'cotonou-accra': ['benin-togo', 'togo-ghana'],
+  'accra-cotonou': ['togo-ghana', 'benin-togo'],
+  'lagos-togo': ['nigeria-benin', 'benin-togo'],
+  'lagos-aneho': ['nigeria-benin', 'benin-togo'],
+  'lagos-kpalime': ['nigeria-benin', 'benin-togo'],
+  'lagos-ghana': ['nigeria-benin', 'benin-togo', 'togo-ghana'],
+}
+
+export function getRouteBorderFee(routeId: RouteId, tripType: TripType = 'one-way') {
+  const feeById = new Map(borderFees.map((fee) => [fee.id, fee.feePerPersonNGN]))
+  const oneWayFee = (routeBorderFeeIds[routeId] ?? []).reduce((total, borderFeeId) => {
+    return total + (feeById.get(borderFeeId) ?? 0)
+  }, 0)
+
+  return tripType === 'round-trip' ? oneWayFee * 2 : oneWayFee
+}

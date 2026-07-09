@@ -7,6 +7,7 @@ import { useLocale, useTranslations } from 'next-intl'
 import { motion } from 'framer-motion'
 import { findRoute } from '@/data/routes'
 import { getRouteDropoffPrice, requiresLagosPickupArea, type LagosPickupArea } from '@/data/pricing'
+import { getRouteBorderFee } from '@/data/borderFees'
 import { useVehicles } from '@/hooks/useVehicles'
 import { useRoutePriceOverrides } from '@/hooks/useRoutePriceOverrides'
 import JourneyTracker from '@/components/booking/JourneyTracker'
@@ -98,8 +99,9 @@ function PassengerDetailsContent() {
 
   const legCount = tripType === 'round-trip' ? 2 : 1
   const rideFare = (dropoffFare ?? 0) * legCount
+  const borderFee = matchedRoute ? getRouteBorderFee(matchedRoute.id as RouteId, tripType) : 0
   const serviceFee = rideFare ? Math.round(rideFare * 0.05) : 0
-  const total = rideFare + serviceFee
+  const total = rideFare + borderFee + serviceFee
 
   const formattedDate = date
     ? new Date(date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -392,6 +394,7 @@ function PassengerDetailsContent() {
                         <div className="space-y-2.5">
                           {[
                             { label: tripType === 'round-trip' ? `${t('rideFare')} (drop-off x 2)` : `${t('rideFare')} (drop-off)`, value: rideFare },
+                            { label: t('borderFee'), value: borderFee },
                             { label: t('serviceFee'), value: serviceFee },
                           ].map(({ label, value }) => (
                             <div key={label} className="flex justify-between text-sm">

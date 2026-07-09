@@ -5,6 +5,7 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { findRoute } from '@/data/routes'
 import { getRouteDropoffPrice, requiresLagosPickupArea } from '@/data/pricing'
+import { getRouteBorderFee } from '@/data/borderFees'
 import { vehicles as catalogVehicles } from '@/data/vehicles'
 import { assertVehicleTypeAvailable, findAvailableFleetVehicle } from '@/lib/availability'
 import { getRoutePriceOverrides } from '@/lib/routePriceOverrides'
@@ -109,8 +110,9 @@ export async function POST(req: Request) {
   }
   const legCount = data.tripType === 'round-trip' ? 2 : 1
   const rideFare = dropoffFare * legCount
+  const borderFee = getRouteBorderFee(matchedRoute.id as RouteId, data.tripType)
   const serviceFee = Math.round(rideFare * 0.05)
-  const priceNGN = rideFare + serviceFee
+  const priceNGN = rideFare + borderFee + serviceFee
 
   try {
     const booking = await prisma.$transaction(async (tx) => {

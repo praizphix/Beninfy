@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { findRoute } from '@/data/routes'
 import { getRouteDropoffPrice, type LagosPickupArea } from '@/data/pricing'
+import { getRouteBorderFee } from '@/data/borderFees'
 import { formatNGN } from '@/lib/utils'
 import { useVehicles } from '@/hooks/useVehicles'
 import { useRoutePriceOverrides } from '@/hooks/useRoutePriceOverrides'
@@ -115,8 +116,9 @@ function PaymentContent() {
 
   const legCount = tripType === 'round-trip' ? 2 : 1
   const rideFare = (dropoffFare ?? 0) * legCount
+  const borderFee = matchedRoute ? getRouteBorderFee(matchedRoute.id as RouteId, tripType) : 0
   const serviceFee = Math.round(rideFare * 0.05)
-  const total = rideFare + serviceFee
+  const total = rideFare + borderFee + serviceFee
 
   const [method, setMethod] = useState<PaymentMethod>('card')
   const [processing, setProcessing] = useState(false)
@@ -398,6 +400,10 @@ function PaymentContent() {
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">{tripType === 'round-trip' ? `${t('rideFare')} (drop-off x 2)` : `${t('rideFare')} (drop-off)`}</span>
                       <span className="font-medium text-gray-900">₦<CountUp end={rideFare} separator="," duration={1.2} /></span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">{t('borderFee')}</span>
+                      <span className="font-medium text-gray-900">₦<CountUp end={borderFee} separator="," duration={1.2} /></span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">{t('serviceFee')}</span>
