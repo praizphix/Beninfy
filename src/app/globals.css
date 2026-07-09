@@ -24,6 +24,25 @@
   border-radius: 999px;
 }
 
+.admin-sidebar-scroll {
+  scrollbar-color: #c8a2cf transparent;
+  scrollbar-width: thin;
+}
+
+.admin-sidebar-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.admin-sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-sidebar-scroll::-webkit-scrollbar-thumb {
+  background: #c8a2cf;
+  border: 2px solid #fff;
+  border-radius: 999px;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 /* ─── Tailwind utility → CSS-variable mapping ─────────────────────────────── */

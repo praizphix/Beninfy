@@ -22,6 +22,7 @@ const NAV_GROUPS = [
       { href: '', label: 'Overview', icon: 'dashboard', hint: 'Daily pulse' },
       { href: '/bookings', label: 'Bookings', icon: 'event', hint: 'Trips & assignments' },
       { href: '/payments', label: 'Payments', icon: 'payments', hint: 'Collections' },
+      { href: '/route-prices', label: 'Prices', icon: 'sell', hint: 'Route fares' },
       { href: '/users', label: 'Users', icon: 'group', hint: 'Accounts' },
     ],
   },
@@ -32,7 +33,6 @@ const NAV_GROUPS = [
       { href: '/fleet-vehicles', label: 'Fleet units', icon: 'garage', hint: 'Cars & plates' },
       { href: '/drivers', label: 'Drivers', icon: 'badge', hint: 'Crew' },
       { href: '/routes', label: 'Routes', icon: 'route', hint: 'Corridors' },
-      { href: '/route-prices', label: 'Prices', icon: 'sell', hint: 'Route fares' },
     ],
   },
   {
@@ -73,14 +73,14 @@ export default function AdminSidebar({ locale, user, signOutSlot }: AdminSidebar
 
   return (
     <>
-      <aside className="hidden min-h-screen w-[292px] shrink-0 border-r border-[#eaddec] bg-[#fcf8fd] p-3 lg:flex">
-        <div className="sticky top-3 flex h-[calc(100vh-1.5rem)] w-full flex-col overflow-hidden rounded-2xl border border-white/70 bg-white shadow-[0_18px_50px_rgba(62,0,76,0.09)]">
-          <div className="relative overflow-hidden border-b border-[#f0e5f2] px-4 py-5">
+      <aside className="hidden min-h-screen w-[292px] shrink-0 border-r border-[#eaddec] bg-[#fcf8fd] p-2 lg:flex xl:p-3">
+        <div className="sticky top-2 flex h-[calc(100vh-1rem)] w-full flex-col overflow-hidden rounded-2xl border border-white/70 bg-white shadow-[0_18px_50px_rgba(62,0,76,0.09)] xl:top-3 xl:h-[calc(100vh-1.5rem)]">
+          <div className="relative shrink-0 overflow-hidden border-b border-[#f0e5f2] px-4 py-4">
             <div className="absolute inset-x-0 top-0 h-24 bg-[linear-gradient(135deg,#3e004c_0%,#7b3f89_46%,#e0b94f_100%)] opacity-95" />
             <div className="relative">
               <Link href={`/${locale}/admin`} className="flex items-center gap-3">
-                <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-sm">
-                  <Image src="/logo.png" alt="Beninfy" width={86} height={58} className="h-10 w-auto object-contain" />
+                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm">
+                  <Image src="/logo.png" alt="Beninfy" width={86} height={58} className="h-9 w-auto object-contain" />
                 </span>
                 <span>
                   <span className="block text-sm font-semibold text-white">Beninfy</span>
@@ -88,7 +88,7 @@ export default function AdminSidebar({ locale, user, signOutSlot }: AdminSidebar
                 </span>
               </Link>
 
-              <div className="mt-5 rounded-xl border border-white/20 bg-white/12 p-3 text-white backdrop-blur">
+              <div className="mt-4 rounded-xl border border-white/20 bg-white/12 p-3 text-white backdrop-blur">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-white/65">Control center</p>
@@ -100,7 +100,7 @@ export default function AdminSidebar({ locale, user, signOutSlot }: AdminSidebar
             </div>
           </div>
 
-          <nav className="min-h-0 flex-1 space-y-5 overflow-y-auto px-3 py-4">
+          <nav className="admin-sidebar-scroll min-h-0 flex-1 space-y-4 overflow-y-auto px-3 py-3">
             {NAV_GROUPS.map((group) => (
               <section key={group.label}>
                 <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-400">{group.label}</p>
@@ -142,7 +142,7 @@ export default function AdminSidebar({ locale, user, signOutSlot }: AdminSidebar
           </nav>
 
           <div className="border-t border-[#f0e5f2] p-3">
-            <div className="mb-3 rounded-2xl border border-[#f0e5f2] bg-[#fbf7fc] p-3">
+            <div className="mb-2 rounded-2xl border border-[#f0e5f2] bg-[#fbf7fc] p-3">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#3e004c] text-xs font-semibold text-white">
                   {initials(user.name, user.email)}
