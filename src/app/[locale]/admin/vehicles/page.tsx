@@ -4,6 +4,7 @@ import { useRef, useState } from 'react'
 import { Upload } from 'lucide-react'
 import { CrudTable } from '@/components/admin/CrudTable'
 import { formatNGN } from '@/lib/utils'
+import { adminSecondaryButtonClass } from '@/components/admin/AdminUI'
 
 interface Vehicle {
   id: string
@@ -45,13 +46,13 @@ function VehicleImageUploader({ vehicle, onUploaded }: { vehicle: Vehicle; onUpl
   }
 
   return (
-    <div className="flex items-center gap-3 min-w-[230px]">
-      <div className="h-16 w-24 rounded-lg overflow-hidden bg-gray-100 border border-gray-200 shrink-0">
+    <div className="flex min-w-[260px] items-center gap-3">
+      <div className="h-16 w-24 shrink-0 overflow-hidden rounded-xl border border-[#eaddec] bg-[#fbf7fc] shadow-sm">
         {vehicle.image ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={vehicle.image} alt={vehicle.name} className="h-full w-full object-cover" />
         ) : (
-          <div className="h-full w-full flex items-center justify-center text-[10px] text-gray-400">No image</div>
+          <div className="flex h-full w-full items-center justify-center text-[10px] font-medium text-gray-400">No image</div>
         )}
       </div>
       <div>
@@ -69,12 +70,12 @@ function VehicleImageUploader({ vehicle, onUploaded }: { vehicle: Vehicle; onUpl
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={uploading}
-          className="inline-flex items-center gap-1.5 rounded-md border border-purple-200 bg-purple-50 px-3 py-1.5 text-xs font-medium text-purple-700 transition hover:bg-purple-100 disabled:cursor-not-allowed disabled:opacity-50"
+          className={`${adminSecondaryButtonClass} !px-3 !py-2 !text-xs text-[#3e004c] disabled:cursor-not-allowed disabled:opacity-50`}
         >
           <Upload aria-hidden="true" className="h-4 w-4" />
           {uploading ? 'Uploading...' : 'Upload image'}
         </button>
-        <p className="mt-1 text-[10px] text-gray-400">JPEG, PNG, WebP, AVIF · Max 6MB</p>
+        <p className="mt-1 text-[10px] text-gray-400">JPEG, PNG, WebP, AVIF. Max 6MB</p>
       </div>
     </div>
   )

@@ -1,7 +1,15 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { AdminPageHeader, AdminStatusBadge } from '@/components/admin/AdminUI'
+import {
+  AdminModal,
+  AdminPageHeader,
+  AdminStatusBadge,
+  adminInputClass,
+  adminLabelClass,
+  adminPrimaryButtonClass,
+  adminSecondaryButtonClass,
+} from '@/components/admin/AdminUI'
 
 interface UserRow {
   id: string
@@ -252,117 +260,135 @@ export default function AdminUsersPage() {
       </div>
 
       {showCreate && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
-            <h2 className="text-lg font-bold mb-1" style={{ color: '#3e004c' }}>Add user</h2>
-            <p className="text-xs text-gray-500 mb-4">Create a team member or customer account.</p>
-            <form onSubmit={submitCreate} className="space-y-3">
-              <div>
-                <label className="block text-xs text-gray-600 mb-1">Name</label>
-                <input
-                  required
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-600 mb-1">Email</label>
-                <input
-                  required
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-600 mb-1">Password</label>
-                <input
-                  required
-                  type="text"
-                  minLength={8}
-                  value={form.password}
-                  onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono"
-                  placeholder="At least 8 chars"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-600 mb-1">Phone (optional)</label>
-                <input
-                  value={form.phone}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-600 mb-1">Role</label>
-                <select
-                  value={form.role}
-                  onChange={(e) => setForm({ ...form, role: e.target.value as 'admin' | 'user' })}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"
-                >
-                  <option value="admin">Admin</option>
-                  <option value="user">User</option>
-                </select>
-              </div>
-              {error && <p className="text-xs text-red-600">{error}</p>}
-              <div className="flex items-center gap-2 justify-end pt-2">
-                <button
-                  type="button"
-                  onClick={() => { setShowCreate(false); setError(null) }}
-                  className="px-4 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
-                >Cancel</button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="px-4 py-2 rounded-lg text-sm text-white disabled:opacity-50"
-                  style={{ background: '#3e004c' }}
-                >{submitting ? 'Creating…' : 'Create'}</button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <AdminModal
+          open={showCreate}
+          onClose={() => { setShowCreate(false); setError(null) }}
+          title="Add user"
+          eyebrow="Create account"
+          description="Create a team member or customer account."
+          icon="person_add"
+          maxWidth="md"
+          footer={
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => { setShowCreate(false); setError(null) }}
+                className={adminSecondaryButtonClass}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="admin-create-user-form"
+                disabled={submitting}
+                className={adminPrimaryButtonClass}
+              >
+                {submitting ? 'Creating...' : 'Create'}
+              </button>
+            </div>
+          }
+        >
+          <form id="admin-create-user-form" onSubmit={submitCreate} className="space-y-4">
+            <div>
+              <label className={adminLabelClass}>Name</label>
+              <input
+                required
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                className={adminInputClass}
+              />
+            </div>
+            <div>
+              <label className={adminLabelClass}>Email</label>
+              <input
+                required
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                className={adminInputClass}
+              />
+            </div>
+            <div>
+              <label className={adminLabelClass}>Password</label>
+              <input
+                required
+                type="text"
+                minLength={8}
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                className={`${adminInputClass} font-mono`}
+                placeholder="At least 8 chars"
+              />
+            </div>
+            <div>
+              <label className={adminLabelClass}>Phone <span className="font-normal text-gray-400">(optional)</span></label>
+              <input
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                className={adminInputClass}
+              />
+            </div>
+            <div>
+              <label className={adminLabelClass}>Role</label>
+              <select
+                value={form.role}
+                onChange={(e) => setForm({ ...form, role: e.target.value as 'admin' | 'user' })}
+                className={adminInputClass}
+              >
+                <option value="admin">Admin</option>
+                <option value="user">User</option>
+              </select>
+            </div>
+            {error && <p className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
+          </form>
+        </AdminModal>
       )}
 
       {resetTarget && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
-            <h2 className="text-lg font-bold mb-1" style={{ color: '#3e004c' }}>Reset password</h2>
-            <p className="text-xs text-gray-500 mb-4">
-              Set a new temporary password for {resetTarget.email ?? resetTarget.name ?? 'this user'}.
-            </p>
-            <form onSubmit={submitPasswordReset} className="space-y-3">
-              <div>
-                <label className="block text-xs text-gray-600 mb-1">New password</label>
-                <input
-                  required
-                  type="text"
-                  minLength={8}
-                  value={resetPassword}
-                  onChange={(e) => setResetPassword(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono"
-                  placeholder="At least 8 chars"
-                />
-              </div>
-              {resetError && <p className="text-xs text-red-600">{resetError}</p>}
-              <div className="flex items-center gap-2 justify-end pt-2">
-                <button
-                  type="button"
-                  onClick={() => { setResetTarget(null); setResetPassword(''); setResetError(null) }}
-                  className="px-4 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
-                >Cancel</button>
-                <button
-                  type="submit"
-                  disabled={resetting}
-                  className="px-4 py-2 rounded-lg text-sm text-white disabled:opacity-50"
-                  style={{ background: '#3e004c' }}
-                >{resetting ? 'Saving...' : 'Reset password'}</button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <AdminModal
+          open={!!resetTarget}
+          onClose={() => { setResetTarget(null); setResetPassword(''); setResetError(null) }}
+          title="Reset password"
+          eyebrow="Account security"
+          description={`Set a new temporary password for ${resetTarget.email ?? resetTarget.name ?? 'this user'}.`}
+          icon="lock_reset"
+          maxWidth="md"
+          footer={
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => { setResetTarget(null); setResetPassword(''); setResetError(null) }}
+                className={adminSecondaryButtonClass}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="admin-reset-password-form"
+                disabled={resetting}
+                className={adminPrimaryButtonClass}
+              >
+                {resetting ? 'Saving...' : 'Reset password'}
+              </button>
+            </div>
+          }
+        >
+          <form id="admin-reset-password-form" onSubmit={submitPasswordReset} className="space-y-4">
+            <div>
+              <label className={adminLabelClass}>New password</label>
+              <input
+                required
+                type="text"
+                minLength={8}
+                value={resetPassword}
+                onChange={(e) => setResetPassword(e.target.value)}
+                className={`${adminInputClass} font-mono`}
+                placeholder="At least 8 chars"
+              />
+            </div>
+            {resetError && <p className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">{resetError}</p>}
+          </form>
+        </AdminModal>
       )}
     </div>
   )

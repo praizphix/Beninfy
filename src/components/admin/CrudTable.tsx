@@ -1,7 +1,14 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { AdminPageHeader } from '@/components/admin/AdminUI'
+import {
+  AdminModal,
+  AdminPageHeader,
+  adminInputClass,
+  adminLabelClass,
+  adminPrimaryButtonClass,
+  adminSecondaryButtonClass,
+} from '@/components/admin/AdminUI'
 
 export type FieldType = 'text' | 'number' | 'textarea' | 'boolean' | 'array' | 'select'
 
@@ -284,109 +291,101 @@ export function CrudTable<T extends { id: string } & Record<string, unknown>>({
       </div>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-hidden bg-[#16001d]/55 p-3 backdrop-blur-sm sm:items-center sm:p-4" onClick={close}>
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="flex h-[calc(100dvh-1.5rem)] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-white/70 bg-white shadow-[0_30px_80px_rgba(22,0,29,0.35)] sm:h-[calc(100dvh-2rem)]"
-          >
-            <div className="shrink-0 border-b border-gray-100 bg-[#fbf7fc] px-5 py-4 sm:px-6">
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-400">{open.mode === 'create' ? 'Create record' : 'Edit record'}</p>
-                  <h2 className="mt-1 truncate text-lg font-bold text-[#3e004c]">{open.mode === 'create' ? `New ${singularTitle}` : `Edit ${singularTitle}`}</h2>
-                </div>
-                <button type="button" onClick={close} className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-gray-500 transition-colors hover:bg-white hover:text-gray-700">
-                  <span className="material-symbols-outlined text-[20px]">close</span>
-                </button>
-              </div>
+        <AdminModal
+          open={!!open}
+          onClose={close}
+          title={open.mode === 'create' ? `New ${singularTitle}` : `Edit ${singularTitle}`}
+          eyebrow={open.mode === 'create' ? 'Create record' : 'Edit record'}
+          description="Complete the fields below, then save your changes."
+          icon={pageIcon}
+          maxWidth="xl"
+          footer={
+            <div className="flex justify-end gap-2">
+              <button type="button" onClick={close} className={adminSecondaryButtonClass}>Cancel</button>
+              <button type="submit" form={modalFormId} disabled={saving} className={adminPrimaryButtonClass}>
+                {saving ? 'Saving...' : 'Save'}
+              </button>
             </div>
-            <form id={modalFormId} onSubmit={handleSave} className="flex min-h-0 flex-1 flex-col overflow-hidden">
-              <div className="admin-modal-scroll min-h-0 flex-1 space-y-4 overflow-y-scroll overscroll-contain p-4 pb-8 sm:p-6">
-                {fields.map((f) => {
-                  if (open.mode === 'edit' && f.createOnly) return null
-                  const value = form[f.name] ?? ''
-                  if (f.type === 'textarea') {
-                    return (
-                      <div key={f.name}>
-                        <label className="mb-1.5 block text-xs font-semibold text-gray-600">{f.label}{f.required && ' *'}</label>
-                        <textarea
-                          value={String(value)}
-                          onChange={(e) => setForm({ ...form, [f.name]: e.target.value })}
-                          rows={4}
-                          className="min-h-28 w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-[#3e004c] focus:ring-2 focus:ring-[#3e004c]/15"
-                          placeholder={f.placeholder}
-                        />
-                      </div>
-                    )
-                  }
-                  if (f.type === 'array') {
-                    return (
-                      <div key={f.name}>
-                        <label className="mb-1.5 block text-xs font-semibold text-gray-600">{f.label} <span className="font-normal text-gray-400">(one per line)</span></label>
-                        <textarea
-                          value={String(value)}
-                          onChange={(e) => setForm({ ...form, [f.name]: e.target.value })}
-                          rows={4}
-                          className="min-h-28 w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-[#3e004c] focus:ring-2 focus:ring-[#3e004c]/15"
-                          placeholder={f.placeholder}
-                        />
-                      </div>
-                    )
-                  }
-                  if (f.type === 'boolean') {
-                    return (
-                      <label key={f.name} className="flex items-center justify-between gap-4 rounded-xl border border-gray-200 bg-[#fbf7fc] px-4 py-3 text-sm font-medium text-gray-700">
-                        <span>{f.label}</span>
-                        <input
-                          type="checkbox"
-                          checked={!!value}
-                          onChange={(e) => setForm({ ...form, [f.name]: e.target.checked })}
-                          className="h-5 w-5 rounded border-gray-300 text-[#3e004c]"
-                        />
-                      </label>
-                    )
-                  }
-                  if (f.type === 'select') {
-                    return (
-                      <div key={f.name}>
-                        <label className="mb-1.5 block text-xs font-semibold text-gray-600">{f.label}{f.required && ' *'}</label>
-                        <select
-                          value={String(value)}
-                          onChange={(e) => setForm({ ...form, [f.name]: e.target.value })}
-                          required={f.required && open.mode === 'create'}
-                          className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-[#3e004c] focus:ring-2 focus:ring-[#3e004c]/15"
-                        >
-                          {f.options?.map((option) => (
-                            <option key={option.value} value={option.value}>{option.label}</option>
-                          ))}
-                        </select>
-                      </div>
-                    )
-                  }
-                  return (
-                    <div key={f.name}>
-                      <label className="mb-1.5 block text-xs font-semibold text-gray-600">{f.label}{f.required && ' *'}</label>
-                      <input
-                        type={f.type === 'number' ? 'number' : 'text'}
-                        value={String(value)}
-                        onChange={(e) => setForm({ ...form, [f.name]: e.target.value })}
-                        required={f.required && open.mode === 'create'}
-                        className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-[#3e004c] focus:ring-2 focus:ring-[#3e004c]/15"
-                        placeholder={f.placeholder}
-                      />
-                    </div>
-                  )
-                })}
-              </div>
-              <div className="flex shrink-0 justify-end gap-2 border-t border-gray-100 bg-white px-4 py-4 sm:px-6">
-                <button type="button" onClick={close} className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-50">Cancel</button>
-                <button type="submit" disabled={saving} className="rounded-xl bg-[#3e004c] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#50115f] disabled:opacity-50">
-                  {saving ? 'Saving...' : 'Save'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+          }
+        >
+          <form id={modalFormId} onSubmit={handleSave} className="space-y-4">
+            {fields.map((f) => {
+              if (open.mode === 'edit' && f.createOnly) return null
+              const value = form[f.name] ?? ''
+              if (f.type === 'textarea') {
+                return (
+                  <div key={f.name}>
+                    <label className={adminLabelClass}>{f.label}{f.required && ' *'}</label>
+                    <textarea
+                      value={String(value)}
+                      onChange={(e) => setForm({ ...form, [f.name]: e.target.value })}
+                      rows={4}
+                      className={`${adminInputClass} min-h-28 resize-y`}
+                      placeholder={f.placeholder}
+                    />
+                  </div>
+                )
+              }
+              if (f.type === 'array') {
+                return (
+                  <div key={f.name}>
+                    <label className={adminLabelClass}>{f.label} <span className="font-normal text-gray-400">(one per line)</span></label>
+                    <textarea
+                      value={String(value)}
+                      onChange={(e) => setForm({ ...form, [f.name]: e.target.value })}
+                      rows={4}
+                      className={`${adminInputClass} min-h-28 resize-y`}
+                      placeholder={f.placeholder}
+                    />
+                  </div>
+                )
+              }
+              if (f.type === 'boolean') {
+                return (
+                  <label key={f.name} className="flex items-center justify-between gap-4 rounded-xl border border-gray-200 bg-[#fbf7fc] px-4 py-3 text-sm font-medium text-gray-700">
+                    <span>{f.label}</span>
+                    <input
+                      type="checkbox"
+                      checked={!!value}
+                      onChange={(e) => setForm({ ...form, [f.name]: e.target.checked })}
+                      className="h-5 w-5 rounded border-gray-300 text-[#3e004c]"
+                    />
+                  </label>
+                )
+              }
+              if (f.type === 'select') {
+                return (
+                  <div key={f.name}>
+                    <label className={adminLabelClass}>{f.label}{f.required && ' *'}</label>
+                    <select
+                      value={String(value)}
+                      onChange={(e) => setForm({ ...form, [f.name]: e.target.value })}
+                      required={f.required && open.mode === 'create'}
+                      className={adminInputClass}
+                    >
+                      {f.options?.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                )
+              }
+              return (
+                <div key={f.name}>
+                  <label className={adminLabelClass}>{f.label}{f.required && ' *'}</label>
+                  <input
+                    type={f.type === 'number' ? 'number' : 'text'}
+                    value={String(value)}
+                    onChange={(e) => setForm({ ...form, [f.name]: e.target.value })}
+                    required={f.required && open.mode === 'create'}
+                    className={adminInputClass}
+                    placeholder={f.placeholder}
+                  />
+                </div>
+              )
+            })}
+          </form>
+        </AdminModal>
       )}
     </div>
   )
