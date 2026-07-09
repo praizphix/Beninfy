@@ -29,6 +29,13 @@ interface VehicleOption {
   name: string
 }
 
+interface FleetVehicleOption {
+  id: string
+  label: string
+  vehicleId: string
+  vehicle?: { id: string; name: string }
+}
+
 const FALLBACK_ROUTE_OPTIONS = fallbackRoutes.map((route) => ({
   label: `${route.from} → ${route.to}`,
   value: route.id,
@@ -50,8 +57,13 @@ export default function AdminRoutePricesPage() {
     Promise.all([
       fetch('/api/admin/routes').then((res) => (res.ok ? res.json() : { routes: [] })),
       fetch('/api/admin/vehicles').then((res) => (res.ok ? res.json() : { vehicles: [] })),
+      fetch('/api/admin/fleet-vehicles').then((res) => (res.ok ? res.json() : { fleetVehicles: [] })),
     ])
-      .then(([routeData, vehicleData]: [{ routes?: RouteOption[] }, { vehicles?: VehicleOption[] }]) => {
+      .then(([routeData, vehicleData, fleetData]: [
+        { routes?: RouteOption[] },
+        { vehicles?: VehicleOption[] },
+        { fleetVehicles?: FleetVehicleOption[] },
+      ]) => {
         if (cancelled) return
         const routes = (routeData.routes ?? [])
           .filter((route) => route.id && route.from && route.to)
@@ -59,9 +71,20 @@ export default function AdminRoutePricesPage() {
         const vehicles = (vehicleData.vehicles ?? [])
           .filter((vehicle) => vehicle.id && vehicle.name)
           .map((vehicle) => ({ label: vehicle.name, value: vehicle.id }))
+        const fleetVehicles = (fleetData.fleetVehicles ?? [])
+          .filter((unit) => unit.id && unit.label)
+          .map((unit) => ({
+            label: `${unit.vehicle?.name ?? unit.vehicleId} / ${unit.label}`,
+            value: unit.id,
+          }))
 
         if (routes.length > 0) setRouteOptions(routes)
-        if (vehicles.length > 0) setVehicleOptions(vehicles)
+        if (vehicles.length > 0) {
+          setVehicleOptions([
+            ...vehicles,
+            ...fleetVehicles,
+          ])
+        }
       })
       .catch(() => {
         if (!cancelled) {

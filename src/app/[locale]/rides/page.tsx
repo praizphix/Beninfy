@@ -7,6 +7,7 @@ import { useSearchParams } from 'next/navigation'
 import { bookingCities, findRoute } from '@/data/routes'
 import { formatPriceRange, getRoutePrice } from '@/data/pricing'
 import { useVehicles } from '@/hooks/useVehicles'
+import { useFleetVehicles } from '@/hooks/useFleetVehicles'
 import { useRoutePriceOverrides } from '@/hooks/useRoutePriceOverrides'
 import type { VehicleId, RouteId } from '@/types'
 import CatalogImage from '@/components/shared/CatalogImage'
@@ -32,6 +33,7 @@ function RidesContent() {
   const t = useTranslations('ridesPage')
   const searchParams = useSearchParams()
   const { vehicles } = useVehicles()
+  const { fleetVehicles } = useFleetVehicles()
   const [from, setFrom] = useState(searchParams.get('from') ?? 'Lagos')
   const [to, setTo] = useState(searchParams.get('to') ?? 'Cotonou')
   const [date, setDate] = useState(searchParams.get('date') ?? '')
@@ -57,15 +59,49 @@ function RidesContent() {
       prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]
     )
 
-  const displayVehicles = vehicles.filter((v) => {
+  const selectedCategoryIds = new Set(selectedVehicles)
+  const fleetVehicleCategoryIds = new Set(fleetVehicles.map((unit) => unit.vehicleId))
+  const rideOptions = [
+    ...vehicles
+      .filter((vehicle) => !fleetVehicleCategoryIds.has(vehicle.id))
+      .map((vehicle) => ({
+        id: vehicle.id,
+        categoryId: vehicle.id,
+        priceTargetId: vehicle.id,
+        name: vehicle.name,
+        description: vehicle.description,
+        image: vehicle.image,
+        capacity: vehicle.capacity,
+        luggageCapacity: vehicle.luggageCapacity,
+        features: vehicle.features,
+        fleetVehicleId: null as string | null,
+      })),
+    ...fleetVehicles.map((unit) => {
+      const category = vehicles.find((vehicle) => vehicle.id === unit.vehicleId)
+      return {
+        id: unit.id,
+        categoryId: unit.vehicleId,
+        priceTargetId: unit.id,
+        name: unit.label,
+        description: category?.description ?? unit.vehicle?.description ?? '',
+        image: category?.image ?? unit.vehicle?.image ?? '',
+        capacity: category?.capacity ?? unit.vehicle?.capacity ?? 4,
+        luggageCapacity: category?.luggageCapacity ?? unit.vehicle?.luggageCapacity ?? 4,
+        features: category?.features ?? unit.vehicle?.features ?? [],
+        fleetVehicleId: unit.id,
+      }
+    }),
+  ]
+
+  const displayVehicles = rideOptions.filter((v) => {
     if (selectedVehicles.length === 0) return true
-    return selectedVehicles.includes(v.id)
+    return selectedCategoryIds.has(v.categoryId)
   })
 
-  const getPriceForVehicle = (vehicleId: VehicleId) => {
+  const getPriceForVehicle = (priceTargetId: VehicleId, categoryId: VehicleId, vehicleName?: string) => {
     if (!matchedRoute) return null
-    const vehicle = vehicles.find((v) => v.id === vehicleId)
-    const price = getRoutePrice(matchedRoute.id as RouteId, vehicleId, vehicle?.name, overrides)
+    const category = vehicles.find((v) => v.id === categoryId)
+    const price = getRoutePrice(matchedRoute.id as RouteId, priceTargetId, vehicleName ?? category?.name, overrides)
     if (!price) return null
     return formatPriceRange(price)
   }
@@ -249,9 +285,9 @@ function RidesContent() {
             )}
 
             {displayVehicles.map((vehicle) => {
-              const price = getPriceForVehicle(vehicle.id)
+              const price = getPriceForVehicle(vehicle.priceTargetId, vehicle.categoryId, vehicle.name)
               if (matchedRoute && !price) return null
-              const badge = VEHICLE_BADGES[vehicle.id]
+              const badge = VEHICLE_BADGES[vehicle.categoryId]
 
               return (
                 <div
@@ -309,13 +345,13 @@ function RidesContent() {
                     </div>
                     <div className="flex gap-3">
                       <Link
-                        href={`/${locale}/rides/book?vehicle=${vehicle.id}&from=${from}&to=${to}&date=${date}&returnDate=${returnDate}&tripType=${tripType}&passengers=${passengers}`}
+                        href={`/${locale}/rides/book?vehicle=${vehicle.categoryId}&fleetVehicle=${vehicle.fleetVehicleId ?? ''}&from=${from}&to=${to}&date=${date}&returnDate=${returnDate}&tripType=${tripType}&passengers=${passengers}`}
                         className="flex-1 bg-primary text-on-primary py-3 rounded-xl text-label-md text-center hover:opacity-95 active:scale-[0.98] transition-all"
                       >
                         {t('bookNow')}
                       </Link>
                       <Link
-                        href={`/${locale}/fleet#${vehicle.id}`}
+                        href={`/${locale}/fleet#${vehicle.categoryId}`}
                         className="px-4 border border-outline-variant rounded-xl hover:bg-surface-container transition-colors flex items-center"
                       >
                         <span className="material-symbols-outlined text-[20px]">info</span>

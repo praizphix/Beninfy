@@ -10,6 +10,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { getPaymentConfigurationError, settlePaymentFromPayOnUs, verifyPayOnUsPayment } from '@/lib/payonus'
+import { getRoutePriceOverrides } from '@/lib/routePriceOverrides'
 import type { VehicleId, RouteId } from '@/types'
 
 interface Props {
@@ -17,6 +18,7 @@ interface Props {
   searchParams: Promise<{
     id?: string
     vehicle?: string
+    fleetVehicle?: string
     from?: string
     to?: string
     date?: string
@@ -67,6 +69,7 @@ export default async function BookingConfirmedPage({ params, searchParams }: Pro
   }
 
   const vehicleId = (dbBooking?.vehicleId ?? sp.vehicle ?? 'saloon') as VehicleId
+  const selectedFleetVehicleId = sp.fleetVehicle || undefined
   const from = dbBooking?.from ?? sp.from ?? 'Lagos'
   const to = dbBooking?.to ?? sp.to ?? 'Cotonou'
   const date = dbBooking ? dbBooking.date.toISOString() : (sp.date ?? '')
@@ -76,14 +79,33 @@ export default async function BookingConfirmedPage({ params, searchParams }: Pro
 
   const vehicles = await getPublicVehicles({ availableOnly: false })
   const vehicle = vehicles.find((v) => v.id === vehicleId)
+  const bookingLegs = dbBooking
+    ? await prisma.bookingLeg.findMany({
+        where: { bookingId: dbBooking.id },
+        orderBy: { departureDate: 'asc' },
+        include: { fleetVehicle: { select: { id: true, label: true } } },
+      })
+    : []
+  const selectedFleetVehicle = selectedFleetVehicleId
+    ? await prisma.fleetVehicle.findUnique({ where: { id: selectedFleetVehicleId }, select: { id: true, label: true } })
+    : null
+  const displayFleetVehicle = bookingLegs[0]?.fleetVehicle ?? selectedFleetVehicle
   const matchedRoute = findRoute(from, to)
   const legCount = tripType === 'round-trip' ? 2 : 1
-  const fallbackDropoff = matchedRoute ? getRouteDropoffPrice(matchedRoute.id as RouteId, vehicleId, vehicle?.name) : 120000
+  const routePriceOverrides = matchedRoute ? await getRoutePriceOverrides(matchedRoute.id) : undefined
+  const fallbackDropoff = matchedRoute
+    ? getRouteDropoffPrice(
+        matchedRoute.id as RouteId,
+        (displayFleetVehicle?.id ?? vehicleId) as VehicleId,
+        displayFleetVehicle?.label ?? vehicle?.name,
+        undefined,
+        routePriceOverrides
+      )
+    : 120000
   const fallbackRideFare = (fallbackDropoff ?? 0) * legCount
   const borderFee = matchedRoute ? getRouteBorderFee(matchedRoute.id as RouteId, tripType) : 0
-  const serviceFee = Math.round(fallbackRideFare * 0.05)
-  const total = dbBooking?.priceNGN ?? (fallbackRideFare + borderFee + serviceFee)
-  const basePrice = dbBooking ? Math.max(0, dbBooking.priceNGN - borderFee - serviceFee) : fallbackRideFare
+  const total = dbBooking?.priceNGN ?? (fallbackRideFare + borderFee)
+  const basePrice = dbBooking ? Math.max(0, dbBooking.priceNGN - borderFee) : fallbackRideFare
 
   const formattedDate = date
     ? new Date(date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
@@ -140,7 +162,7 @@ export default async function BookingConfirmedPage({ params, searchParams }: Pro
                 <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
                   <span className="material-symbols-outlined text-gray-400 text-[20px] mb-2 block">airport_shuttle</span>
                   <p className="text-xs text-gray-500">{t('vehicleClass')}</p>
-                  <p className="text-sm font-medium text-gray-900 mt-1">{vehicle?.name ?? vehicleId}</p>
+                  <p className="text-sm font-medium text-gray-900 mt-1">{displayFleetVehicle?.label ?? vehicle?.name ?? vehicleId}</p>
                 </div>
                 <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 col-span-2 md:col-span-1">
                   <span className="material-symbols-outlined text-gray-400 text-[20px] mb-2 block">payments</span>
@@ -158,10 +180,6 @@ export default async function BookingConfirmedPage({ params, searchParams }: Pro
                 <div className="flex justify-between">
                   <span className="text-gray-500">{t('borderFee')}</span>
                   <span className="text-gray-900">{formatNGN(borderFee)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">{t('serviceFee')}</span>
-                  <span className="text-gray-900">{formatNGN(serviceFee)}</span>
                 </div>
               </div>
             </div>

@@ -88,6 +88,53 @@ export async function findAvailableFleetVehicle(
   })
 }
 
+export async function assertFleetVehicleAvailable(
+  fleetVehicleId: string,
+  vehicleId: string,
+  dates: Date[],
+  client: PrismaClientLike = prisma
+) {
+  const fleetVehicle = await client.fleetVehicle.findUnique({
+    where: { id: fleetVehicleId },
+    select: { id: true, vehicleId: true, label: true, status: true },
+  })
+
+  if (!fleetVehicle || fleetVehicle.vehicleId !== vehicleId) {
+    return { ok: false as const, status: 400, error: 'Selected fleet unit does not belong to this vehicle category.' }
+  }
+
+  if (fleetVehicle.status !== 'available') {
+    return { ok: false as const, status: 409, error: `${fleetVehicle.label} is not available for booking.` }
+  }
+
+  for (const date of dates) {
+    const { startsAt, endsAt } = dayWindow(date)
+    const blocked = await client.vehicleBlock.count({
+      where: {
+        fleetVehicleId,
+        startsAt: { lte: endsAt },
+        endsAt: { gte: startsAt },
+      },
+    })
+    if (blocked > 0) {
+      return { ok: false as const, status: 409, error: `${fleetVehicle.label} is blocked on ${date.toISOString().slice(0, 10)}.` }
+    }
+
+    const booked = await client.bookingLeg.count({
+      where: {
+        fleetVehicleId,
+        departureDate: { gte: startsAt, lte: endsAt },
+        status: { notIn: ACTIVE_LEG_STATUSES },
+      },
+    })
+    if (booked > 0) {
+      return { ok: false as const, status: 409, error: `${fleetVehicle.label} is already booked on ${date.toISOString().slice(0, 10)}.` }
+    }
+  }
+
+  return { ok: true as const, fleetVehicle }
+}
+
 export async function assertVehicleTypeAvailable(vehicleId: string, dates: Date[], client: PrismaClientLike = prisma) {
   const vehicle = await client.vehicle.findUnique({ where: { id: vehicleId } })
   if (!vehicle) return { ok: false as const, status: 404, error: 'Vehicle not found' }

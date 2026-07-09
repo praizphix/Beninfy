@@ -10,6 +10,7 @@ import { getRouteDropoffPrice, type LagosPickupArea } from '@/data/pricing'
 import { getRouteBorderFee } from '@/data/borderFees'
 import { formatNGN } from '@/lib/utils'
 import { useVehicles } from '@/hooks/useVehicles'
+import { useFleetVehicles } from '@/hooks/useFleetVehicles'
 import { useRoutePriceOverrides } from '@/hooks/useRoutePriceOverrides'
 import JourneyTracker from '@/components/booking/JourneyTracker'
 import CountUp from 'react-countup'
@@ -90,8 +91,10 @@ function PaymentContent() {
   const router = useRouter()
   const params = useSearchParams()
   const { vehicles } = useVehicles()
+  const { fleetVehicles } = useFleetVehicles()
 
   const vehicleId = (params.get('vehicle') ?? 'saloon') as VehicleId
+  const fleetVehicleId = params.get('fleetVehicle') || ''
   const from = params.get('from') ?? 'Lagos'
   const to = params.get('to') ?? 'Cotonou'
   const date = params.get('date') ?? ''
@@ -110,15 +113,23 @@ function PaymentContent() {
   const passengers = Math.max(1, parseInt(params.get('passengers') ?? '1', 10) || 1)
 
   const vehicle = vehicles.find((v) => v.id === vehicleId)
+  const fleetVehicle = fleetVehicles.find((unit) => unit.id === fleetVehicleId && unit.vehicleId === vehicleId)
   const matchedRoute = findRoute(from, to)
   const { overrides } = useRoutePriceOverrides(matchedRoute?.id)
-  const dropoffFare = matchedRoute ? getRouteDropoffPrice(matchedRoute.id as RouteId, vehicleId, vehicle?.name, pickupArea, overrides) : (vehicle?.basePriceNGN ?? 120000)
+  const dropoffFare = matchedRoute
+    ? getRouteDropoffPrice(
+        matchedRoute.id as RouteId,
+        (fleetVehicle?.id ?? vehicleId) as VehicleId,
+        fleetVehicle?.label ?? vehicle?.name,
+        pickupArea,
+        overrides
+      )
+    : (vehicle?.basePriceNGN ?? 120000)
 
   const legCount = tripType === 'round-trip' ? 2 : 1
   const rideFare = (dropoffFare ?? 0) * legCount
   const borderFee = matchedRoute ? getRouteBorderFee(matchedRoute.id as RouteId, tripType) : 0
-  const serviceFee = Math.round(rideFare * 0.05)
-  const total = rideFare + borderFee + serviceFee
+  const total = rideFare + borderFee
 
   const [method, setMethod] = useState<PaymentMethod>('card')
   const [processing, setProcessing] = useState(false)
@@ -141,6 +152,7 @@ function PaymentContent() {
           returnDate: returnDate ? new Date(returnDate).toISOString() : undefined,
           tripType,
           vehicleId,
+          fleetVehicleId: fleetVehicle?.id,
           passengers,
           priceNGN: total,
           passengerName,
@@ -257,6 +269,7 @@ function PaymentContent() {
         <Link
           href={`/${locale}/rides/book?${new URLSearchParams({
             vehicle: vehicleId,
+            fleetVehicle: fleetVehicle?.id ?? '',
             from,
             to,
             date,
@@ -375,7 +388,7 @@ function PaymentContent() {
                       <span className="material-symbols-outlined text-[32px]" style={{ color: '#3e004c' }}>airport_shuttle</span>
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-gray-900">{vehicle?.name ?? vehicleId}</p>
+                      <p className="text-sm font-semibold text-gray-900">{fleetVehicle?.label ?? vehicle?.name ?? vehicleId}</p>
                       <p className="text-xs text-gray-500">{from} → {to}</p>
                       {tripType === 'round-trip' && <p className="text-xs text-gray-500">{to} → {from}</p>}
                       {date && (
@@ -404,10 +417,6 @@ function PaymentContent() {
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">{t('borderFee')}</span>
                       <span className="font-medium text-gray-900">₦<CountUp end={borderFee} separator="," duration={1.2} /></span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">{t('serviceFee')}</span>
-                      <span className="font-medium text-gray-900">₦<CountUp end={serviceFee} separator="," duration={1.2} /></span>
                     </div>
                   </div>
 

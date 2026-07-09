@@ -16,10 +16,10 @@ export async function ensureDefaultRoutePrices() {
 
   await ensureDefaultRoutes()
   await ensureDefaultVehicles()
-  await normalizeLegacyRoutePriceBuckets()
 
-  const [vehicles, existing] = await Promise.all([
+  const [vehicles, fleetVehicles, existing] = await Promise.all([
     prisma.vehicle.findMany({ select: { id: true, name: true } }),
+    prisma.fleetVehicle.findMany({ select: { id: true, vehicleId: true, label: true } }),
     prisma.routePrice.findMany({ select: { routeId: true, vehicleId: true, pricingScope: true } }),
   ])
 
@@ -27,7 +27,7 @@ export async function ensureDefaultRoutePrices() {
     existing.map((price) => priceKey(price.routeId, price.vehicleId, normalizeScope(price.pricingScope)))
   )
 
-  const missingPrices: RoutePriceSeed[] = defaultRoutes.flatMap((route) => {
+  const categoryPrices: RoutePriceSeed[] = defaultRoutes.flatMap((route) => {
     return vehicles.flatMap<RoutePriceSeed>((vehicle) => {
       const routeId = route.id as RouteId
       const vehicleId = vehicle.id as VehicleId
@@ -46,6 +46,18 @@ export async function ensureDefaultRoutePrices() {
     })
   })
 
+  const fleetUnitPrices: RoutePriceSeed[] = defaultRoutes.flatMap((route) => {
+    return fleetVehicles.flatMap<RoutePriceSeed>((unit) => {
+      const routeId = route.id as RouteId
+      const vehicleId = unit.id as VehicleId
+      const amountNGN = fixedRouteAmount(routeId, vehicleId, unit.label)
+      if (!amountNGN || existingKeys.has(priceKey(route.id, unit.id, 'default'))) return []
+      return [{ routeId: route.id, vehicleId: unit.id, pricingScope: 'default' as const, amountNGN }]
+    })
+  })
+
+  const missingPrices = [...categoryPrices, ...fleetUnitPrices]
+
   if (missingPrices.length === 0) return { created: 0 }
 
   const result = await prisma.routePrice.createMany({
@@ -57,16 +69,6 @@ export async function ensureDefaultRoutePrices() {
   })
 
   return { created: result.count }
-}
-
-export function normalizePricingVehicleId(vehicleId: string) {
-  const text = vehicleId.toLowerCase().replace(/[^a-z0-9]/g, '')
-
-  if (text.includes('rav4') || text.includes('highlander') || text === 'suv') return 'suv'
-  if (text.includes('gx460') || text.includes('lexusgx') || text.includes('lexus460')) return 'prado'
-  if (text.includes('camry') || text.includes('sedan') || text.includes('saloon')) return 'saloon'
-
-  return vehicleId
 }
 
 function fixedRouteAmount(routeId: RouteId, vehicleId: VehicleId, vehicleName: string) {
@@ -82,55 +84,4 @@ function normalizeScope(scope: string | null | undefined): RoutePriceScope {
 
 function priceKey(routeId: string, vehicleId: string, scope: RoutePriceScope) {
   return `${routeId}:${vehicleId}:${scope}`
-}
-
-async function normalizeLegacyRoutePriceBuckets() {
-  const { prisma } = await import('@/lib/prisma')
-  const rows = await prisma.routePrice.findMany({
-    select: {
-      id: true,
-      routeId: true,
-      vehicleId: true,
-      pricingScope: true,
-      amountNGN: true,
-      notes: true,
-    },
-  })
-
-  for (const row of rows) {
-    const normalizedVehicleId = normalizePricingVehicleId(row.vehicleId)
-    if (normalizedVehicleId === row.vehicleId) continue
-
-    const pricingScope = normalizeScope(row.pricingScope)
-    const existingTarget = await prisma.routePrice.findFirst({
-      where: {
-        routeId: row.routeId,
-        vehicleId: normalizedVehicleId,
-        pricingScope,
-      },
-      select: { id: true },
-    })
-
-    if (existingTarget && existingTarget.id !== row.id) {
-      await prisma.$transaction([
-        prisma.routePrice.update({
-          where: { id: existingTarget.id },
-          data: {
-            amountNGN: row.amountNGN,
-            notes: row.notes,
-          },
-        }),
-        prisma.routePrice.delete({ where: { id: row.id } }),
-      ])
-      continue
-    }
-
-    await prisma.routePrice.update({
-      where: { id: row.id },
-      data: {
-        vehicleId: normalizedVehicleId,
-        pricingScope,
-      },
-    })
-  }
 }

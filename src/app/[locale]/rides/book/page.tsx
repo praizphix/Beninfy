@@ -9,6 +9,7 @@ import { findRoute } from '@/data/routes'
 import { getRouteDropoffPrice, requiresLagosPickupArea, type LagosPickupArea } from '@/data/pricing'
 import { getRouteBorderFee } from '@/data/borderFees'
 import { useVehicles } from '@/hooks/useVehicles'
+import { useFleetVehicles } from '@/hooks/useFleetVehicles'
 import { useRoutePriceOverrides } from '@/hooks/useRoutePriceOverrides'
 import JourneyTracker from '@/components/booking/JourneyTracker'
 import RouteMapSVG from '@/components/shared/RouteMapSVG'
@@ -26,8 +27,10 @@ function PassengerDetailsContent() {
   const router = useRouter()
   const params = useSearchParams()
   const { vehicles } = useVehicles()
+  const { fleetVehicles } = useFleetVehicles()
 
   const vehicleId = (params.get('vehicle') ?? 'saloon') as VehicleId
+  const fleetVehicleId = params.get('fleetVehicle') || ''
   const from = params.get('from') ?? 'Lagos'
   const to = params.get('to') ?? 'Cotonou'
   const date = params.get('date') ?? ''
@@ -36,6 +39,7 @@ function PassengerDetailsContent() {
   const initialPickupArea = params.get('pickupArea')
 
   const vehicle = vehicles.find((v) => v.id === vehicleId)
+  const fleetVehicle = fleetVehicles.find((unit) => unit.id === fleetVehicleId && unit.vehicleId === vehicleId)
   const matchedRoute = findRoute(from, to)
 
   const [form, setForm] = useState({
@@ -59,7 +63,13 @@ function PassengerDetailsContent() {
     : false
   const { overrides } = useRoutePriceOverrides(matchedRoute?.id)
   const dropoffFare = matchedRoute
-    ? getRouteDropoffPrice(matchedRoute.id as RouteId, vehicleId, vehicle?.name, pickupArea || undefined, overrides)
+    ? getRouteDropoffPrice(
+        matchedRoute.id as RouteId,
+        (fleetVehicle?.id ?? vehicleId) as VehicleId,
+        fleetVehicle?.label ?? vehicle?.name,
+        pickupArea || undefined,
+        overrides
+      )
     : null
 
   const set =
@@ -93,6 +103,7 @@ function PassengerDetailsContent() {
       dropoffAddress: form.dropoffAddress,
       specialRequirements: form.specialRequirements,
     })
+    if (fleetVehicle?.id) search.set('fleetVehicle', fleetVehicle.id)
     if (pickupArea) search.set('pickupArea', pickupArea)
     router.push(`/${locale}/rides/pay?${search.toString()}`)
   }
@@ -100,8 +111,7 @@ function PassengerDetailsContent() {
   const legCount = tripType === 'round-trip' ? 2 : 1
   const rideFare = (dropoffFare ?? 0) * legCount
   const borderFee = matchedRoute ? getRouteBorderFee(matchedRoute.id as RouteId, tripType) : 0
-  const serviceFee = rideFare ? Math.round(rideFare * 0.05) : 0
-  const total = rideFare + borderFee + serviceFee
+  const total = rideFare + borderFee
 
   const formattedDate = date
     ? new Date(date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -358,7 +368,7 @@ function PassengerDetailsContent() {
                         <span className="material-symbols-outlined" style={{ fontSize: 16, color: '#3e004c' }}>airport_shuttle</span>
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">{vehicle?.name ?? vehicleId}</p>
+                        <p className="text-sm font-medium text-gray-900">{fleetVehicle?.label ?? vehicle?.name ?? vehicleId}</p>
                         <p className="text-xs text-gray-500">{vehicle?.capacity ?? '—'} passengers • {tripType}</p>
                       </div>
                     </div>
@@ -395,7 +405,6 @@ function PassengerDetailsContent() {
                           {[
                             { label: tripType === 'round-trip' ? `${t('rideFare')} (drop-off x 2)` : `${t('rideFare')} (drop-off)`, value: rideFare },
                             { label: t('borderFee'), value: borderFee },
-                            { label: t('serviceFee'), value: serviceFee },
                           ].map(({ label, value }) => (
                             <div key={label} className="flex justify-between text-sm">
                               <span className="text-gray-500">{label}</span>

@@ -7,7 +7,7 @@ import { findRoute } from '@/data/routes'
 import { getRouteDropoffPrice, requiresLagosPickupArea } from '@/data/pricing'
 import { getRouteBorderFee } from '@/data/borderFees'
 import { vehicles as catalogVehicles } from '@/data/vehicles'
-import { assertVehicleTypeAvailable, findAvailableFleetVehicle } from '@/lib/availability'
+import { assertFleetVehicleAvailable, assertVehicleTypeAvailable, findAvailableFleetVehicle } from '@/lib/availability'
 import { getRoutePriceOverrides } from '@/lib/routePriceOverrides'
 import type { RouteId, VehicleId } from '@/types'
 
@@ -18,6 +18,7 @@ const createSchema = z.object({
   returnDate: z.string().refine((s) => !Number.isNaN(Date.parse(s)), 'Invalid return date').optional(),
   tripType: z.enum(['one-way', 'round-trip']).default('one-way'),
   vehicleId: z.string().min(1),
+  fleetVehicleId: z.string().min(1).optional(),
   passengers: z.number().int().positive().max(50),
   priceNGN: z.number().int().nonnegative(),
   passengerName: z.string().trim().max(100).optional(),
@@ -98,10 +99,19 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'This route is not available for booking' }, { status: 400 })
   }
   const routePriceOverrides = await getRoutePriceOverrides(matchedRoute.id)
+  const selectedFleetVehicle = data.fleetVehicleId
+    ? await prisma.fleetVehicle.findUnique({
+        where: { id: data.fleetVehicleId },
+        select: { id: true, vehicleId: true, label: true },
+      })
+    : null
+  if (data.fleetVehicleId && (!selectedFleetVehicle || selectedFleetVehicle.vehicleId !== vehicle.id)) {
+    return NextResponse.json({ error: 'Selected fleet unit does not belong to this vehicle category' }, { status: 400 })
+  }
   const dropoffFare = getRouteDropoffPrice(
     matchedRoute.id as RouteId,
-    vehicle.id as VehicleId,
-    vehicle.name,
+    (selectedFleetVehicle?.id ?? vehicle.id) as VehicleId,
+    selectedFleetVehicle?.label ?? vehicle.name,
     data.pickupArea,
     routePriceOverrides
   )
@@ -111,8 +121,7 @@ export async function POST(req: Request) {
   const legCount = data.tripType === 'round-trip' ? 2 : 1
   const rideFare = dropoffFare * legCount
   const borderFee = getRouteBorderFee(matchedRoute.id as RouteId, data.tripType)
-  const serviceFee = Math.round(rideFare * 0.05)
-  const priceNGN = rideFare + borderFee + serviceFee
+  const priceNGN = rideFare + borderFee
 
   try {
     const booking = await prisma.$transaction(async (tx) => {
@@ -122,10 +131,22 @@ export async function POST(req: Request) {
         throw new BookingAvailabilityError(availability.error, availability.status)
       }
 
+      if (selectedFleetVehicle) {
+        const fleetAvailability = await assertFleetVehicleAvailable(selectedFleetVehicle.id, vehicle.id, datesToCheck, tx)
+        if (!fleetAvailability.ok) {
+          throw new BookingAvailabilityError(fleetAvailability.error, fleetAvailability.status)
+        }
+      }
+
       const reservedFleetVehicles = new Map<string, { id: string; label: string }>()
       for (const date of datesToCheck) {
         const key = dateKey(date)
         if (reservedFleetVehicles.has(key)) continue
+
+        if (selectedFleetVehicle) {
+          reservedFleetVehicles.set(key, selectedFleetVehicle)
+          continue
+        }
 
         const fleetVehicle = await findAvailableFleetVehicle(vehicle.id, date, tx)
         if (!fleetVehicle) {

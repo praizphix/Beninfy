@@ -3,7 +3,6 @@ import { Prisma } from '@prisma/client'
 import { z } from 'zod'
 import { requireAdmin } from '@/lib/admin'
 import { prisma } from '@/lib/prisma'
-import { normalizePricingVehicleId } from '@/lib/routePriceCatalog'
 
 const patchSchema = z.object({
   routeId: z.string().trim().min(1).optional(),
@@ -26,7 +25,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (!current) return NextResponse.json({ error: 'Route price not found. Please refresh and try again.' }, { status: 404 })
 
     const routeId = parsed.data.routeId ?? current.routeId
-    const vehicleId = normalizePricingVehicleId(parsed.data.vehicleId ?? current.vehicleId)
+    const vehicleId = parsed.data.vehicleId ?? current.vehicleId
     const pricingScope = parsed.data.pricingScope ?? current.pricingScope
     const amountNGN = parsed.data.amountNGN ?? current.amountNGN
     const notes = Object.hasOwn(parsed.data, 'notes') ? parsed.data.notes : current.notes
