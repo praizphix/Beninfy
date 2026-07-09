@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { formatNGN } from '@/lib/utils'
+import { AdminPageHeader, AdminStatusBadge } from '@/components/admin/AdminUI'
 
 interface BookingRow {
   id: string
@@ -129,23 +130,38 @@ export default function AdminBookingsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold" style={{ color: '#3e004c' }}>Bookings</h1>
-          <p className="text-sm text-gray-500">All bookings across customers.</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <input
-            type="search"
-            placeholder="Search route, customer…"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-64 focus:outline-none focus:ring-2 focus:ring-primary/20"
-          />
+      <AdminPageHeader
+        title="Bookings"
+        description="Assign vehicles and drivers, confirm trip statuses, and monitor customer ride operations."
+        icon="event"
+        actions={
+          <button
+            type="button"
+            onClick={() => void load()}
+            className="inline-flex items-center gap-2 rounded-xl border border-[#eaddec] bg-white px-4 py-2.5 text-sm font-semibold text-[#3e004c] shadow-sm transition-colors hover:bg-[#fbf7fc]"
+          >
+            <span className="material-symbols-outlined text-[18px]">refresh</span>
+            Refresh
+          </button>
+        }
+      />
+
+      <div className="mb-4 rounded-2xl border border-white/70 bg-white p-4 shadow-[0_14px_35px_rgba(62,0,76,0.07)]">
+        <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_220px]">
+          <label className="relative block">
+            <span className="material-symbols-outlined pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-gray-400">search</span>
+            <input
+              type="search"
+              placeholder="Search route, customer, email, phone..."
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              className="w-full rounded-xl border border-gray-200 bg-[#fbf7fc] py-3 pl-10 pr-3 text-sm text-gray-900 outline-none transition focus:border-[#3e004c] focus:bg-white focus:ring-2 focus:ring-[#3e004c]/15"
+            />
+          </label>
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value)}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="w-full rounded-xl border border-gray-200 bg-[#fbf7fc] px-3 py-3 text-sm text-gray-900 outline-none transition focus:border-[#3e004c] focus:bg-white focus:ring-2 focus:ring-[#3e004c]/15"
           >
             {STATUSES.map((s) => (
               <option key={s} value={s}>{s || 'All statuses'}</option>
@@ -154,54 +170,62 @@ export default function AdminBookingsPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto">
+      <div className="overflow-hidden rounded-2xl border border-white/70 bg-white shadow-[0_16px_45px_rgba(62,0,76,0.08)]">
+        <div className="flex items-center justify-between gap-3 border-b border-gray-100 px-5 py-4">
+          <div>
+            <p className="text-sm font-semibold text-gray-900">{bookings.length} bookings</p>
+            <p className="text-xs text-gray-400">Use each leg card to assign a fleet unit and driver.</p>
+          </div>
+          <span className="material-symbols-outlined text-[20px] text-gray-300">assignment</span>
+        </div>
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
+          <thead className="bg-[#fbf7fc] text-xs uppercase tracking-[0.14em] text-gray-500">
             <tr>
-              <th className="text-left px-5 py-3">Customer</th>
-              <th className="text-left px-5 py-3">Route</th>
-              <th className="text-left px-5 py-3">Vehicle</th>
-              <th className="text-left px-5 py-3">Date</th>
-              <th className="text-left px-5 py-3">Legs</th>
-              <th className="text-left px-5 py-3">Pax</th>
-              <th className="text-left px-5 py-3">Price</th>
-              <th className="text-left px-5 py-3">Payments</th>
-              <th className="text-left px-5 py-3">Status</th>
-              <th className="px-5 py-3"></th>
+              <th className="text-left px-5 py-3.5 font-semibold">Customer</th>
+              <th className="text-left px-5 py-3.5 font-semibold">Route</th>
+              <th className="text-left px-5 py-3.5 font-semibold">Vehicle</th>
+              <th className="text-left px-5 py-3.5 font-semibold">Date</th>
+              <th className="text-left px-5 py-3.5 font-semibold">Legs</th>
+              <th className="text-left px-5 py-3.5 font-semibold">Pax</th>
+              <th className="text-left px-5 py-3.5 font-semibold">Price</th>
+              <th className="text-left px-5 py-3.5 font-semibold">Payments</th>
+              <th className="text-left px-5 py-3.5 font-semibold">Status</th>
+              <th className="px-5 py-3.5"></th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={10} className="px-5 py-10 text-center text-gray-400">Loading…</td></tr>
+              <tr><td colSpan={10} className="px-5 py-14 text-center text-gray-400">Loading...</td></tr>
             ) : bookings.length === 0 ? (
-              <tr><td colSpan={10} className="px-5 py-10 text-center text-gray-400">No bookings.</td></tr>
+              <tr><td colSpan={10} className="px-5 py-14 text-center text-gray-400">No bookings.</td></tr>
             ) : bookings.map((b) => (
-              <tr key={b.id} className="border-t border-gray-100 align-top">
-                <td className="px-5 py-3">
+              <tr key={b.id} className="border-t border-gray-100 align-top transition-colors hover:bg-[#fcf9fd]">
+                <td className="px-5 py-4">
                   <p className="font-medium text-gray-800">{b.passengerName ?? b.user?.name ?? '—'}</p>
                   <p className="text-xs text-gray-400">{b.passengerEmail ?? b.user?.email ?? 'guest'}</p>
                   {(b.passengerPhone ?? b.user?.phone) && <p className="text-xs text-gray-400">{b.passengerPhone ?? b.user?.phone}</p>}
                 </td>
-                <td className="px-5 py-3 text-gray-700">
-                  <p>{b.from} → {b.to}</p>
-                  <p className="text-xs text-gray-400">{b.tripType === 'round_trip' ? 'round trip' : 'one way'}</p>
+                <td className="px-5 py-4 text-gray-700">
+                  <p className="font-medium text-gray-900">{b.from} → {b.to}</p>
+                  <p className="mt-1 text-xs text-gray-400">{b.tripType === 'round_trip' ? 'round trip' : 'one way'}</p>
                 </td>
-                <td className="px-5 py-3 text-gray-700">{b.vehicle?.name ?? b.id}</td>
-                <td className="px-5 py-3 text-gray-700">{new Date(b.date).toLocaleDateString()}</td>
-                <td className="px-5 py-3 min-w-[300px]">
+                <td className="px-5 py-4 text-gray-700">{b.vehicle?.name ?? b.id}</td>
+                <td className="px-5 py-4 text-gray-700">{new Date(b.date).toLocaleDateString()}</td>
+                <td className="px-5 py-4 min-w-[320px]">
                   <div className="space-y-3">
                     {b.legs.map((leg) => (
-                      <div key={leg.id} className="rounded-lg border border-gray-100 p-2">
+                      <div key={leg.id} className="rounded-xl border border-[#eaddec] bg-white p-3 shadow-sm">
                         <div className="flex items-center justify-between gap-2 mb-2">
-                          <p className="text-xs font-semibold text-gray-800">{leg.direction}: {leg.from} → {leg.to}</p>
-                          <span className="text-[10px] uppercase text-gray-400">{new Date(leg.departureDate).toLocaleDateString()}</span>
+                          <p className="text-xs font-semibold text-gray-900">{leg.direction}: {leg.from} → {leg.to}</p>
+                          <span className="rounded-full bg-[#fbf7fc] px-2 py-1 text-[10px] font-semibold uppercase text-gray-500">{new Date(leg.departureDate).toLocaleDateString()}</span>
                         </div>
                         <div className="grid grid-cols-1 gap-2">
                           <select
                             value={leg.fleetVehicleId ?? ''}
                             disabled={busy === leg.id}
                             onChange={(e) => assignLeg(leg.id, { fleetVehicleId: e.target.value || null })}
-                            className="text-xs border border-gray-200 rounded-md px-2 py-1"
+                            className="rounded-lg border border-gray-200 bg-[#fbf7fc] px-2 py-2 text-xs outline-none focus:border-[#3e004c] focus:bg-white focus:ring-2 focus:ring-[#3e004c]/15"
                           >
                             <option value="">Assign fleet unit</option>
                             {fleetVehicles
@@ -216,7 +240,7 @@ export default function AdminBookingsPage() {
                             value={leg.driverId ?? ''}
                             disabled={busy === leg.id}
                             onChange={(e) => assignLeg(leg.id, { driverId: e.target.value || null })}
-                            className="text-xs border border-gray-200 rounded-md px-2 py-1"
+                            className="rounded-lg border border-gray-200 bg-[#fbf7fc] px-2 py-2 text-xs outline-none focus:border-[#3e004c] focus:bg-white focus:ring-2 focus:ring-[#3e004c]/15"
                           >
                             <option value="">Assign driver</option>
                             {drivers.map((d) => (
@@ -228,22 +252,25 @@ export default function AdminBookingsPage() {
                     ))}
                   </div>
                 </td>
-                <td className="px-5 py-3 text-gray-700">{b.passengers}</td>
-                <td className="px-5 py-3 text-gray-800">{formatNGN(b.priceNGN)}</td>
-                <td className="px-5 py-3 text-xs text-gray-500">
+                <td className="px-5 py-4 text-gray-700">{b.passengers}</td>
+                <td className="px-5 py-4 font-semibold text-gray-900">{formatNGN(b.priceNGN)}</td>
+                <td className="px-5 py-4 text-xs text-gray-500">
                   {b.payments.length === 0 ? '—' : b.payments.map((p) => (
-                    <div key={p.id}>
-                      <span className={p.status === 'paid' ? 'text-green-700' : p.status === 'failed' ? 'text-red-600' : 'text-amber-700'}>{p.status}</span>
-                      {' '}{formatNGN(p.amountNGN)}
+                    <div key={p.id} className="mb-1 flex flex-col gap-1">
+                      <AdminStatusBadge status={p.status} />
+                      <span>{formatNGN(p.amountNGN)}</span>
                     </div>
                   ))}
                 </td>
-                <td className="px-5 py-3">
+                <td className="px-5 py-4">
+                  <div className="mb-2">
+                    <AdminStatusBadge status={b.status} />
+                  </div>
                   <select
                     value={b.status}
                     onChange={(e) => updateStatus(b.id, e.target.value)}
                     disabled={busy === b.id}
-                    className="text-xs border border-gray-200 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className="rounded-lg border border-gray-200 bg-white px-2 py-2 text-xs outline-none focus:border-[#3e004c] focus:ring-2 focus:ring-[#3e004c]/15"
                   >
                     <option value="pending">pending</option>
                     <option value="confirmed">confirmed</option>
@@ -251,13 +278,16 @@ export default function AdminBookingsPage() {
                     <option value="completed">completed</option>
                   </select>
                 </td>
-                <td className="px-5 py-3 text-right whitespace-nowrap">
-                  <button onClick={() => remove(b.id)} disabled={busy === b.id} className="text-xs text-red-600 hover:underline disabled:opacity-50">Delete</button>
+                <td className="px-5 py-4 text-right whitespace-nowrap">
+                  <button onClick={() => remove(b.id)} disabled={busy === b.id} className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-red-100 text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50" title="Delete booking">
+                    <span className="material-symbols-outlined text-[17px]">delete</span>
+                  </button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   )

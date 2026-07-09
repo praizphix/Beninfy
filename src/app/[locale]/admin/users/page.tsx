@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { AdminPageHeader, AdminStatusBadge } from '@/components/admin/AdminUI'
 
 interface UserRow {
   id: string
@@ -136,81 +137,86 @@ export default function AdminUsersPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold" style={{ color: '#3e004c' }}>Users</h1>
-          <p className="text-sm text-gray-500">
-            {isSuper ? 'Manage customers and admin team.' : 'View customer accounts. Role changes require super admin.'}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
+      <AdminPageHeader
+        title="Users"
+        description={isSuper ? 'Manage customers, admin users, roles, and password resets.' : 'View customer accounts. Role changes require super admin access.'}
+        icon="group"
+        actions={isSuper ? (
+          <button
+            onClick={() => setShowCreate(true)}
+            className="inline-flex items-center gap-2 rounded-xl bg-[#3e004c] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(62,0,76,0.18)] transition-colors hover:bg-[#50115f]"
+          >
+            <span className="material-symbols-outlined text-[18px]">person_add</span>
+            Add user
+          </button>
+        ) : null}
+      />
+
+      <div className="mb-4 rounded-2xl border border-white/70 bg-white p-4 shadow-[0_14px_35px_rgba(62,0,76,0.07)]">
+        <label className="relative block max-w-xl">
+          <span className="material-symbols-outlined pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-gray-400">search</span>
           <input
             type="search"
-            placeholder="Search name or email…"
+            placeholder="Search name or email..."
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="w-full rounded-xl border border-gray-200 bg-[#fbf7fc] py-3 pl-10 pr-3 text-sm text-gray-900 outline-none transition focus:border-[#3e004c] focus:bg-white focus:ring-2 focus:ring-[#3e004c]/15"
           />
-          {isSuper && (
-            <button
-              onClick={() => setShowCreate(true)}
-              className="px-4 py-2 rounded-lg text-sm text-white"
-              style={{ background: '#3e004c' }}
-            >
-              + Add user
-            </button>
-          )}
-        </div>
+        </label>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto">
+      <div className="overflow-hidden rounded-2xl border border-white/70 bg-white shadow-[0_16px_45px_rgba(62,0,76,0.08)]">
+        <div className="flex items-center justify-between gap-3 border-b border-gray-100 px-5 py-4">
+          <div>
+            <p className="text-sm font-semibold text-gray-900">{users.length} users</p>
+            <p className="text-xs text-gray-400">Customer and backoffice account directory.</p>
+          </div>
+          <span className="material-symbols-outlined text-[20px] text-gray-300">manage_accounts</span>
+        </div>
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
+          <thead className="bg-[#fbf7fc] text-xs uppercase tracking-[0.14em] text-gray-500">
             <tr>
-              <th className="text-left px-5 py-3">Name</th>
-              <th className="text-left px-5 py-3">Email</th>
-              <th className="text-left px-5 py-3">Phone</th>
-              <th className="text-left px-5 py-3">Bookings</th>
-              <th className="text-left px-5 py-3">Joined</th>
-              <th className="text-left px-5 py-3">Role</th>
-              {isSuper && <th className="px-5 py-3"></th>}
+              <th className="text-left px-5 py-3.5 font-semibold">Name</th>
+              <th className="text-left px-5 py-3.5 font-semibold">Email</th>
+              <th className="text-left px-5 py-3.5 font-semibold">Phone</th>
+              <th className="text-left px-5 py-3.5 font-semibold">Bookings</th>
+              <th className="text-left px-5 py-3.5 font-semibold">Joined</th>
+              <th className="text-left px-5 py-3.5 font-semibold">Role</th>
+              {isSuper && <th className="px-5 py-3.5"></th>}
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={isSuper ? 7 : 6} className="px-5 py-10 text-center text-gray-400">Loading…</td></tr>
+              <tr><td colSpan={isSuper ? 7 : 6} className="px-5 py-14 text-center text-gray-400">Loading...</td></tr>
             ) : users.length === 0 ? (
-              <tr><td colSpan={isSuper ? 7 : 6} className="px-5 py-10 text-center text-gray-400">No users.</td></tr>
+              <tr><td colSpan={isSuper ? 7 : 6} className="px-5 py-14 text-center text-gray-400">No users.</td></tr>
             ) : users.map((u) => {
               const isThisSuper = u.role === 'super_admin'
               return (
-                <tr key={u.id} className="border-t border-gray-100">
-                  <td className="px-5 py-3 font-medium text-gray-800">{u.name ?? '—'}</td>
-                  <td className="px-5 py-3 text-gray-700">{u.email ?? '—'}</td>
-                  <td className="px-5 py-3 text-gray-700">{u.phone ?? '—'}</td>
-                  <td className="px-5 py-3 text-gray-700">{u._count.bookings}</td>
-                  <td className="px-5 py-3 text-gray-500 text-xs">{new Date(u.createdAt).toLocaleDateString()}</td>
-                  <td className="px-5 py-3">
+                <tr key={u.id} className="border-t border-gray-100 transition-colors hover:bg-[#fcf9fd]">
+                  <td className="px-5 py-4 font-medium text-gray-800">{u.name ?? '—'}</td>
+                  <td className="px-5 py-4 text-gray-700">{u.email ?? '—'}</td>
+                  <td className="px-5 py-4 text-gray-700">{u.phone ?? '—'}</td>
+                  <td className="px-5 py-4 text-gray-700">{u._count.bookings}</td>
+                  <td className="px-5 py-4 text-xs text-gray-500">{new Date(u.createdAt).toLocaleDateString()}</td>
+                  <td className="px-5 py-4">
                     {isSuper && !isThisSuper ? (
                       <select
                         value={u.role}
                         onChange={(e) => setRole(u.id, e.target.value as UserRow['role'])}
                         disabled={busy === u.id}
-                        className="text-xs border border-gray-200 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        className="rounded-lg border border-gray-200 bg-white px-2 py-2 text-xs outline-none focus:border-[#3e004c] focus:ring-2 focus:ring-[#3e004c]/15"
                       >
                         <option value="user">user</option>
                         <option value="admin">admin</option>
                       </select>
                     ) : (
-                      <span className={`inline-block px-2 py-0.5 rounded-full text-xs ${
-                        isThisSuper ? 'bg-purple-50 text-purple-700' :
-                        u.role === 'admin' ? 'bg-blue-50 text-blue-700' :
-                        'bg-gray-50 text-gray-600'
-                      }`}>{ROLE_LABEL[u.role]}</span>
+                      <AdminStatusBadge status={ROLE_LABEL[u.role]} />
                     )}
                   </td>
                   {isSuper && (
-                    <td className="px-5 py-3 text-right whitespace-nowrap">
+                    <td className="px-5 py-4 text-right whitespace-nowrap">
                       {!isThisSuper && (
                         <>
                           <button
@@ -220,13 +226,19 @@ export default function AdminUsersPage() {
                               setResetError(null)
                             }}
                             disabled={busy === u.id}
-                            className="text-xs text-purple-700 hover:underline disabled:opacity-50 mr-3"
-                          >Reset password</button>
+                            className="mr-2 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-purple-100 text-[#3e004c] transition-colors hover:bg-[#f7eff8] disabled:opacity-50"
+                            title="Reset password"
+                          >
+                            <span className="material-symbols-outlined text-[17px]">lock_reset</span>
+                          </button>
                           <button
                             onClick={() => remove(u.id)}
                             disabled={busy === u.id}
-                            className="text-xs text-red-600 hover:underline disabled:opacity-50"
-                          >Delete</button>
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-red-100 text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
+                            title="Delete user"
+                          >
+                            <span className="material-symbols-outlined text-[17px]">delete</span>
+                          </button>
                         </>
                       )}
                     </td>
@@ -236,6 +248,7 @@ export default function AdminUsersPage() {
             })}
           </tbody>
         </table>
+        </div>
       </div>
 
       {showCreate && (

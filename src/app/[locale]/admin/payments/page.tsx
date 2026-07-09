@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { formatNGN } from '@/lib/utils'
+import { AdminPageHeader, AdminStatusBadge } from '@/components/admin/AdminUI'
 
 interface PaymentRow {
   id: string
@@ -40,58 +41,64 @@ export default function AdminPaymentsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold" style={{ color: '#3e004c' }}>Payments</h1>
-          <p className="text-sm text-gray-500">Transaction history.</p>
-        </div>
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-          className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-        >
-          {STATUSES.map((s) => <option key={s} value={s}>{s || 'All statuses'}</option>)}
-        </select>
-      </div>
+      <AdminPageHeader
+        title="Payments"
+        description="Review transaction references, payment status, booking links, and customer payment history."
+        icon="payments"
+        actions={
+          <select
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+            className="rounded-xl border border-[#eaddec] bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm outline-none transition focus:border-[#3e004c] focus:ring-2 focus:ring-[#3e004c]/15"
+          >
+            {STATUSES.map((s) => <option key={s} value={s}>{s || 'All statuses'}</option>)}
+          </select>
+        }
+      />
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto">
+      <div className="overflow-hidden rounded-2xl border border-white/70 bg-white shadow-[0_16px_45px_rgba(62,0,76,0.08)]">
+        <div className="flex items-center justify-between gap-3 border-b border-gray-100 px-5 py-4">
+          <div>
+            <p className="text-sm font-semibold text-gray-900">{payments.length} payments</p>
+            <p className="text-xs text-gray-400">Filtered by current payment state.</p>
+          </div>
+          <span className="material-symbols-outlined text-[20px] text-gray-300">receipt_long</span>
+        </div>
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
+          <thead className="bg-[#fbf7fc] text-xs uppercase tracking-[0.14em] text-gray-500">
             <tr>
-              <th className="text-left px-5 py-3">Reference</th>
-              <th className="text-left px-5 py-3">Customer</th>
-              <th className="text-left px-5 py-3">Booking</th>
-              <th className="text-left px-5 py-3">Amount</th>
-              <th className="text-left px-5 py-3">Status</th>
-              <th className="text-left px-5 py-3">Created</th>
+              <th className="text-left px-5 py-3.5 font-semibold">Reference</th>
+              <th className="text-left px-5 py-3.5 font-semibold">Customer</th>
+              <th className="text-left px-5 py-3.5 font-semibold">Booking</th>
+              <th className="text-left px-5 py-3.5 font-semibold">Amount</th>
+              <th className="text-left px-5 py-3.5 font-semibold">Status</th>
+              <th className="text-left px-5 py-3.5 font-semibold">Created</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={6} className="px-5 py-10 text-center text-gray-400">Loading…</td></tr>
+              <tr><td colSpan={6} className="px-5 py-14 text-center text-gray-400">Loading...</td></tr>
             ) : payments.length === 0 ? (
-              <tr><td colSpan={6} className="px-5 py-10 text-center text-gray-400">No payments.</td></tr>
+              <tr><td colSpan={6} className="px-5 py-14 text-center text-gray-400">No payments.</td></tr>
             ) : payments.map((p) => (
-              <tr key={p.id} className="border-t border-gray-100">
-                <td className="px-5 py-3"><code className="text-xs text-gray-600">{p.reference}</code></td>
-                <td className="px-5 py-3">
+              <tr key={p.id} className="border-t border-gray-100 transition-colors hover:bg-[#fcf9fd]">
+                <td className="px-5 py-4"><code className="rounded-lg bg-[#fbf7fc] px-2 py-1 text-xs text-gray-700">{p.reference}</code></td>
+                <td className="px-5 py-4">
                   <p className="font-medium text-gray-800">{p.booking?.user?.name ?? '—'}</p>
                   <p className="text-xs text-gray-400">{p.booking?.user?.email ?? 'guest'}</p>
                 </td>
-                <td className="px-5 py-3 text-gray-700">{p.booking ? `${p.booking.from} → ${p.booking.to}` : '—'}</td>
-                <td className="px-5 py-3 text-gray-800">{formatNGN(p.amountNGN)}</td>
-                <td className="px-5 py-3">
-                  <span className={`inline-block px-2 py-0.5 rounded-full text-xs ${
-                    p.status === 'paid' ? 'bg-green-50 text-green-700' :
-                    p.status === 'failed' ? 'bg-red-50 text-red-700' :
-                    'bg-amber-50 text-amber-700'
-                  }`}>{p.status}</span>
+                <td className="px-5 py-4 text-gray-700">{p.booking ? `${p.booking.from} → ${p.booking.to}` : '—'}</td>
+                <td className="px-5 py-4 font-semibold text-gray-900">{formatNGN(p.amountNGN)}</td>
+                <td className="px-5 py-4">
+                  <AdminStatusBadge status={p.status} />
                 </td>
-                <td className="px-5 py-3 text-gray-500 text-xs">{new Date(p.createdAt).toLocaleString()}</td>
+                <td className="px-5 py-4 text-xs text-gray-500">{new Date(p.createdAt).toLocaleString()}</td>
               </tr>
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   )

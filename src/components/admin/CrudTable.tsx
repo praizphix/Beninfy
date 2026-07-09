@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { AdminPageHeader } from '@/components/admin/AdminUI'
 
 export type FieldType = 'text' | 'number' | 'textarea' | 'boolean' | 'array' | 'select'
 
@@ -65,6 +66,16 @@ export function CrudTable<T extends { id: string } & Record<string, unknown>>({
     : title.endsWith('s')
       ? title.slice(0, -1)
       : title
+
+  const pageIcon =
+    collectionKey === 'fleetVehicles' ? 'garage' :
+    collectionKey === 'vehicles' ? 'category' :
+    collectionKey === 'routes' ? 'route' :
+    collectionKey === 'routePrices' ? 'sell' :
+    collectionKey === 'drivers' ? 'badge' :
+    collectionKey === 'tours' ? 'travel_explore' :
+    collectionKey === 'borderFees' ? 'currency_exchange' :
+    'table_view'
 
   useEffect(() => {
     if (!open || typeof document === 'undefined') return
@@ -201,54 +212,66 @@ export function CrudTable<T extends { id: string } & Record<string, unknown>>({
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold" style={{ color: '#3e004c' }}>{title}</h1>
-          {description && <p className="text-sm text-gray-500">{description}</p>}
-        </div>
-        {canCreate && createUrl && (
+      <AdminPageHeader
+        title={title}
+        description={description}
+        icon={pageIcon}
+        actions={canCreate && createUrl ? (
           <button
             onClick={openCreate}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium text-white hover:opacity-90 transition-opacity"
-            style={{ background: '#3e004c' }}
+            className="inline-flex items-center gap-2 rounded-xl bg-[#3e004c] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(62,0,76,0.18)] transition-colors hover:bg-[#50115f]"
           >
             <span className="material-symbols-outlined text-[18px]">add</span>
             New
           </button>
-        )}
-      </div>
+        ) : null}
+      />
 
-      {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
+      {error && (
+        <div className="mb-4 flex items-start gap-2 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <span className="material-symbols-outlined text-[18px]">error</span>
+          <p>{error}</p>
+        </div>
+      )}
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="overflow-hidden rounded-2xl border border-white/70 bg-white shadow-[0_16px_45px_rgba(62,0,76,0.08)]">
+        <div className="flex items-center justify-between gap-3 border-b border-gray-100 px-5 py-4">
+          <div>
+            <p className="text-sm font-semibold text-gray-900">{items.length} records</p>
+            <p className="text-xs text-gray-400">Manage, edit, and audit this dataset.</p>
+          </div>
+          <span className="material-symbols-outlined text-[20px] text-gray-300">database</span>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
+            <thead className="bg-[#fbf7fc] text-xs uppercase tracking-[0.14em] text-gray-500">
               <tr>
                 {columns.map((c) => (
-                  <th key={c.header} className={`text-left px-5 py-3 ${c.className ?? ''}`}>{c.header}</th>
+                  <th key={c.header} className={`text-left px-5 py-3.5 font-semibold ${c.className ?? ''}`}>{c.header}</th>
                 ))}
-                {(canEdit || canDelete) && <th className="px-5 py-3"></th>}
+                {(canEdit || canDelete) && <th className="px-5 py-3.5"></th>}
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={columns.length + 1} className="px-5 py-10 text-center text-gray-400">Loading…</td></tr>
+                <tr><td colSpan={columns.length + 1} className="px-5 py-14 text-center text-gray-400">Loading...</td></tr>
               ) : items.length === 0 ? (
-                <tr><td colSpan={columns.length + 1} className="px-5 py-10 text-center text-gray-400">No items.</td></tr>
+                <tr><td colSpan={columns.length + 1} className="px-5 py-14 text-center text-gray-400">No items.</td></tr>
               ) : items.map((item) => (
-                <tr key={item.id} className="border-t border-gray-100">
+                <tr key={item.id} className="border-t border-gray-100 align-top transition-colors hover:bg-[#fcf9fd]">
                   {columns.map((c) => (
-                    <td key={c.header} className={`px-5 py-3 ${c.className ?? ''}`}>{c.render(item)}</td>
+                    <td key={c.header} className={`px-5 py-4 ${c.className ?? ''}`}>{c.render(item)}</td>
                   ))}
                   {(canEdit || canDelete) && (
-                    <td className="px-5 py-3 text-right whitespace-nowrap">
+                    <td className="px-5 py-4 text-right whitespace-nowrap">
                       {canEdit && itemUrl && (
-                        <button onClick={() => openEdit(item)} className="text-xs text-purple-700 hover:underline mr-3">Edit</button>
+                        <button onClick={() => openEdit(item)} className="mr-2 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-purple-100 text-[#3e004c] transition-colors hover:bg-[#f7eff8]" title="Edit">
+                          <span className="material-symbols-outlined text-[17px]">edit</span>
+                        </button>
                       )}
                       {canDelete && itemUrl && (
-                        <button onClick={() => handleDelete(item.id)} disabled={deleting === item.id} className="text-xs text-red-600 hover:underline disabled:opacity-50">
-                          {deleting === item.id ? '…' : 'Delete'}
+                        <button onClick={() => handleDelete(item.id)} disabled={deleting === item.id} className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-red-100 text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50" title="Delete">
+                          <span className="material-symbols-outlined text-[17px]">{deleting === item.id ? 'more_horiz' : 'delete'}</span>
                         </button>
                       )}
                     </td>
@@ -261,41 +284,36 @@ export function CrudTable<T extends { id: string } & Record<string, unknown>>({
       </div>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-hidden bg-black/40 p-3 sm:items-center sm:p-4" onClick={close}>
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-hidden bg-[#16001d]/55 p-3 backdrop-blur-sm sm:items-center sm:p-4" onClick={close}>
           <div
             onClick={(e) => e.stopPropagation()}
-            className="flex h-[calc(100dvh-1.5rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl sm:h-[calc(100dvh-2rem)]"
+            className="flex h-[calc(100dvh-1.5rem)] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-white/70 bg-white shadow-[0_30px_80px_rgba(22,0,29,0.35)] sm:h-[calc(100dvh-2rem)]"
           >
-            <div className="shrink-0 px-6 py-4 border-b border-gray-100 flex items-center justify-between gap-3">
-              <h2 className="font-semibold" style={{ color: '#3e004c' }}>{open.mode === 'create' ? `New ${singularTitle}` : `Edit ${singularTitle}`}</h2>
-              <div className="flex items-center gap-2">
-                <button type="button" onClick={close} className="px-3 py-2 text-xs text-gray-600 hover:bg-gray-50 rounded-lg">Cancel</button>
-                <button
-                  type="submit"
-                  form={modalFormId}
-                  disabled={saving}
-                  className="px-4 py-2 text-xs font-medium text-white rounded-lg hover:opacity-90 disabled:opacity-50"
-                  style={{ background: '#3e004c' }}
-                >
-                  {saving ? 'Saving…' : 'Save'}
+            <div className="shrink-0 border-b border-gray-100 bg-[#fbf7fc] px-5 py-4 sm:px-6">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-400">{open.mode === 'create' ? 'Create record' : 'Edit record'}</p>
+                  <h2 className="mt-1 truncate text-lg font-bold text-[#3e004c]">{open.mode === 'create' ? `New ${singularTitle}` : `Edit ${singularTitle}`}</h2>
+                </div>
+                <button type="button" onClick={close} className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-gray-500 transition-colors hover:bg-white hover:text-gray-700">
+                  <span className="material-symbols-outlined text-[20px]">close</span>
                 </button>
-                <button type="button" onClick={close} className="text-gray-400 hover:text-gray-600"><span className="material-symbols-outlined">close</span></button>
               </div>
             </div>
             <form id={modalFormId} onSubmit={handleSave} className="flex min-h-0 flex-1 flex-col overflow-hidden">
-              <div className="admin-modal-scroll min-h-0 flex-1 space-y-4 overflow-y-scroll overscroll-contain p-6 pb-8">
+              <div className="admin-modal-scroll min-h-0 flex-1 space-y-4 overflow-y-scroll overscroll-contain p-4 pb-8 sm:p-6">
                 {fields.map((f) => {
                   if (open.mode === 'edit' && f.createOnly) return null
                   const value = form[f.name] ?? ''
                   if (f.type === 'textarea') {
                     return (
                       <div key={f.name}>
-                        <label className="block text-xs font-medium text-gray-600 mb-1.5">{f.label}{f.required && ' *'}</label>
+                        <label className="mb-1.5 block text-xs font-semibold text-gray-600">{f.label}{f.required && ' *'}</label>
                         <textarea
                           value={String(value)}
                           onChange={(e) => setForm({ ...form, [f.name]: e.target.value })}
                           rows={4}
-                          className="min-h-24 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                          className="min-h-28 w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-[#3e004c] focus:ring-2 focus:ring-[#3e004c]/15"
                           placeholder={f.placeholder}
                         />
                       </div>
@@ -304,12 +322,12 @@ export function CrudTable<T extends { id: string } & Record<string, unknown>>({
                   if (f.type === 'array') {
                     return (
                       <div key={f.name}>
-                        <label className="block text-xs font-medium text-gray-600 mb-1.5">{f.label} <span className="text-gray-400 font-normal">(one per line)</span></label>
+                        <label className="mb-1.5 block text-xs font-semibold text-gray-600">{f.label} <span className="font-normal text-gray-400">(one per line)</span></label>
                         <textarea
                           value={String(value)}
                           onChange={(e) => setForm({ ...form, [f.name]: e.target.value })}
                           rows={4}
-                          className="min-h-24 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                          className="min-h-28 w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-[#3e004c] focus:ring-2 focus:ring-[#3e004c]/15"
                           placeholder={f.placeholder}
                         />
                       </div>
@@ -317,25 +335,26 @@ export function CrudTable<T extends { id: string } & Record<string, unknown>>({
                   }
                   if (f.type === 'boolean') {
                     return (
-                      <label key={f.name} className="flex items-center gap-2 text-sm text-gray-700">
+                      <label key={f.name} className="flex items-center justify-between gap-4 rounded-xl border border-gray-200 bg-[#fbf7fc] px-4 py-3 text-sm font-medium text-gray-700">
+                        <span>{f.label}</span>
                         <input
                           type="checkbox"
                           checked={!!value}
                           onChange={(e) => setForm({ ...form, [f.name]: e.target.checked })}
+                          className="h-5 w-5 rounded border-gray-300 text-[#3e004c]"
                         />
-                        {f.label}
                       </label>
                     )
                   }
                   if (f.type === 'select') {
                     return (
                       <div key={f.name}>
-                        <label className="block text-xs font-medium text-gray-600 mb-1.5">{f.label}{f.required && ' *'}</label>
+                        <label className="mb-1.5 block text-xs font-semibold text-gray-600">{f.label}{f.required && ' *'}</label>
                         <select
                           value={String(value)}
                           onChange={(e) => setForm({ ...form, [f.name]: e.target.value })}
                           required={f.required && open.mode === 'create'}
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white"
+                          className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-[#3e004c] focus:ring-2 focus:ring-[#3e004c]/15"
                         >
                           {f.options?.map((option) => (
                             <option key={option.value} value={option.value}>{option.label}</option>
@@ -346,23 +365,23 @@ export function CrudTable<T extends { id: string } & Record<string, unknown>>({
                   }
                   return (
                     <div key={f.name}>
-                      <label className="block text-xs font-medium text-gray-600 mb-1.5">{f.label}{f.required && ' *'}</label>
+                      <label className="mb-1.5 block text-xs font-semibold text-gray-600">{f.label}{f.required && ' *'}</label>
                       <input
                         type={f.type === 'number' ? 'number' : 'text'}
                         value={String(value)}
                         onChange={(e) => setForm({ ...form, [f.name]: e.target.value })}
                         required={f.required && open.mode === 'create'}
-                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                        className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-[#3e004c] focus:ring-2 focus:ring-[#3e004c]/15"
                         placeholder={f.placeholder}
                       />
                     </div>
                   )
                 })}
               </div>
-              <div className="flex shrink-0 justify-end gap-2 border-t border-gray-100 bg-white px-6 py-4">
-                <button type="button" onClick={close} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg">Cancel</button>
-                <button type="submit" disabled={saving} className="px-5 py-2 text-sm font-medium text-white rounded-lg hover:opacity-90 disabled:opacity-50" style={{ background: '#3e004c' }}>
-                  {saving ? 'Saving…' : 'Save'}
+              <div className="flex shrink-0 justify-end gap-2 border-t border-gray-100 bg-white px-4 py-4 sm:px-6">
+                <button type="button" onClick={close} className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-50">Cancel</button>
+                <button type="submit" disabled={saving} className="rounded-xl bg-[#3e004c] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#50115f] disabled:opacity-50">
+                  {saving ? 'Saving...' : 'Save'}
                 </button>
               </div>
             </form>
