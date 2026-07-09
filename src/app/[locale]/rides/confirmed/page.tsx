@@ -11,6 +11,7 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { getPaymentConfigurationError, settlePaymentFromPayOnUs, verifyPayOnUsPayment } from '@/lib/payonus'
 import { getRoutePriceOverrides } from '@/lib/routePriceOverrides'
+import { getFleetVehicleDisplayLabel } from '@/lib/fleetDisplay'
 import type { VehicleId, RouteId } from '@/types'
 
 interface Props {
@@ -90,6 +91,7 @@ export default async function BookingConfirmedPage({ params, searchParams }: Pro
     ? await prisma.fleetVehicle.findUnique({ where: { id: selectedFleetVehicleId }, select: { id: true, label: true } })
     : null
   const displayFleetVehicle = bookingLegs[0]?.fleetVehicle ?? selectedFleetVehicle
+  const vehicleDisplayName = displayFleetVehicle ? getFleetVehicleDisplayLabel(displayFleetVehicle.label) : vehicle?.name
   const matchedRoute = findRoute(from, to)
   const legCount = tripType === 'round-trip' ? 2 : 1
   const routePriceOverrides = matchedRoute ? await getRoutePriceOverrides(matchedRoute.id) : undefined
@@ -162,7 +164,7 @@ export default async function BookingConfirmedPage({ params, searchParams }: Pro
                 <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
                   <span className="material-symbols-outlined text-gray-400 text-[20px] mb-2 block">airport_shuttle</span>
                   <p className="text-xs text-gray-500">{t('vehicleClass')}</p>
-                  <p className="text-sm font-medium text-gray-900 mt-1">{displayFleetVehicle?.label ?? vehicle?.name ?? vehicleId}</p>
+                  <p className="text-sm font-medium text-gray-900 mt-1">{vehicleDisplayName ?? vehicleId}</p>
                 </div>
                 <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 col-span-2 md:col-span-1">
                   <span className="material-symbols-outlined text-gray-400 text-[20px] mb-2 block">payments</span>

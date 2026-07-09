@@ -14,6 +14,7 @@ import { useFleetVehicles } from '@/hooks/useFleetVehicles'
 import { useRoutePriceOverrides } from '@/hooks/useRoutePriceOverrides'
 import JourneyTracker from '@/components/booking/JourneyTracker'
 import CountUp from 'react-countup'
+import { getFleetVehicleDisplayLabel } from '@/lib/fleetDisplay'
 import type { VehicleId, RouteId } from '@/types'
 
 type PaymentMethod = 'card' | 'mobile-money' | 'bank-transfer'
@@ -114,6 +115,7 @@ function PaymentContent() {
 
   const vehicle = vehicles.find((v) => v.id === vehicleId)
   const fleetVehicle = fleetVehicles.find((unit) => unit.id === fleetVehicleId && unit.vehicleId === vehicleId)
+  const vehicleDisplayName = fleetVehicle ? getFleetVehicleDisplayLabel(fleetVehicle.label) : vehicle?.name
   const matchedRoute = findRoute(from, to)
   const { overrides } = useRoutePriceOverrides(matchedRoute?.id)
   const dropoffFare = matchedRoute
@@ -388,7 +390,7 @@ function PaymentContent() {
                       <span className="material-symbols-outlined text-[32px]" style={{ color: '#3e004c' }}>airport_shuttle</span>
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-gray-900">{fleetVehicle?.label ?? vehicle?.name ?? vehicleId}</p>
+                      <p className="text-sm font-semibold text-gray-900">{vehicleDisplayName ?? vehicleId}</p>
                       <p className="text-xs text-gray-500">{from} → {to}</p>
                       {tripType === 'round-trip' && <p className="text-xs text-gray-500">{to} → {from}</p>}
                       {date && (

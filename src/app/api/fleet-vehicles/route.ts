@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getFleetVehicleDisplayLabel } from '@/lib/fleetDisplay'
 
 export async function GET() {
   const fleetVehicles = await prisma.fleetVehicle.findMany({
@@ -26,7 +27,12 @@ export async function GET() {
   })
 
   return NextResponse.json(
-    { fleetVehicles },
+    {
+      fleetVehicles: fleetVehicles.map((unit) => ({
+        ...unit,
+        displayLabel: getFleetVehicleDisplayLabel(unit.label),
+      })),
+    },
     { headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=600' } }
   )
 }

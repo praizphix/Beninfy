@@ -14,6 +14,7 @@ import { useRoutePriceOverrides } from '@/hooks/useRoutePriceOverrides'
 import JourneyTracker from '@/components/booking/JourneyTracker'
 import RouteMapSVG from '@/components/shared/RouteMapSVG'
 import CountUp from 'react-countup'
+import { getFleetVehicleDisplayLabel } from '@/lib/fleetDisplay'
 import type { VehicleId, RouteId } from '@/types'
 
 const INPUT_BASE =
@@ -40,6 +41,7 @@ function PassengerDetailsContent() {
 
   const vehicle = vehicles.find((v) => v.id === vehicleId)
   const fleetVehicle = fleetVehicles.find((unit) => unit.id === fleetVehicleId && unit.vehicleId === vehicleId)
+  const vehicleDisplayName = fleetVehicle ? getFleetVehicleDisplayLabel(fleetVehicle.label) : vehicle?.name
   const matchedRoute = findRoute(from, to)
 
   const [form, setForm] = useState({
@@ -368,7 +370,7 @@ function PassengerDetailsContent() {
                         <span className="material-symbols-outlined" style={{ fontSize: 16, color: '#3e004c' }}>airport_shuttle</span>
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">{fleetVehicle?.label ?? vehicle?.name ?? vehicleId}</p>
+                        <p className="text-sm font-medium text-gray-900">{vehicleDisplayName ?? vehicleId}</p>
                         <p className="text-xs text-gray-500">{vehicle?.capacity ?? '—'} passengers • {tripType}</p>
                       </div>
                     </div>

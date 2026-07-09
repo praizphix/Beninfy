@@ -69,6 +69,7 @@ function RidesContent() {
         categoryId: vehicle.id,
         priceTargetId: vehicle.id,
         name: vehicle.name,
+        pricingLabel: vehicle.name,
         description: vehicle.description,
         image: vehicle.image,
         capacity: vehicle.capacity,
@@ -82,7 +83,8 @@ function RidesContent() {
         id: unit.id,
         categoryId: unit.vehicleId,
         priceTargetId: unit.id,
-        name: unit.label,
+        name: unit.displayLabel,
+        pricingLabel: unit.label,
         description: category?.description ?? unit.vehicle?.description ?? '',
         image: category?.image ?? unit.vehicle?.image ?? '',
         capacity: category?.capacity ?? unit.vehicle?.capacity ?? 4,
@@ -285,7 +287,7 @@ function RidesContent() {
             )}
 
             {displayVehicles.map((vehicle) => {
-              const price = getPriceForVehicle(vehicle.priceTargetId, vehicle.categoryId, vehicle.name)
+              const price = getPriceForVehicle(vehicle.priceTargetId, vehicle.categoryId, vehicle.pricingLabel)
               if (matchedRoute && !price) return null
               const badge = VEHICLE_BADGES[vehicle.categoryId]
 
