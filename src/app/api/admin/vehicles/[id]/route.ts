@@ -42,16 +42,42 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   const guard = await requireAdmin()
   if (!guard.ok) return guard.response
   const { id } = await params
-  const bookingCount = await prisma.booking.count({ where: { vehicleId: id } })
-  if (bookingCount > 0) {
-    return NextResponse.json({ error: 'Cannot delete: vehicle has bookings. Mark unavailable instead.' }, { status: 409 })
+  const [bookingCount, fleetVehicleCount, bookingLegCount] = await Promise.all([
+    prisma.booking.count({ where: { vehicleId: id } }),
+    prisma.fleetVehicle.count({ where: { vehicleId: id } }),
+    prisma.bookingLeg.count({ where: { vehicleId: id } }),
+  ])
+
+  const blockers = [
+    bookingCount > 0 ? `${bookingCount} booking${bookingCount === 1 ? '' : 's'}` : null,
+    fleetVehicleCount > 0 ? `${fleetVehicleCount} fleet unit${fleetVehicleCount === 1 ? '' : 's'}` : null,
+    bookingLegCount > 0 ? `${bookingLegCount} booking leg${bookingLegCount === 1 ? '' : 's'}` : null,
+  ].filter(Boolean)
+
+  if (blockers.length > 0) {
+    return NextResponse.json(
+      {
+        error: `Cannot delete this vehicle category because it is linked to ${blockers.join(', ')}. Mark it unavailable instead, or move/delete the linked records first.`,
+      },
+      { status: 409 }
+    )
   }
+
   try {
-    await prisma.vehicle.delete({ where: { id } })
+    await prisma.$transaction([
+      prisma.routePrice.deleteMany({ where: { vehicleId: id } }),
+      prisma.vehicle.delete({ where: { id } }),
+    ])
     return NextResponse.json({ ok: true })
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
       return NextResponse.json({ error: 'Vehicle not found. Please refresh and try again.' }, { status: 404 })
+    }
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
+      return NextResponse.json(
+        { error: 'Cannot delete this vehicle category because it is still linked to operational records. Mark it unavailable instead.' },
+        { status: 409 }
+      )
     }
     throw error
   }
