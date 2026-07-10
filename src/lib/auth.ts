@@ -70,15 +70,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user }) {
       const isFreshSignIn = Boolean(user)
       if (user) {
-        token.id = user.id
+        token.id = user.id ?? token.sub
         delete token.sessionVersion
       }
 
-      if (token.id) {
-        const dbUser = await prisma.user.findUnique({
-          where: { id: token.id as string },
-          select: { role: true, sessionVersion: true },
-        })
+      const tokenUserId = typeof token.id === 'string' ? token.id : typeof token.sub === 'string' ? token.sub : null
+      const tokenEmail = typeof token.email === 'string' ? token.email : null
+
+      if (tokenUserId || tokenEmail) {
+        const dbUser = tokenUserId
+          ? await prisma.user.findUnique({
+              where: { id: tokenUserId },
+              select: { id: true, role: true, sessionVersion: true },
+            })
+          : tokenEmail
+            ? await prisma.user.findUnique({
+                where: { email: tokenEmail },
+                select: { id: true, role: true, sessionVersion: true },
+              })
+            : null
         const tokenVersion = typeof token.sessionVersion === 'number' ? token.sessionVersion : null
 
         if (!dbUser || (!isFreshSignIn && tokenVersion !== null && tokenVersion !== dbUser.sessionVersion)) {
@@ -86,6 +96,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           delete token.role
           delete token.sessionVersion
         } else {
+          token.id = dbUser.id
           token.role = dbUser.role
           token.sessionVersion = dbUser.sessionVersion
         }
