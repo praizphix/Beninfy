@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { useSession, signOut } from 'next-auth/react'
 import { cn } from '@/lib/utils'
+import { isAdminRole } from '@/lib/roles'
 
 const NAV_LINKS = [
   { href: '', key: 'home' },
@@ -22,6 +23,9 @@ export default function Navbar() {
   const t = useTranslations('nav')
   const pathname = usePathname()
   const { data: session, status } = useSession()
+  const sessionRole = (session?.user as { role?: string } | undefined)?.role
+  const isCustomerSession = status === 'authenticated' && session?.user && !isAdminRole(sessionRole)
+  const customerUser = isCustomerSession ? session.user : null
   const [menuOpen, setMenuOpen] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
@@ -96,7 +100,7 @@ export default function Navbar() {
           >
             {t('bookNow')}
           </Link>
-          {status === 'authenticated' && session?.user ? (
+          {customerUser ? (
             <div className="relative">
               <button
                 type="button"
@@ -106,7 +110,7 @@ export default function Navbar() {
                 className="flex items-center gap-2 rounded-full pl-1 pr-3 py-1 hover:bg-surface-container transition-colors"
               >
                 <span className="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center text-label-sm font-bold">
-                  {(session.user.name ?? session.user.email ?? 'B')
+                  {(customerUser.name ?? customerUser.email ?? 'B')
                     .split(/\s+/)
                     .map((s) => s[0])
                     .join('')
@@ -122,9 +126,9 @@ export default function Navbar() {
                   onMouseLeave={() => setAccountOpen(false)}
                 >
                   <div className="px-4 py-3 border-b border-outline-variant">
-                    <p className="text-label-md truncate">{session.user.name ?? 'Account'}</p>
-                    {session.user.email && (
-                      <p className="text-label-sm text-on-surface-variant truncate">{session.user.email}</p>
+                    <p className="text-label-md truncate">{customerUser.name ?? 'Account'}</p>
+                    {customerUser.email && (
+                      <p className="text-label-sm text-on-surface-variant truncate">{customerUser.email}</p>
                     )}
                   </div>
                   <Link
@@ -220,12 +224,12 @@ export default function Navbar() {
                 {t('bookNow')}
               </Link>
             </div>
-            {status === 'authenticated' && session?.user ? (
+            {customerUser ? (
               <div className="border-t border-outline-variant pt-3 mt-3 space-y-1">
                 <div className="px-4 py-2">
-                  <p className="text-label-md truncate">{session.user.name ?? 'Account'}</p>
-                  {session.user.email && (
-                    <p className="text-label-sm text-on-surface-variant truncate">{session.user.email}</p>
+                  <p className="text-label-md truncate">{customerUser.name ?? 'Account'}</p>
+                  {customerUser.email && (
+                    <p className="text-label-sm text-on-surface-variant truncate">{customerUser.email}</p>
                   )}
                 </div>
                 <Link href={`/${locale}/dashboard`} onClick={() => setMenuOpen(false)} className="block rounded-lg px-4 py-3 text-label-md text-on-surface-variant hover:bg-surface-container">

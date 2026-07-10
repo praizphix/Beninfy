@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
-import { auth } from '@/lib/auth'
+import { requireCustomer } from '@/lib/customer'
 import { prisma } from '@/lib/prisma'
 import {
   getPaymentConfigurationError,
@@ -20,13 +20,13 @@ async function verify(req: Request, reference: string, providerReference?: strin
     return NextResponse.json({ error: configurationError }, { status: 503 })
   }
 
-  const session = await auth()
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const customer = await requireCustomer()
+  if (!customer.ok) return customer.response
+  const { session } = customer
+  const user = session.user!
   const rateLimit = await checkRateLimit({
     scope: 'payment-verify',
-    identifier: `${session.user.id}:${requestIp(req)}`,
+    identifier: `${user.id}:${requestIp(req)}`,
     limit: 30,
     windowMs: 15 * 60 * 1000,
   })
@@ -41,7 +41,7 @@ async function verify(req: Request, reference: string, providerReference?: strin
     where: { reference },
     include: { booking: { select: { userId: true } } },
   })
-  if (!payment || payment.booking.userId !== session.user.id) {
+  if (!payment || payment.booking.userId !== user.id) {
     return NextResponse.json({ error: 'Payment not found' }, { status: 404 })
   }
 

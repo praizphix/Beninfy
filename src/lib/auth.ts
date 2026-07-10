@@ -26,6 +26,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           Google({
             clientId: googleClientId,
             clientSecret: googleClientSecret,
+            allowDangerousEmailAccountLinking: true,
           }),
         ]
       : []),
@@ -56,6 +57,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
+    async signIn({ account, profile }) {
+      if (account?.provider !== 'google') return true
+
+      const googleProfile = profile as { email?: string; email_verified?: boolean } | undefined
+      if (!googleProfile?.email || googleProfile.email_verified !== true) {
+        return '/login?error=GoogleEmailUnverified'
+      }
+
+      return true
+    },
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id

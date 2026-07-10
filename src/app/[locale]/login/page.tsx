@@ -5,7 +5,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useLocale } from 'next-intl'
-import { signIn } from 'next-auth/react'
+import { getSession, signIn, signOut } from 'next-auth/react'
+import { isAdminRole } from '@/lib/roles'
 
 export default function LoginPage() {
   const locale = useLocale()
@@ -16,6 +17,15 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [authError] = useState<string | null>(() =>
+    typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('error')
+  )
+  const authErrorMessage =
+    authError === 'GoogleEmailUnverified'
+      ? 'Google could not verify that email address. Please use another Google account or sign in with email.'
+      : authError === 'OAuthAccountNotLinked'
+        ? 'This email already exists. Try Google again with the verified email, or sign in with your password.'
+        : null
 
   const handleGoogleLogin = async () => {
     setError(null)
@@ -35,6 +45,12 @@ export default function LoginPage() {
     try {
       const result = await signIn('credentials', { email, password, redirect: false })
       if (result?.error) throw new Error('Invalid email or password')
+      const session = await getSession()
+      const role = (session?.user as { role?: string } | undefined)?.role
+      if (isAdminRole(role)) {
+        await signOut({ redirect: false })
+        throw new Error('Admin accounts must sign in from the backoffice.')
+      }
       router.push(`/${locale}/dashboard`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Sign in failed')
@@ -176,7 +192,9 @@ export default function LoginPage() {
             >
               {loading ? 'Signing in…' : 'Sign In'}
             </button>
-            {error && <p className="text-body-sm text-error mt-1">{error}</p>}
+            {(error || authErrorMessage) && (
+              <p className="text-body-sm text-error mt-1">{error ?? authErrorMessage}</p>
+            )}
           </form>
 
           {/* Register link */}

@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server'
 import type { Session } from 'next-auth'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { isAdminRole, type AppRole } from '@/lib/roles'
 
-export type Role = 'user' | 'admin' | 'super_admin'
+export type Role = AppRole
 
 export function getRole(session: Session | null): Role | undefined {
   return (session?.user as { role?: Role } | undefined)?.role
@@ -22,7 +23,7 @@ export async function requireAdmin() {
     where: { id: session.user.id },
     select: { role: true },
   })
-  if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
+  if (!user || !isAdminRole(user.role)) {
     return {
       ok: false as const,
       response: NextResponse.json({ error: 'Forbidden' }, { status: 403 }),

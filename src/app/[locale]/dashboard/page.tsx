@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useLocale } from 'next-intl'
 import { useSession, signOut } from 'next-auth/react'
 import { formatNGN } from '@/lib/utils'
+import { isAdminRole } from '@/lib/roles'
 import PulseStatus, { DepartureRow } from '@/components/shared/PulseStatus'
 import ProfileTab from './tabs/ProfileTab'
 import SettingsTab from './tabs/SettingsTab'
@@ -43,6 +44,13 @@ interface PaymentApi {
   status: string
   createdAt: string
   booking: { id: string; from: string; to: string; date: string } | null
+}
+
+interface ProfileApi {
+  id: string
+  name: string | null
+  email: string | null
+  phone: string | null
 }
 
 type NavItem = 'dashboard' | 'profile' | 'payments' | 'support' | 'settings'
@@ -92,12 +100,18 @@ function sectionTitle(title: string, subtitle?: string) {
 export default function DashboardPage() {
   const locale = useLocale()
   const { data: session, status } = useSession()
+  const sessionRole = (session?.user as { role?: string } | undefined)?.role
   const [activeNav, setActiveNav] = useState<NavItem>('dashboard')
   const [trips, setTrips] = useState<Trip[]>([])
   const [loading, setLoading] = useState(true)
   const [cancellingId, setCancellingId] = useState<string | null>(null)
   const [payments, setPayments] = useState<PaymentApi[]>([])
   const [paymentsLoading, setPaymentsLoading] = useState(false)
+  const [now] = useState(() => Date.now())
+  const [profile, setProfile] = useState<ProfileApi | null>(null)
+  const [profileForm, setProfileForm] = useState({ name: '', phone: '' })
+  const [profileSaving, setProfileSaving] = useState(false)
+  const [profileMessage, setProfileMessage] = useState<string | null>(null)
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -105,10 +119,17 @@ export default function DashboardPage() {
       return
     }
     if (status !== 'authenticated') return
+    if (isAdminRole(sessionRole)) {
+      window.location.href = `/${locale}/admin`
+      return
+    }
 
     let cancelled = false
-    setLoading(true)
-    fetch('/api/bookings')
+    void Promise.resolve()
+      .then(() => {
+        if (!cancelled) setLoading(true)
+        return fetch('/api/bookings')
+      })
       .then((r) => (r.ok ? r.json() : { bookings: [] }))
       .then((data: { bookings?: BookingApi[] }) => {
         if (cancelled) return
@@ -130,14 +151,17 @@ export default function DashboardPage() {
     return () => {
       cancelled = true
     }
-  }, [status, locale])
+  }, [status, locale, sessionRole])
 
   useEffect(() => {
-    if (activeNav !== 'payments' || status !== 'authenticated') return
+    if (activeNav !== 'payments' || status !== 'authenticated' || isAdminRole(sessionRole)) return
 
     let cancelled = false
-    setPaymentsLoading(true)
-    fetch('/api/payments')
+    void Promise.resolve()
+      .then(() => {
+        if (!cancelled) setPaymentsLoading(true)
+        return fetch('/api/payments')
+      })
       .then((r) => (r.ok ? r.json() : { payments: [] }))
       .then((data: { payments?: PaymentApi[] }) => {
         if (!cancelled) setPayments(data.payments ?? [])
@@ -147,9 +171,28 @@ export default function DashboardPage() {
     return () => {
       cancelled = true
     }
-  }, [activeNav, status])
+  }, [activeNav, status, sessionRole])
 
-  const now = Date.now()
+  useEffect(() => {
+    if (status !== 'authenticated' || isAdminRole(sessionRole)) return
+
+    let cancelled = false
+    void fetch('/api/profile')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { user?: ProfileApi } | null) => {
+        if (cancelled || !data?.user) return
+        setProfile(data.user)
+        setProfileForm({
+          name: data.user.name ?? '',
+          phone: data.user.phone ?? '',
+        })
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [status, sessionRole])
+
   const upcoming = trips.filter((t) => new Date(t.date).getTime() >= now && t.status !== 'completed')
   const history = trips.filter((t) => new Date(t.date).getTime() < now || t.status === 'completed')
   const totalSpend = trips.reduce((a, t) => a + t.amount, 0)
@@ -173,6 +216,32 @@ export default function DashboardPage() {
       setTrips((prev) => prev.filter((t) => t.id !== id))
     } finally {
       setCancellingId(null)
+    }
+  }
+
+  const needsProfileCompletion = Boolean(profile && (!profile.name?.trim() || !profile.phone?.trim()))
+
+  const handleProfileCompletion = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setProfileSaving(true)
+    setProfileMessage(null)
+    try {
+      const res = await fetch('/api/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: profileForm.name.trim() || undefined,
+          phone: profileForm.phone.trim() ? profileForm.phone.trim() : null,
+        }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.error ?? 'Could not update profile')
+      setProfile(data.user)
+      setProfileMessage('Account details saved.')
+    } catch (err) {
+      setProfileMessage(err instanceof Error ? err.message : 'Could not update profile')
+    } finally {
+      setProfileSaving(false)
     }
   }
 
@@ -300,6 +369,63 @@ export default function DashboardPage() {
                     </div>
                   </div>
                 </section>
+
+                {needsProfileCompletion && (
+                  <section className="overflow-hidden rounded-2xl border border-[#e0b94f]/40 bg-[#fff9df] shadow-[0_16px_45px_rgba(115,92,0,0.09)]">
+                    <div className="grid gap-5 p-5 sm:p-6 lg:grid-cols-[1fr_360px] lg:items-end">
+                      <div>
+                        <div className="flex items-center gap-3">
+                          <span className="material-symbols-outlined flex h-11 w-11 items-center justify-center rounded-xl bg-[#3e004c] text-[22px] text-[#f4d66c]">assignment_ind</span>
+                          <div>
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#735c00]/70">Complete your account</p>
+                            <h2 className="mt-1 text-xl font-bold text-[#3e004c]">Add the details Google did not share</h2>
+                          </div>
+                        </div>
+                        <p className="mt-3 max-w-2xl text-sm leading-6 text-[#735c00]/80">
+                          We need these details for bookings, driver coordination, and border support. You only have to do this once.
+                        </p>
+                      </div>
+                      <form onSubmit={handleProfileCompletion} className="space-y-3">
+                        {!profile?.name?.trim() && (
+                          <input
+                            type="text"
+                            value={profileForm.name}
+                            onChange={(e) => setProfileForm((p) => ({ ...p, name: e.target.value }))}
+                            className="w-full rounded-xl border border-[#eadb9b] bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-[#3e004c] focus:ring-2 focus:ring-[#3e004c]/15"
+                            placeholder="Full name"
+                            required
+                          />
+                        )}
+                        <input
+                          type="tel"
+                          value={profileForm.phone}
+                          onChange={(e) => setProfileForm((p) => ({ ...p, phone: e.target.value }))}
+                          className="w-full rounded-xl border border-[#eadb9b] bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-[#3e004c] focus:ring-2 focus:ring-[#3e004c]/15"
+                          placeholder="Phone number, e.g. +234 801 234 5678"
+                          required
+                        />
+                        <div className="flex flex-col gap-2 sm:flex-row">
+                          <button
+                            type="submit"
+                            disabled={profileSaving}
+                            className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#3e004c] px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#50115f] disabled:cursor-wait disabled:opacity-60"
+                          >
+                            <span className="material-symbols-outlined text-[17px]">{profileSaving ? 'progress_activity' : 'save'}</span>
+                            {profileSaving ? 'Saving...' : 'Save details'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setActiveNav('profile')}
+                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#eadb9b] bg-white px-4 py-3 text-sm font-semibold text-[#3e004c] transition-colors hover:bg-[#fffdf2]"
+                          >
+                            Full profile
+                          </button>
+                        </div>
+                        {profileMessage && <p className="text-xs font-medium text-[#735c00]">{profileMessage}</p>}
+                      </form>
+                    </div>
+                  </section>
+                )}
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                   {[

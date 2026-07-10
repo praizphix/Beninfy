@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
-import { auth } from '@/lib/auth'
+import { requireCustomer } from '@/lib/customer'
 import { prisma } from '@/lib/prisma'
 
 const patchSchema = z.object({
@@ -10,12 +10,11 @@ const patchSchema = z.object({
 })
 
 export async function GET() {
-  const session = await auth()
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const customer = await requireCustomer()
+  if (!customer.ok) return customer.response
+  const { session } = customer
   const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
+    where: { id: session.user!.id },
     select: { id: true, name: true, email: true, phone: true, image: true, createdAt: true },
   })
   if (!user) return NextResponse.json({ error: 'Not found' }, { status: 404 })
@@ -23,17 +22,16 @@ export async function GET() {
 }
 
 export async function PATCH(req: Request) {
-  const session = await auth()
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const customer = await requireCustomer()
+  if (!customer.ok) return customer.response
+  const { session } = customer
   const body = await req.json().catch(() => null)
   const parsed = patchSchema.safeParse(body)
   if (!parsed.success) {
     return NextResponse.json({ error: 'Invalid input', issues: parsed.error.flatten() }, { status: 400 })
   }
   const user = await prisma.user.update({
-    where: { id: session.user.id },
+    where: { id: session.user!.id },
     data: parsed.data,
     select: { id: true, name: true, email: true, phone: true, image: true },
   })

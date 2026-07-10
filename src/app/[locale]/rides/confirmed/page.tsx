@@ -12,6 +12,7 @@ import { prisma } from '@/lib/prisma'
 import { getPaymentConfigurationError, settlePaymentFromPayOnUs, verifyPayOnUsPayment } from '@/lib/payonus'
 import { getRoutePriceOverrides } from '@/lib/routePriceOverrides'
 import { getFleetVehicleDisplayLabel } from '@/lib/fleetDisplay'
+import { isAdminRole } from '@/lib/roles'
 import type { VehicleId, RouteId } from '@/types'
 
 interface Props {
@@ -38,17 +39,19 @@ export default async function BookingConfirmedPage({ params, searchParams }: Pro
   const sp = await searchParams
   const t = await getTranslations('confirmedPage')
   const session = await auth()
+  const sessionRole = (session?.user as { role?: string } | undefined)?.role
+  const customerUserId = session?.user?.id && !isAdminRole(sessionRole) ? session.user.id : null
   const paymentReference = sp.reference ?? sp.ref
   const providerReference = sp.providerRef
 
   let dbBooking: Awaited<ReturnType<typeof prisma.booking.findUnique>> = null
 
-  if (paymentReference && session?.user?.id) {
+  if (paymentReference && customerUserId) {
     const payment = await prisma.payment.findUnique({
       where: { reference: paymentReference },
       include: { booking: true },
     })
-    if (payment?.booking.userId === session.user.id) {
+    if (payment?.booking.userId === customerUserId) {
       const onusReference = providerReference || payment.providerReference
       if (!getPaymentConfigurationError() && onusReference && payment.status !== 'paid') {
         try {
@@ -62,9 +65,9 @@ export default async function BookingConfirmedPage({ params, searchParams }: Pro
     }
   }
 
-  if (!dbBooking && sp.id && session?.user?.id) {
+  if (!dbBooking && sp.id && customerUserId) {
     const found = await prisma.booking.findUnique({ where: { id: sp.id } })
-    if (found && found.userId === session.user.id) {
+    if (found && found.userId === customerUserId) {
       dbBooking = found
     }
   }

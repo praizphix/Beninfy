@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { randomBytes } from 'crypto'
-import { auth } from '@/lib/auth'
+import { requireCustomer } from '@/lib/customer'
 import { prisma } from '@/lib/prisma'
 import {
   getPaymentConfigurationError,
@@ -25,13 +25,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: configurationError }, { status: 503 })
   }
 
-  const session = await auth()
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const customer = await requireCustomer()
+  if (!customer.ok) return customer.response
+  const { session } = customer
+  const user = session.user!
   const rateLimit = await checkRateLimit({
     scope: 'payment-initiate',
-    identifier: `${session.user.id}:${requestIp(req)}`,
+    identifier: `${user.id}:${requestIp(req)}`,
     limit: 10,
     windowMs: 15 * 60 * 1000,
   })
@@ -48,16 +48,16 @@ export async function POST(req: Request) {
   }
 
   const booking = await prisma.booking.findUnique({ where: { id: parsed.data.bookingId } })
-  if (!booking || booking.userId !== session.user.id) {
+  if (!booking || booking.userId !== user.id) {
     return NextResponse.json({ error: 'Booking not found' }, { status: 404 })
   }
 
   const reference = `BFY-${booking.id.slice(-6).toUpperCase()}-${randomBytes(3).toString('hex').toUpperCase()}`
-  const email = session.user.email ?? `user-${session.user.id}@beninfy.com`
+  const email = user.email ?? `user-${user.id}@beninfy.com`
   const businessId = getPayOnUsBusinessId()
   if (!businessId) return NextResponse.json({ error: 'PayOnUs business ID is not configured' }, { status: 503 })
   const origin = new URL(req.url).origin
-  const customerName = parsed.data.passengerName || session.user.name || 'Beninfy Customer'
+  const customerName = parsed.data.passengerName || user.name || 'Beninfy Customer'
 
   await prisma.payment.upsert({
     where: { reference },

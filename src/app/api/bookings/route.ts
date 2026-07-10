@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { Prisma } from '@prisma/client'
 import { z } from 'zod'
-import { auth } from '@/lib/auth'
+import { requireCustomer } from '@/lib/customer'
 import { prisma } from '@/lib/prisma'
 import { findRoute } from '@/data/routes'
 import { getRouteDropoffPrice, requiresLagosPickupArea } from '@/data/pricing'
@@ -46,13 +46,13 @@ function dateKey(date: Date) {
 }
 
 export async function POST(req: Request) {
-  const session = await auth()
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-  const userId = session.user.id
-  const userName = session.user.name ?? null
-  const userEmail = session.user.email ?? null
+  const customer = await requireCustomer()
+  if (!customer.ok) return customer.response
+  const { session } = customer
+  const user = session.user!
+  const userId = user.id!
+  const userName = user.name ?? null
+  const userEmail = user.email ?? null
   const body = await req.json().catch(() => null)
   const parsed = createSchema.safeParse(body)
   if (!parsed.success) {
@@ -221,12 +221,11 @@ export async function POST(req: Request) {
 }
 
 export async function GET() {
-  const session = await auth()
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const customer = await requireCustomer()
+  if (!customer.ok) return customer.response
+  const { session } = customer
   const bookings = await prisma.booking.findMany({
-    where: { userId: session.user.id },
+    where: { userId: session.user!.id },
     orderBy: { createdAt: 'desc' },
     include: { legs: true },
   })
