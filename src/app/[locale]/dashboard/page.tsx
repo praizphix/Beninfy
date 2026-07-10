@@ -23,8 +23,6 @@ interface Trip {
   amount: number
   status: TripStatus
   driver?: string
-  plate?: string
-  pickupEta?: string
 }
 
 interface BookingApi {
@@ -36,7 +34,6 @@ interface BookingApi {
   passengers: number
   priceNGN: number
   status: string
-  createdAt: string
 }
 
 interface PaymentApi {
@@ -48,23 +45,49 @@ interface PaymentApi {
   booking: { id: string; from: string; to: string; date: string } | null
 }
 
-const activeTrip: Trip | null = null
-
-const statusColors: Record<TripStatus, string> = {
-  active: 'bg-primary text-on-primary',
-  confirmed: 'bg-primary-container text-on-primary-container',
-  pending: 'bg-secondary-container text-on-secondary-container',
-  completed: 'bg-surface-container-high text-on-surface-variant',
-}
+type NavItem = 'dashboard' | 'profile' | 'payments' | 'support' | 'settings'
 
 const LIVE_DEPARTURES = [
   { from: 'Lagos', to: 'Cotonou', time: '08:30', status: 'boarding' as const, vehicle: 'Executive SUV' },
-  { from: 'Cotonou', to: 'Lomé', time: '09:00', status: 'on-time' as const, vehicle: 'Toyota Sienna' },
+  { from: 'Cotonou', to: 'Lome', time: '09:00', status: 'on-time' as const, vehicle: 'Toyota Sienna' },
   { from: 'Lagos', to: 'Accra', time: '10:15', status: 'delayed' as const, vehicle: 'Toyota Prado' },
   { from: 'Abuja', to: 'Lagos', time: '11:45', status: 'en-route' as const, vehicle: 'Saloon Car' },
 ]
 
-type NavItem = 'dashboard' | 'profile' | 'payments' | 'support' | 'settings'
+const NAV_ITEMS: { id: NavItem; label: string; icon: string }[] = [
+  { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
+  { id: 'profile', label: 'Profile', icon: 'person' },
+  { id: 'payments', label: 'Payments', icon: 'payments' },
+  { id: 'support', label: 'Support', icon: 'support_agent' },
+  { id: 'settings', label: 'Settings', icon: 'settings' },
+]
+
+function statusBadge(status: string) {
+  const normalized = status.toLowerCase()
+  const tone =
+    normalized === 'confirmed' || normalized === 'paid' || normalized === 'active'
+      ? 'bg-emerald-50 text-emerald-700 ring-emerald-100'
+      : normalized === 'failed' || normalized === 'cancelled'
+        ? 'bg-red-50 text-red-700 ring-red-100'
+        : normalized === 'completed'
+          ? 'bg-gray-100 text-gray-700 ring-gray-200'
+          : 'bg-amber-50 text-amber-700 ring-amber-100'
+
+  return (
+    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold capitalize ring-1 ${tone}`}>
+      {status.replace(/_/g, ' ')}
+    </span>
+  )
+}
+
+function sectionTitle(title: string, subtitle?: string) {
+  return (
+    <div>
+      <h2 className="text-xl font-bold tracking-normal text-[#3e004c]">{title}</h2>
+      {subtitle && <p className="mt-1 text-sm text-gray-500">{subtitle}</p>}
+    </div>
+  )
+}
 
 export default function DashboardPage() {
   const locale = useLocale()
@@ -82,6 +105,7 @@ export default function DashboardPage() {
       return
     }
     if (status !== 'authenticated') return
+
     let cancelled = false
     setLoading(true)
     fetch('/api/bookings')
@@ -102,6 +126,7 @@ export default function DashboardPage() {
         setTrips(mapped)
       })
       .finally(() => !cancelled && setLoading(false))
+
     return () => {
       cancelled = true
     }
@@ -109,6 +134,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (activeNav !== 'payments' || status !== 'authenticated') return
+
     let cancelled = false
     setPaymentsLoading(true)
     fetch('/api/payments')
@@ -117,34 +143,26 @@ export default function DashboardPage() {
         if (!cancelled) setPayments(data.payments ?? [])
       })
       .finally(() => !cancelled && setPaymentsLoading(false))
-    return () => { cancelled = true }
-  }, [activeNav, status])
 
-  const handleNav = (id: NavItem) => {
-    setActiveNav(id)
-  }
+    return () => {
+      cancelled = true
+    }
+  }, [activeNav, status])
 
   const now = Date.now()
   const upcoming = trips.filter((t) => new Date(t.date).getTime() >= now && t.status !== 'completed')
   const history = trips.filter((t) => new Date(t.date).getTime() < now || t.status === 'completed')
+  const totalSpend = trips.reduce((a, t) => a + t.amount, 0)
+  const countriesVisited = new Set(trips.flatMap((trip) => [trip.from, trip.to]).filter(Boolean)).size
 
   const userName = session?.user?.name ?? session?.user?.email ?? 'Traveler'
+  const firstName = userName.split(/[ @]/)[0] || 'Traveler'
   const initials = userName
-    .split(/\s+/)
-    .map((s) => s[0])
-    .join('')
+    .split(/[ @._-]/)
+    .filter(Boolean)
     .slice(0, 2)
-    .toUpperCase()
-
-  const navItems: { id: NavItem; label: string; icon: string }[] = [
-    { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
-    { id: 'profile', label: 'Profile', icon: 'person' },
-    { id: 'payments', label: 'Payments', icon: 'payments' },
-    { id: 'support', label: 'Support', icon: 'support_agent' },
-    { id: 'settings', label: 'Settings', icon: 'settings' },
-  ]
-
-  const totalSpend = history.reduce((a, t) => a + t.amount, 0)
+    .map((part) => part[0]?.toUpperCase())
+    .join('') || 'B'
 
   const handleCancel = async (id: string) => {
     if (typeof window !== 'undefined' && !window.confirm('Cancel this booking?')) return
@@ -153,220 +171,226 @@ export default function DashboardPage() {
       const res = await fetch(`/api/bookings/${id}`, { method: 'DELETE' })
       if (!res.ok) throw new Error('Cancel failed')
       setTrips((prev) => prev.filter((t) => t.id !== id))
-    } catch {
-      // swallow; could surface a toast later
     } finally {
       setCancellingId(null)
     }
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <main className="mt-16 max-w-[1280px] mx-auto px-4 md:px-10 py-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Sidebar (always visible on mobile/desktop) */}
-          <aside className="col-span-12 lg:col-span-3 space-y-5 mb-6 lg:mb-0 lg:block">
-            {/* Profile card */}
-            <div className="bg-surface-container-lowest p-6 rounded-2xl shadow-sm space-y-4">
-              <div className="flex items-center gap-4 pb-4 border-b border-outline-variant">
-                <div className="w-14 h-14 rounded-full bg-primary flex items-center justify-center text-on-primary text-headline-sm font-bold">{initials || 'B'}</div>
-                <div>
-                  <p className="text-headline-sm text-primary">{userName}</p>
-                  <p className="text-body-sm text-on-surface-variant">Member</p>
-                  <div className="flex items-center gap-3 mt-1">
+    <div className="min-h-screen bg-[#f4f2f8]">
+      <main className="mx-auto mt-16 max-w-[1320px] px-4 py-6 sm:px-6 md:px-10 lg:py-8">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+          <aside className="lg:col-span-3">
+            <div className="sticky top-24 space-y-4">
+              <section className="overflow-hidden rounded-2xl border border-white/70 bg-white shadow-[0_16px_45px_rgba(62,0,76,0.08)]">
+                <div className="relative bg-[#3e004c] p-5 text-white">
+                  <div className="absolute inset-0 bg-[linear-gradient(135deg,#3e004c_0%,#672875_56%,#e0b94f_150%)]" />
+                  <div className="relative flex items-center gap-3">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-lg font-bold text-[#3e004c] shadow-sm">
+                      {initials}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate text-base font-semibold">{userName}</p>
+                      <p className="text-xs font-medium uppercase tracking-[0.16em] text-white/65">Beninfy member</p>
+                    </div>
+                  </div>
+                  <div className="relative mt-4 flex gap-2">
                     <Link
                       href={`/${locale}/profile`}
-                      className="text-label-sm text-primary hover:underline"
+                      className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-white/12 px-3 py-2 text-xs font-semibold text-white ring-1 ring-white/15 transition-colors hover:bg-white/18"
                     >
-                      Edit profile
+                      <span className="material-symbols-outlined text-[16px]">edit</span>
+                      Profile
                     </Link>
-                    <span className="text-outline-variant">·</span>
                     <button
                       onClick={() => signOut({ callbackUrl: `/${locale}/login` })}
-                      className="text-label-sm text-primary hover:underline"
+                      className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-white/12 px-3 py-2 text-xs font-semibold text-white ring-1 ring-white/15 transition-colors hover:bg-white/18"
                     >
+                      <span className="material-symbols-outlined text-[16px]">logout</span>
                       Sign out
                     </button>
                   </div>
                 </div>
-              </div>
 
-              <nav className="flex flex-col gap-1">
-                {navItems.map(({ id, label, icon }) => (
-                  <button
-                    key={id}
-                    onClick={() => handleNav(id)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-label-md transition-colors text-left ${activeNav === id ? 'bg-primary-container text-on-primary-container' : 'text-on-surface-variant hover:bg-surface-container'}`}
-                  >
-                    <span className={`material-symbols-outlined text-[20px] ${activeNav === id ? 'icon-fill' : ''}`}>{icon}</span>
-                    {label}
-                  </button>
-                ))}
-              </nav>
-            </div>
+                <nav className="space-y-1 p-3">
+                  {NAV_ITEMS.map(({ id, label, icon }) => (
+                    <button
+                      key={id}
+                      onClick={() => setActiveNav(id)}
+                      className={[
+                        'flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium transition-colors',
+                        activeNav === id
+                          ? 'bg-[#3e004c] text-white shadow-[0_12px_26px_rgba(62,0,76,0.16)]'
+                          : 'text-gray-600 hover:bg-[#f7eff8] hover:text-[#3e004c]',
+                      ].join(' ')}
+                    >
+                      <span className={activeNav === id ? 'material-symbols-outlined text-[20px] text-[#f4d66c]' : 'material-symbols-outlined text-[20px] text-[#7b3f89]'}>
+                        {icon}
+                      </span>
+                      {label}
+                    </button>
+                  ))}
+                </nav>
+              </section>
 
-            {/* Saved travelers */}
-            <div className="bg-surface-container-lowest p-6 rounded-2xl shadow-sm">
-              <h3 className="text-headline-sm mb-4">Saved Travelers</h3>
-              <div className="space-y-4">
-                {[{ init: 'AK', name: 'Abeba K.' }, { init: 'JM', name: 'Jean M.' }].map(({ init, name }) => (
-                  <div key={name} className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-bold text-xs">{init}</div>
-                      <span className="text-body-md">{name}</span>
+              <section className="rounded-2xl border border-white/70 bg-white p-4 shadow-[0_14px_35px_rgba(62,0,76,0.07)]">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-400">Your travel</p>
+                <div className="mt-4 grid grid-cols-3 gap-2">
+                  {[
+                    { label: 'Trips', value: trips.length },
+                    { label: 'Upcoming', value: upcoming.length },
+                    { label: 'Cities', value: countriesVisited || 0 },
+                  ].map((stat) => (
+                    <div key={stat.label} className="rounded-xl bg-[#fbf7fc] p-3 text-center">
+                      <p className="text-lg font-bold text-[#3e004c]">{stat.value}</p>
+                      <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-gray-400">{stat.label}</p>
                     </div>
-                    <span className="material-symbols-outlined text-outline cursor-pointer hover:text-primary transition-colors text-[18px]">edit</span>
-                  </div>
-                ))}
-                <button className="w-full py-2.5 border-2 border-dashed border-outline-variant rounded-xl text-on-surface-variant text-label-md flex items-center justify-center gap-2 hover:bg-surface-container hover:border-primary transition-all">
-                  <span className="material-symbols-outlined text-[18px]">add</span> Add Traveler
-                </button>
-              </div>
-            </div>
+                  ))}
+                </div>
+                <div className="mt-3 rounded-xl bg-[#fff7d6] px-3 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#735c00]/70">Total spend</p>
+                  <p className="mt-1 text-base font-bold text-[#735c00]">{formatNGN(totalSpend)}</p>
+                </div>
+              </section>
 
-            {/* Stats card */}
-            <div className="bg-surface-container-lowest p-6 rounded-2xl shadow-sm">
-              <h3 className="text-label-md text-on-surface-variant mb-4 uppercase tracking-wider">Your Stats</h3>
-              <div className="space-y-4">
-                <div>
-                  <p className="text-headline-sm text-primary">{trips.length}</p>
-                  <p className="text-body-sm text-on-surface-variant">Total Trips</p>
+              <section className="rounded-2xl border border-white/70 bg-white p-4 shadow-[0_14px_35px_rgba(62,0,76,0.07)]">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">Saved travelers</p>
+                    <p className="text-xs text-gray-400">Fast booking profiles</p>
+                  </div>
+                  <span className="material-symbols-outlined text-[20px] text-[#7b3f89]">group</span>
                 </div>
-                <div>
-                  <p className="text-headline-sm text-secondary">{formatNGN(totalSpend)}</p>
-                  <p className="text-body-sm text-on-surface-variant">Total Spent</p>
+                <div className="mt-4 space-y-2">
+                  {[{ init: 'AK', name: 'Abeba K.' }, { init: 'JM', name: 'Jean M.' }].map(({ init, name }) => (
+                    <div key={name} className="flex items-center justify-between rounded-xl bg-[#fbf7fc] px-3 py-2">
+                      <div className="flex items-center gap-2">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#3e004c] text-xs font-bold text-white">{init}</span>
+                        <span className="text-sm font-medium text-gray-700">{name}</span>
+                      </div>
+                      <span className="material-symbols-outlined text-[17px] text-gray-400">edit</span>
+                    </div>
+                  ))}
                 </div>
-                <div>
-                  <p className="text-headline-sm text-primary">3</p>
-                  <p className="text-body-sm text-on-surface-variant">Countries Visited</p>
-                </div>
-              </div>
+              </section>
             </div>
           </aside>
 
-          {/* Main content SPA tabs */}
-          <div className="col-span-12 lg:col-span-9 space-y-6">
+          <div className="space-y-6 lg:col-span-9">
             {activeNav === 'dashboard' && (
               <>
-                {/* Active trip banner */}
-                {activeTrip ? (
-                  <section className="relative overflow-hidden bg-primary rounded-2xl p-8 text-on-primary shadow-lg">
-                    <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
-                      <span className="material-symbols-outlined text-[120px]">directions_car</span>
-                    </div>
-                    <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 bg-primary-container text-on-primary-container px-3 py-1 rounded-full w-fit">
-                          <span className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
-                          <span className="text-label-sm uppercase tracking-wider">Vehicle Assigned</span>
-                        </div>
-                        <h2 className="text-headline-lg">{activeTrip.from} to {activeTrip.to}</h2>
-                        <p className="text-body-md opacity-90">{activeTrip.vehicle} • {activeTrip.plate} • Driver: {activeTrip.driver}</p>
-                        <p className="text-label-sm opacity-75">Ref: #{activeTrip.ref}</p>
+                <section className="overflow-hidden rounded-2xl border border-white/70 bg-white shadow-[0_16px_45px_rgba(62,0,76,0.08)]">
+                  <div className="relative px-5 py-6 sm:px-6 md:px-8">
+                    <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,#3e004c,#7b3f89,#e0b94f)]" />
+                    <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-400">Traveler dashboard</p>
+                        <h1 className="mt-2 text-2xl font-bold text-[#3e004c] md:text-3xl">Welcome back, {firstName}</h1>
+                        <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-500">
+                          Track bookings, review payments, manage your profile, and get support for your cross-border trips.
+                        </p>
                       </div>
+                      <Link
+                        href={`/${locale}/rides`}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#3e004c] px-5 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(62,0,76,0.18)] transition-colors hover:bg-[#50115f]"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">add</span>
+                        Book a ride
+                      </Link>
                     </div>
-                  </section>
-                ) : (
-                  <section className="bg-surface-container-lowest rounded-2xl p-8 border border-outline-variant text-center">
-                    <span className="material-symbols-outlined text-primary text-[48px]">directions_car</span>
-                    <h2 className="text-headline-sm mt-3">Welcome{session?.user?.name ? `, ${session.user.name.split(' ')[0]}` : ''}</h2>
-                    <p className="text-body-md text-on-surface-variant mt-1">{loading ? 'Loading your trips…' : 'You have no active ride. Book one to get started.'}</p>
-                    <Link
-                      href={`/${locale}/rides`}
-                      className="inline-flex items-center gap-2 mt-5 bg-primary text-on-primary px-6 py-3 rounded-xl text-label-md hover:opacity-90 transition-opacity"
-                    >
-                      <span className="material-symbols-outlined text-[18px]">add</span> Book a ride
-                    </Link>
-                  </section>
-                )}
+                  </div>
+                </section>
 
-                {/* Upcoming + History grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Upcoming trips */}
-                  <section className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-headline-sm">Upcoming Trips</h3>
-                      <a href="#" className="text-primary text-label-md hover:underline">View All</a>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                  {[
+                    { label: 'Upcoming trips', value: upcoming.length, icon: 'event_available', tone: 'bg-emerald-50 text-emerald-700' },
+                    { label: 'Completed trips', value: history.length, icon: 'verified', tone: 'bg-sky-50 text-sky-700' },
+                    { label: 'Total paid', value: formatNGN(totalSpend), icon: 'payments', tone: 'bg-[#fff7d6] text-[#735c00]' },
+                  ].map((stat) => (
+                    <div key={stat.label} className="rounded-2xl border border-white/70 bg-white p-5 shadow-[0_14px_35px_rgba(62,0,76,0.07)]">
+                      <div className="mb-4 flex items-center justify-between gap-3">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-400">{stat.label}</p>
+                        <span className={`material-symbols-outlined flex h-10 w-10 items-center justify-center rounded-xl text-[20px] ${stat.tone}`}>{stat.icon}</span>
+                      </div>
+                      <p className="text-2xl font-bold text-gray-950">{stat.value}</p>
                     </div>
-                    <div className="space-y-4">
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+                  <section className="rounded-2xl border border-white/70 bg-white p-5 shadow-[0_16px_45px_rgba(62,0,76,0.08)]">
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      {sectionTitle('Upcoming Trips', 'Trips that need your attention.')}
+                      <Link href={`/${locale}/rides`} className="text-sm font-semibold text-[#3e004c] hover:underline">New trip</Link>
+                    </div>
+
+                    <div className="space-y-3">
+                      {loading && <p className="py-8 text-center text-sm text-gray-400">Loading trips...</p>}
                       {upcoming.length === 0 && !loading && (
-                        <p className="text-body-sm text-on-surface-variant">No upcoming trips yet.</p>
+                        <div className="rounded-2xl border border-dashed border-[#eaddec] bg-[#fbf7fc] p-6 text-center">
+                          <span className="material-symbols-outlined text-[34px] text-[#7b3f89]">route</span>
+                          <p className="mt-2 text-sm font-semibold text-gray-900">No upcoming trips yet</p>
+                          <p className="mt-1 text-xs text-gray-500">Book a private ride when you are ready.</p>
+                        </div>
                       )}
                       {upcoming.map((trip) => (
-                        <div key={trip.id} className="bg-surface-container-lowest p-5 rounded-2xl shadow-sm border border-outline-variant hover:shadow-md transition-shadow">
-                          <div className="flex justify-between items-start mb-4">
-                            <div className="flex items-center gap-3">
-                              <div className="p-2 bg-surface-container rounded-xl text-primary">
-                                <span className="material-symbols-outlined text-[20px]">airport_shuttle</span>
-                              </div>
-                              <div>
-                                <p className="text-label-md">{trip.from} → {trip.to}</p>
-                                <p className="text-body-sm text-on-surface-variant">
-                                  {new Date(trip.date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}
+                        <div key={trip.id} className="rounded-2xl border border-[#eaddec] bg-white p-4 shadow-sm">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex min-w-0 gap-3">
+                              <span className="material-symbols-outlined flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#f7eff8] text-[21px] text-[#3e004c]">airport_shuttle</span>
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-bold text-gray-950">{trip.from} → {trip.to}</p>
+                                <p className="mt-1 text-xs text-gray-500">
+                                  {new Date(trip.date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
                                 </p>
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                  {statusBadge(trip.status)}
+                                  <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500">{trip.vehicle}</span>
+                                  <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500">{trip.passengers} pax</span>
+                                </div>
                               </div>
                             </div>
-                            <span className="text-label-md text-secondary">{formatNGN(trip.amount)}</span>
+                            <p className="shrink-0 text-sm font-bold text-[#735c00]">{formatNGN(trip.amount)}</p>
                           </div>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <PulseStatus status={trip.status === 'confirmed' ? 'on-time' : trip.status === 'pending' ? 'boarding' : 'en-route'} />
-                            <span className="px-2.5 py-0.5 bg-gray-100 text-gray-500 rounded-lg text-xs">{trip.vehicle}</span>
-                            <span className="px-2.5 py-0.5 bg-gray-100 text-gray-500 rounded-lg text-xs">{trip.passengers} pax</span>
-                          </div>
-                          {trip.driver && (
-                            <p className="text-body-sm text-on-surface-variant mt-3 flex items-center gap-1">
-                              <span className="material-symbols-outlined text-[14px]">person</span> Driver: {trip.driver}
-                            </p>
-                          )}
                           <div className="mt-4 flex justify-end">
                             <button
                               type="button"
                               onClick={() => handleCancel(trip.id)}
                               disabled={cancellingId === trip.id}
-                              className="text-label-sm text-red-600 hover:underline disabled:opacity-50 disabled:cursor-wait inline-flex items-center gap-1"
+                              className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:cursor-wait disabled:opacity-50"
                             >
                               <span className="material-symbols-outlined text-[14px]">close</span>
-                              {cancellingId === trip.id ? 'Cancelling…' : 'Cancel booking'}
+                              {cancellingId === trip.id ? 'Cancelling...' : 'Cancel booking'}
                             </button>
                           </div>
                         </div>
                       ))}
-                      <Link
-                        href={`/${locale}/rides`}
-                        className="w-full py-3.5 border-2 border-dashed border-outline-variant rounded-2xl text-on-surface-variant text-label-md flex items-center justify-center gap-2 hover:bg-surface-container hover:border-primary hover:text-primary transition-all"
-                      >
-                        <span className="material-symbols-outlined text-[18px]">add</span> Book New Ride
-                      </Link>
                     </div>
                   </section>
 
-                  {/* Booking history */}
-                  <section className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-headline-sm">Booking History</h3>
-                      <a href="#" className="text-primary text-label-md hover:underline">View All</a>
+                  <section className="rounded-2xl border border-white/70 bg-white p-5 shadow-[0_16px_45px_rgba(62,0,76,0.08)]">
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      {sectionTitle('Booking History', 'Completed and past trips.')}
+                      <button type="button" className="text-sm font-semibold text-[#3e004c] hover:underline">View all</button>
                     </div>
                     <div className="space-y-3">
                       {history.length === 0 && !loading && (
-                        <p className="text-body-sm text-on-surface-variant">No past trips yet.</p>
+                        <div className="rounded-2xl border border-dashed border-[#eaddec] bg-[#fbf7fc] p-6 text-center">
+                          <span className="material-symbols-outlined text-[34px] text-gray-400">history</span>
+                          <p className="mt-2 text-sm font-semibold text-gray-900">No past trips yet</p>
+                        </div>
                       )}
                       {history.map((trip) => (
-                        <div key={trip.id} className="bg-surface-container-lowest p-4 rounded-2xl border border-outline-variant hover:shadow-sm transition-shadow">
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 bg-surface-container rounded-xl text-on-surface-variant">
-                              <span className="material-symbols-outlined text-[18px]">check_circle</span>
+                        <div key={trip.id} className="rounded-2xl border border-gray-100 bg-[#fbf7fc] p-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-semibold text-gray-950">{trip.from} → {trip.to}</p>
+                              <p className="mt-1 text-xs text-gray-500">{new Date(trip.date).toLocaleDateString('en-GB')}</p>
+                              <p className="mt-1 text-[11px] font-medium text-gray-400">#{trip.ref}</p>
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex justify-between">
-                                <p className="text-label-md truncate">{trip.from} → {trip.to}</p>
-                                <span className="text-label-md text-on-surface-variant ml-2 shrink-0">{formatNGN(trip.amount)}</span>
-                              </div>
-                              <div className="flex items-center gap-2 mt-1">
-                                <p className="text-body-sm text-on-surface-variant">{new Date(trip.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
-                                <span className="w-1 h-1 bg-outline rounded-full" />
-                                <p className="text-body-sm text-on-surface-variant">{trip.vehicle}</p>
-                              </div>
-                              <p className="text-label-sm text-on-surface-variant/60 mt-0.5">#{trip.ref}</p>
+                            <div className="shrink-0 text-right">
+                              <p className="text-sm font-bold text-gray-900">{formatNGN(trip.amount)}</p>
+                              <div className="mt-2">{statusBadge(trip.status)}</div>
                             </div>
                           </div>
                         </div>
@@ -375,12 +399,11 @@ export default function DashboardPage() {
                   </section>
                 </div>
 
-                {/* Live Departures board */}
-                <section className="bg-gray-950 rounded-2xl p-6 shadow-lg border border-gray-800">
-                  <div className="flex items-center justify-between mb-5">
+                <section className="rounded-2xl border border-gray-800 bg-gray-950 p-5 shadow-[0_16px_45px_rgba(0,0,0,0.18)]">
+                  <div className="mb-5 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <span className="material-symbols-outlined text-yellow-400" style={{ fontSize: 22 }}>departure_board</span>
-                      <h3 className="text-sm font-bold text-white tracking-widest uppercase">Live Departures</h3>
+                      <span className="material-symbols-outlined text-[22px] text-yellow-400">departure_board</span>
+                      <h3 className="text-sm font-bold uppercase tracking-[0.18em] text-white">Live Departures</h3>
                     </div>
                     <PulseStatus status="en-route" />
                   </div>
@@ -398,76 +421,70 @@ export default function DashboardPage() {
                   </div>
                 </section>
 
-                {/* Quick actions */}
-                <section className="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant">
-                  <h3 className="text-headline-sm mb-5">Quick Actions</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <section className="rounded-2xl border border-white/70 bg-white p-5 shadow-[0_16px_45px_rgba(62,0,76,0.08)]">
+                  <div className="mb-4">{sectionTitle('Quick Actions', 'Common travel tasks in one place.')}</div>
+                  <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                     {[
                       { icon: 'directions_car', label: 'Book a Ride', href: `/${locale}/rides` },
                       { icon: 'map', label: 'Explore Tours', href: `/${locale}/tours` },
                       { icon: 'security', label: 'Border Info', href: `/${locale}/border-info` },
-                      { icon: 'support_agent', label: 'Get Support', href: `https://wa.me/2348000000000` },
+                      { icon: 'support_agent', label: 'Get Support', href: 'https://wa.me/22951019134' },
                     ].map(({ icon, label, href }) => (
                       <a
                         key={label}
                         href={href}
                         target={href.startsWith('https') ? '_blank' : '_self'}
                         rel={href.startsWith('https') ? 'noopener noreferrer' : undefined}
-                        className="flex flex-col items-center gap-3 p-5 bg-surface-container-low rounded-2xl hover:bg-primary-container/20 hover:border-primary border border-outline-variant/50 transition-all group"
+                        className="group flex flex-col items-center gap-3 rounded-2xl border border-[#eaddec] bg-[#fbf7fc] p-4 text-center transition-colors hover:border-[#3e004c] hover:bg-white"
                       >
-                        <span className="material-symbols-outlined text-primary text-[28px] group-hover:scale-110 transition-transform">{icon}</span>
-                        <span className="text-label-md text-center">{label}</span>
+                        <span className="material-symbols-outlined text-[28px] text-[#3e004c] transition-transform group-hover:scale-110">{icon}</span>
+                        <span className="text-sm font-semibold text-gray-800">{label}</span>
                       </a>
                     ))}
                   </div>
                 </section>
               </>
             )}
+
             {activeNav === 'profile' && <ProfileTab />}
             {activeNav === 'settings' && <SettingsTab />}
             {activeNav === 'support' && <SupportTab />}
             {activeNav === 'payments' && (
-              <section className="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant">
-                <div className="flex items-center justify-between mb-5">
-                  <h2 className="text-headline-sm">Payment history</h2>
+              <section className="overflow-hidden rounded-2xl border border-white/70 bg-white shadow-[0_16px_45px_rgba(62,0,76,0.08)]">
+                <div className="flex flex-col gap-3 border-b border-gray-100 bg-[#fbf7fc] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>{sectionTitle('Payment history', 'Review your payment references and status.')}</div>
                   <button
                     onClick={() => setActiveNav('dashboard')}
-                    className="text-primary text-label-md hover:underline inline-flex items-center gap-1"
+                    className="inline-flex items-center gap-1 rounded-xl border border-[#eaddec] bg-white px-3 py-2 text-sm font-semibold text-[#3e004c] transition-colors hover:bg-[#f7eff8]"
                   >
                     <span className="material-symbols-outlined text-[16px]">arrow_back</span>
-                    Back to dashboard
+                    Dashboard
                   </button>
                 </div>
                 {paymentsLoading ? (
-                  <p className="text-body-sm text-on-surface-variant">Loading payments…</p>
+                  <p className="p-6 text-sm text-gray-500">Loading payments...</p>
                 ) : payments.length === 0 ? (
-                  <p className="text-body-sm text-on-surface-variant">No payments yet.</p>
+                  <p className="p-6 text-sm text-gray-500">No payments yet.</p>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
-                      <thead className="text-on-surface-variant text-xs uppercase tracking-wider">
+                      <thead className="bg-[#fbf7fc] text-xs uppercase tracking-[0.14em] text-gray-500">
                         <tr>
-                          <th className="text-left py-2 pr-4">Reference</th>
-                          <th className="text-left py-2 pr-4">Booking</th>
-                          <th className="text-left py-2 pr-4">Amount</th>
-                          <th className="text-left py-2 pr-4">Status</th>
-                          <th className="text-left py-2">Date</th>
+                          <th className="px-5 py-3.5 text-left font-semibold">Reference</th>
+                          <th className="px-5 py-3.5 text-left font-semibold">Booking</th>
+                          <th className="px-5 py-3.5 text-left font-semibold">Amount</th>
+                          <th className="px-5 py-3.5 text-left font-semibold">Status</th>
+                          <th className="px-5 py-3.5 text-left font-semibold">Date</th>
                         </tr>
                       </thead>
                       <tbody>
                         {payments.map((p) => (
-                          <tr key={p.id} className="border-t border-outline-variant">
-                            <td className="py-3 pr-4"><code className="text-xs">{p.reference}</code></td>
-                            <td className="py-3 pr-4">{p.booking ? `${p.booking.from} → ${p.booking.to}` : '—'}</td>
-                            <td className="py-3 pr-4">{formatNGN(p.amountNGN)}</td>
-                            <td className="py-3 pr-4">
-                              <span className={`inline-block px-2 py-0.5 rounded-full text-xs ${
-                                p.status === 'paid' ? 'bg-green-50 text-green-700' :
-                                p.status === 'failed' ? 'bg-red-50 text-red-700' :
-                                'bg-amber-50 text-amber-700'
-                              }`}>{p.status}</span>
-                            </td>
-                            <td className="py-3 text-on-surface-variant text-xs">{new Date(p.createdAt).toLocaleString()}</td>
+                          <tr key={p.id} className="border-t border-gray-100">
+                            <td className="px-5 py-4"><code className="rounded-lg bg-[#fbf7fc] px-2 py-1 text-xs text-gray-700">{p.reference}</code></td>
+                            <td className="px-5 py-4 text-gray-700">{p.booking ? `${p.booking.from} → ${p.booking.to}` : '—'}</td>
+                            <td className="px-5 py-4 font-semibold text-gray-900">{formatNGN(p.amountNGN)}</td>
+                            <td className="px-5 py-4">{statusBadge(p.status)}</td>
+                            <td className="px-5 py-4 text-xs text-gray-500">{new Date(p.createdAt).toLocaleString()}</td>
                           </tr>
                         ))}
                       </tbody>
