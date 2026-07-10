@@ -33,7 +33,7 @@ export default function RegisterPage() {
     setError(null)
     setGoogleLoading(true)
     try {
-      await signIn('google', { redirectTo: `/${locale}/dashboard` })
+      await signIn('google', { callbackUrl: `/${locale}/dashboard` })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Google sign up failed')
       setGoogleLoading(false)

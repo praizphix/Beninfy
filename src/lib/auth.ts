@@ -65,6 +65,29 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return '/login?error=GoogleEmailUnverified'
       }
 
+      // Defensive check: if there's an existing Account record for this providerAccountId,
+      // ensure the linked User email matches the Google profile email. If it doesn't,
+      // block the sign-in to avoid logging the user into someone else's account (commonly an admin).
+      try {
+        if (account?.providerAccountId) {
+          const existing = await prisma.account.findFirst({
+            where: { provider: 'google', providerAccountId: account.providerAccountId },
+            include: { user: true },
+          })
+          if (existing?.user && existing.user.email && existing.user.email !== googleProfile.email) {
+            console.warn('Google sign-in blocked: providerAccountId already linked to different email', {
+              providerAccountId: account.providerAccountId,
+              existingEmail: existing.user.email,
+              incomingEmail: googleProfile.email,
+            })
+            return '/login?error=OAuthAccountConflict'
+          }
+        }
+      } catch (err) {
+        console.error('Error checking existing google account during signIn callback', err)
+        // allow sign-in to proceed if the check fails for unexpected reasons
+      }
+
       return true
     },
     async jwt({ token, user }) {

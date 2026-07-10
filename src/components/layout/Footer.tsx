@@ -104,7 +104,7 @@ export default function Footer() {
             {[
               { labelKey: 'aboutUs', href: '/about' },
               { labelKey: 'contactSupport', href: '/about#contact' },
-              { labelKey: 'privacyPolicy', href: '/#' },
+              { labelKey: 'privacyPolicy', href: '/privacy' },
               { labelKey: 'termsOfService', href: '/terms' },
             ].map(({ labelKey, href }) => (
               <li key={labelKey}>
