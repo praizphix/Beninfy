@@ -46,15 +46,6 @@ export const fleetInventory: FleetInventoryUnit[] = [
     notes: 'Inventory seed. Replace placeholder plate number with the real plate when available.',
   },
   {
-    id: 'fleet-rav4-2015-01',
-    vehicleId: 'suv',
-    label: 'RAV4 2015',
-    plateNumber: 'BENINFY-RAV4-2015-01',
-    color: null,
-    currentCity: null,
-    notes: 'Inventory seed. Replace placeholder plate number with the real plate when available.',
-  },
-  {
     id: 'fleet-rav4-2010-01',
     vehicleId: 'suv',
     label: 'RAV4 2010',
