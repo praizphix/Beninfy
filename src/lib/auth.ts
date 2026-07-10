@@ -68,8 +68,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return true
     },
     async jwt({ token, user }) {
+      const isFreshSignIn = Boolean(user)
       if (user) {
         token.id = user.id
+        delete token.sessionVersion
       }
 
       if (token.id) {
@@ -79,7 +81,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         })
         const tokenVersion = typeof token.sessionVersion === 'number' ? token.sessionVersion : null
 
-        if (!dbUser || (tokenVersion !== null && tokenVersion !== dbUser.sessionVersion)) {
+        if (!dbUser || (!isFreshSignIn && tokenVersion !== null && tokenVersion !== dbUser.sessionVersion)) {
           delete token.id
           delete token.role
           delete token.sessionVersion
