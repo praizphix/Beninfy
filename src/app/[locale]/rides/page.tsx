@@ -7,7 +7,6 @@ import { useSearchParams } from 'next/navigation'
 import { bookingCities, findRoute } from '@/data/routes'
 import { formatPriceRange, getRoutePrice } from '@/data/pricing'
 import { useVehicles } from '@/hooks/useVehicles'
-import { useFleetVehicles } from '@/hooks/useFleetVehicles'
 import { useRoutePriceOverrides } from '@/hooks/useRoutePriceOverrides'
 import type { VehicleId, RouteId } from '@/types'
 import CatalogImage from '@/components/shared/CatalogImage'
@@ -33,7 +32,6 @@ function RidesContent() {
   const t = useTranslations('ridesPage')
   const searchParams = useSearchParams()
   const { vehicles } = useVehicles()
-  const { fleetVehicles } = useFleetVehicles()
   const [from, setFrom] = useState(searchParams.get('from') ?? 'Lagos')
   const [to, setTo] = useState(searchParams.get('to') ?? 'Cotonou')
   const [date, setDate] = useState(searchParams.get('date') ?? '')
@@ -60,40 +58,19 @@ function RidesContent() {
     )
 
   const selectedCategoryIds = new Set(selectedVehicles)
-  const fleetVehicleCategoryIds = new Set(fleetVehicles.map((unit) => unit.vehicleId))
-  const rideOptions = [
-    ...vehicles
-      .filter((vehicle) => !fleetVehicleCategoryIds.has(vehicle.id))
-      .map((vehicle) => ({
-        id: vehicle.id,
-        categoryId: vehicle.id,
-        priceTargetId: vehicle.id,
-        name: vehicle.name,
-        pricingLabel: vehicle.name,
-        description: vehicle.description,
-        image: vehicle.image,
-        capacity: vehicle.capacity,
-        luggageCapacity: vehicle.luggageCapacity,
-        features: vehicle.features,
-        fleetVehicleId: null as string | null,
-      })),
-    ...fleetVehicles.map((unit) => {
-      const category = vehicles.find((vehicle) => vehicle.id === unit.vehicleId)
-      return {
-        id: unit.id,
-        categoryId: unit.vehicleId,
-        priceTargetId: unit.id,
-        name: unit.displayLabel,
-        pricingLabel: unit.label,
-        description: category?.description ?? unit.vehicle?.description ?? '',
-        image: category?.image ?? unit.vehicle?.image ?? '',
-        capacity: category?.capacity ?? unit.vehicle?.capacity ?? 4,
-        luggageCapacity: category?.luggageCapacity ?? unit.vehicle?.luggageCapacity ?? 4,
-        features: category?.features ?? unit.vehicle?.features ?? [],
-        fleetVehicleId: unit.id,
-      }
-    }),
-  ]
+  const rideOptions = vehicles.map((vehicle) => ({
+    id: vehicle.id,
+    categoryId: vehicle.id,
+    priceTargetId: vehicle.id,
+    name: vehicle.name,
+    pricingLabel: vehicle.name,
+    description: vehicle.description,
+    image: vehicle.image,
+    capacity: vehicle.capacity,
+    luggageCapacity: vehicle.luggageCapacity,
+    features: vehicle.features,
+    fleetVehicleId: null as string | null,
+  }))
 
   const displayVehicles = rideOptions.filter((v) => {
     if (selectedVehicles.length === 0) return true
